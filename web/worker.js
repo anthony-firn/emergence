@@ -14,6 +14,13 @@ self.onmessage = async ({ data }) => {
     const start = performance.now();
     if (data.type === "optics") { api.optics_solve(data.material, data.x, data.tolerance); result = json(); }
     else if (data.type === "design") { api.design_solve(data.fins, data.velocity); result = json(); }
+    else if (data.type === "workspace" || data.type === "mesh") {
+      const bytes = new TextEncoder().encode(JSON.stringify({params:data.params || data, features:data.features || [], target:data.target || "sink"}));
+      const ptr = api.workspace_input(bytes.length);
+      if (!ptr) throw new Error("Model input exceeds 64 KB");
+      new Uint8Array(api.memory.buffer,ptr,bytes.length).set(bytes);
+      api.workspace_run(data.type === "mesh" ? 1 : 0); result = json();
+    }
     else if (["flow-init", "flow-step", "flow-frame"].includes(data.type)) {
       if (data.type === "flow-init" && !api.flow_init(data.n, data.exact, data.re)) throw new Error("Invalid flow settings");
       if (data.type === "flow-step") api.flow_step();

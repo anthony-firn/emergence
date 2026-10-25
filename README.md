@@ -69,6 +69,24 @@ negative result: on Taylor–Green it did not beat the best fixed grid.
 
 ## Browser lab
 
+**[Collaborative CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**:
+edit cooling geometry, add and place box/cylinder parts, branch and review changes,
+and exchange revisions through WebRTC or portable project files. Dimensions drive
+both the native CAD export and electrothermal graph. Prescribed absorbed optical
+power and external deposited heat enter the shared thermal boundary model; the
+Mie scattering experiment remains independent.
+
+The **Shop drawings** view generates A3 dimensioned orthographic sheets with
+first/third-angle projection, material, finish, general tolerance, preparer/checker
+and revision fields. Export vector SVG/PDF, true-size DXF profiles, mechanical
+parts CSV and native STL. Sheets start as drafts; edits to released fields or
+geometry return them to review. This is an initial mechanical handoff for the
+supported shapes, not a qualified replacement for every shop's CAD/CAM process.
+GD&T, general sketches/constraints, STEP/B-rep editing, PCB manufacturing packages
+and domain-specific fabrication qualification remain unfinished.
+Donations reuse Fairground's existing development fund and support flow.
+See [scope, protocol and manufacturing validation](analysis/collaborative_cad.md).
+
 The lab compiles the existing Rust engine and models to WebAssembly. It runs
 inside a Web Worker, with no simulation server or external runtime downloads:
 
@@ -106,6 +124,11 @@ Optional browser QA, with Python Playwright and Chromium installed, against a
 local evolvetech.dev server: `python3 web/test_browser.py http://localhost:8080/play/emergence/`.
 It checks model selection, an unmet tolerance, exact fluid decay, design range
 failure, keyboard tabs, the production content policy and mobile layouts.
+
+For the CAD workspace: `node --test web/test_cad_repository.mjs` and
+`python3 web/test_cad_browser.py http://localhost:8080/play/emergence/cad/`.
+Manufacturing QA: `python3 web/test_cad_manufacturing.py http://localhost:8080/play/emergence/cad/`
+(with `pdfinfo`; optional `ezdxf` independently audits exported DXF).
 
 ## Reproducibility and sources
 

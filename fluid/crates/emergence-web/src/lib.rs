@@ -14,6 +14,7 @@ thread_local! {
     static OUTPUT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
     static FLOW: RefCell<Option<Flow>> = const { RefCell::new(None) };
     static OPTICS: RefCell<Option<(u32, Ladder<MieInput, MieQ>)>> = const { RefCell::new(None) };
+    static INPUT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
 }
 
 fn output(v: Value) {
@@ -177,9 +178,36 @@ pub extern "C" fn flow_report() {
 }
 
 fn design(fins: u32, velocity: f64) -> Result<Value, String> {
-    if !(5..=14).contains(&fins) || !velocity.is_finite() || !(0.5..=4.0).contains(&velocity) {
-        return Err("Design settings outside the demo range".into());
-    }
+    workspace_design(fins, velocity, 30.0, 45.0, 0.0)
+}
+
+fn workspace_design(fins: u32, velocity: f64, current: f64, ambient: f64, heat: f64) -> Result<Value, String> {
+    workspace_config(&json!({"fins":fins,"velocity":velocity,"current":current,"ambient":ambient,"heat":heat}))
+}
+
+fn setting(p: &Value, name: &str, default: f64, min: f64, max: f64) -> Result<f64, String> {
+    let value = match p.get(name) { Some(v) => v.as_f64().ok_or_else(|| format!("Invalid {name}"))?, None => default };
+    if !value.is_finite() || value < min || value > max { return Err(format!("{name} outside the supported range")); }
+    Ok(value)
+}
+
+fn workspace_config(input: &Value) -> Result<Value, String> {
+    let p = input.get("params").unwrap_or(input);
+    let fins = setting(p,"fins",9.,5.,14.)?;
+    if fins.fract() != 0. { return Err("Fin count must be an integer".into()); }
+    let velocity = setting(p,"velocity",2.5,0.5,4.)?;
+    let current = setting(p,"current",30.,5.,40.)?;
+    let ambient = setting(p,"ambient",45.,15.,60.)?;
+    let heat = setting(p,"heat",0.,0.,10.)?;
+    let width = setting(p,"width",40.,30.,70.)?;
+    let length = setting(p,"length",50.,30.,90.)?;
+    let height = setting(p,"finHeight",20.,10.,35.)?;
+    let base = setting(p,"base",3.,2.,8.)?;
+    let thickness = setting(p,"finThickness",1.2,0.8,2.)?;
+    let trace = setting(p,"traceWidth",10.,4.,15.)?;
+    let optical = setting(p,"opticalPower",0.,0.,5.)? * setting(p,"absorption",50.,0.,100.)? / 100.;
+    let gap = (width - fins * thickness) / (fins - 1.);
+    if gap <= 0. { return Err("Fins overlap: increase width or reduce count/thickness".into()); }
     let mut doc: project::Doc =
         serde_json::from_str(include_str!("../../../projects/motor-driver/project.json"))
             .map_err(|e| e.to_string())?;
@@ -189,8 +217,18 @@ fn design(fins: u32, velocity: f64) -> Result<Value, String> {
     doc.analyses.remove("enc");
     doc.requirements
         .retain(|id, _| ["REQ-TJ", "REQ-DROP", "REQ-FAN"].contains(&id.as_str()));
-    doc.params.get_mut("sink.fin_count").unwrap().value = fins.to_string();
-    doc.params.get_mut("duct.velocity").unwrap().value = format!("{velocity} m/s");
+    for (key, value, unit) in [("sink.fin_count",fins,""),("duct.velocity",velocity,"m/s"),
+        ("q1.current",current,"A"),("ambient",ambient,"degC"),("sink.width",width,"mm"),
+        ("sink.length",length,"mm"),("sink.fin_height",height,"mm"),("sink.base",base,"mm"),
+        ("sink.fin_thickness",thickness,"mm"),("trace.width",trace,"mm")] {
+        doc.params.get_mut(key).unwrap().value = format!("{value} {unit}");
+    }
+    // Prescribed extra watts deposited at Q1, not a radiation transport model.
+    // Retains the original switching-loss interval, conservatively scaling it.
+    // Optical coupling is prescribed absorbed power P*a, not inferred from
+    // the independent sphere-scattering experiment. Conservation is exact
+    // for this boundary model; the original loss interval is retained.
+    doc.params.get_mut("q1.switching_loss").unwrap().value = format!("{} W", 3.0 + heat + optical);
     let p = project::Project::new(doc, ".", Default::default())?;
     let e = p.evaluate();
     let checks: Vec<_> = e.checks.values().map(|c|json!({
@@ -198,11 +236,90 @@ fn design(fins: u32, velocity: f64) -> Result<Value, String> {
         "value":c.value.map(|v|json!({"nominal":v.nom,"lo":v.lo,"hi":v.hi,"rigor":format!("{:?}",v.rigor)})),
         "unit":c.unit,"owner":c.owner
     })).collect();
-    Ok(json!({"checks":checks,"computed":e.computed,"cached":e.cached}))
+    let nodes: serde_json::Map<String, Value> = ["q1.power","q1.tj","sink.thermal_resistance","trace.resistance","sink.pressure_drop"]
+        .iter().map(|id| ((*id).to_string(), e.value(id).map(|v| json!({"nominal":v.nom,"lo":v.lo,"hi":v.hi})).unwrap_or(Value::Null))).collect();
+    Ok(json!({"checks":checks,"computed":e.computed,"cached":e.cached,"nodes":nodes,
+        "handoffs":{"optical_heat_w":optical,"external_heat_w":heat,"gap_mm":gap,
+        "sink_volume_mm3":width*length*base+fins*thickness*length*height}}))
 }
 #[no_mangle]
 pub extern "C" fn design_solve(fins: u32, velocity: f64) {
     output(design(fins, velocity).unwrap_or_else(|e| json!({"error":e})));
+}
+
+#[no_mangle]
+pub extern "C" fn workspace_solve(fins: u32, velocity: f64, current: f64, ambient: f64, heat: f64) {
+    output(workspace_design(fins, velocity, current, ambient, heat).unwrap_or_else(|e| json!({"error":e})));
+}
+
+fn sink_mesh(fins: u32) -> Result<Value, String> {
+    mesh_config(&json!({"params":{"fins":fins}}))
+}
+
+fn mesh_config(input: &Value) -> Result<Value, String> {
+    let p = input.get("params").unwrap_or(input);
+    let target = input.get("target").and_then(Value::as_str).unwrap_or("sink");
+    let (solid, cell) = if target == "sink" {
+        workspace_config(input)?;
+        let n = setting(p,"fins",9.,5.,14.)? as u32;
+        let w = setting(p,"width",40.,30.,70.)?;
+        let l = setting(p,"length",50.,30.,90.)?;
+        let h = setting(p,"finHeight",20.,10.,35.)?;
+        let b = setting(p,"base",3.,2.,8.)?;
+        let t = setting(p,"finThickness",1.2,0.8,2.)?;
+        let mut parts = vec![cad::Solid::cuboid([0.,0.,b/2.],[w/2.,l/2.,b/2.])];
+        for i in 0..n {
+            let x = -(w-t)/2. + (w-t)*i as f64/(n-1) as f64;
+            parts.push(cad::Solid::cuboid([x,0.,b+h/2.],[t/2.,l/2.,h/2.]));
+        }
+        let gap=(w-n as f64*t)/(n-1) as f64;
+        let cell=(t/2.).min(gap/3.).min(0.6);
+        if cell<0.2 { return Err("This fin gap requires a finer mesh than the browser export supports. Export the analytic DXF profile or widen the channels.".into()); }
+        (cad::Solid::union(parts), cell)
+    } else {
+        let features = input.get("features").and_then(Value::as_array).ok_or("No custom parts")?;
+        if features.len() > 16 { return Err("Too many custom parts".into()); }
+        let f = features.iter().find(|f| f.get("id").and_then(Value::as_str) == Some(target)).ok_or("Part not found")?;
+        let x = setting(f,"x",0.,-100.,100.)?;
+        let y = setting(f,"y",0.,-100.,100.)?;
+        let z = setting(f,"z",0.,-100.,100.)?;
+        let w = setting(f,"width",10.,1.,50.)?;
+        let d = setting(f,"depth",10.,1.,50.)?;
+        let h = setting(f,"height",10.,1.,50.)?;
+        let solid = match f.get("shape").and_then(Value::as_str) {
+            Some("box") => cad::Solid::cuboid([x,y,z+h/2.],[w/2.,d/2.,h/2.]),
+            Some("cylinder") => cad::Solid::cylinder_z([x,y,z+h/2.],w/2.,h),
+            _ => return Err("Unsupported part shape".into())
+        };
+        (solid, (w.min(d).min(h)/12.).clamp(0.1,0.6))
+    };
+    let bounds=solid.bbox();
+    let nodes=(0..3).map(|k|((bounds.1[k]-bounds.0[k])/cell).ceil()+5.).product::<f64>();
+    if nodes>2_000_000. { return Err("This mesh exceeds the browser export budget. Use the analytic profile DXF or reduce part size/detail.".into()); }
+    let mesh = cad::mesh_solid(&solid, cell)?;
+    let r = mesh.report();
+    Ok(json!({"vertices":mesh.vertices,"triangles":mesh.triangles,
+        "cell_mm":cell,"watertight":r.watertight,"volume_mm3":r.volume}))
+}
+
+#[no_mangle]
+pub extern "C" fn workspace_input(len: u32) -> *mut u8 {
+    if len == 0 || len > 65536 { return std::ptr::null_mut(); }
+    INPUT.with(|b| { let mut b = b.borrow_mut(); b.resize(len as usize,0); b.as_mut_ptr() })
+}
+
+#[no_mangle]
+pub extern "C" fn workspace_run(mesh: u32) {
+    let result = INPUT.with(|b| {
+        let input: Value = serde_json::from_slice(&b.borrow()).map_err(|e|e.to_string())?;
+        if mesh == 0 { workspace_config(&input) } else { mesh_config(&input) }
+    });
+    output(result.unwrap_or_else(|e: String| json!({"error":e})));
+}
+
+#[no_mangle]
+pub extern "C" fn cad_mesh(fins: u32) {
+    output(sink_mesh(fins).unwrap_or_else(|e| json!({"error":e})));
 }
 
 #[cfg(test)]
@@ -241,6 +358,45 @@ mod tests {
         assert_eq!(flow_init(1024, 0, 100.0), 0);
         assert_eq!(flow_init(16, 0, f64::NAN), 0);
         assert!(design(0, 2.5).is_err());
+        assert!(workspace_design(9, 2.5, f64::NAN, 45., 0.).is_err());
+        assert!(workspace_design(9, 2.5, 30., 45., -1.).is_err());
+    }
+    #[test]
+    fn shared_load_reaches_thermal_requirements() {
+        small_pool(|| {
+            let base = workspace_design(9, 2.5, 30., 45., 0.).unwrap();
+            let loaded = workspace_design(9, 2.5, 30., 45., 5.).unwrap();
+            let temperature = |v: &Value| v["checks"].as_array().unwrap().iter()
+                .find(|c| c["id"] == "REQ-TJ").unwrap()["value"]["nominal"].as_f64().unwrap();
+            assert!(temperature(&loaded) > temperature(&base));
+            let mesh = sink_mesh(9).unwrap();
+            assert_eq!(mesh["watertight"], true);
+            // Exact volume: base plus 9 rectangular fins. Surface-net
+            // rounding at 0.6 mm is bounded here by 5% for this preset.
+            let exact = 40. * 50. * 3. + 9. * 1.2 * 50. * 20.;
+            assert!((mesh["volume_mm3"].as_f64().unwrap() / exact - 1.).abs() < 0.05);
+        });
+    }
+    #[test]
+    fn geometry_and_absorbed_power_reach_the_shared_graph() {
+        small_pool(|| {
+            let base=workspace_config(&json!({})).unwrap();
+            let longer=workspace_config(&json!({"length":70.})).unwrap();
+            let temp=|v:&Value|v["nodes"]["q1.tj"]["nominal"].as_f64().unwrap();
+            assert!(temp(&longer)<temp(&base));
+            assert_eq!(longer["handoffs"]["sink_volume_mm3"],json!(40.*70.*3.+9.*1.2*70.*20.));
+            let optical=workspace_config(&json!({"opticalPower":4.,"absorption":25.})).unwrap();
+            let thermal=workspace_config(&json!({"heat":1.})).unwrap();
+            assert_eq!(optical["handoffs"]["optical_heat_w"],json!(1.));
+            assert!((temp(&optical)-temp(&thermal)).abs()<1e-12);
+            assert!(workspace_config(&json!({"width":f64::INFINITY})).is_err());
+            assert!(workspace_config(&json!({"fins":9.5})).is_err());
+            let part=json!({"target":"spacer","features":[{"id":"spacer","shape":"cylinder","width":12.,"depth":12.,"height":10.,"x":0.,"y":0.,"z":0.}]});
+            let mesh=mesh_config(&part).unwrap();
+            assert_eq!(mesh["watertight"],true);
+            let exact=std::f64::consts::PI*36.*10.;
+            assert!((mesh["volume_mm3"].as_f64().unwrap()/exact-1.).abs()<0.03);
+        });
     }
     #[test]
     fn optical_selector_unfolds_and_reports_unreachable_tolerance() {

@@ -142,6 +142,7 @@ dependencies = [
 name = "emergence-web"
 version = "0.1.0"
 dependencies = [
+ "cad",
  "emergence",
  "num-complex",
  "photonics",

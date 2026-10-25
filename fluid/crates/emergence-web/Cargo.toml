@@ -13,6 +13,7 @@ emergence = { path = "../emergence" }
 spectral-core = { path = "../spectral-core" }
 photonics = { path = "../photonics" }
 project = { path = "../project" }
+cad = { path = "../cad" }
 num-complex = "0.4"
 serde_json = "1"
 

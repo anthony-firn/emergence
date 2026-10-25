@@ -13,6 +13,7 @@ def build(out):
     out.mkdir(parents=True, exist_ok=True)
     for name in ("index.html", "lab.css", "lab.js", "worker.js"):
         shutil.copy2(ROOT / "web" / name, out / name)
+    shutil.copytree(ROOT / "web" / "cad", out / "cad", dirs_exist_ok=True)
     wasm = ROOT / "fluid/target/wasm32-unknown-unknown/web/emergence_web.wasm"
     shutil.copy2(wasm, out / wasm.name)
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()

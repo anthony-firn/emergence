@@ -27,6 +27,7 @@ const tabs=[...document.querySelectorAll("[data-tab]")];
 function switchTab(button){
   if(tab === "flow") pause();
   tab=button.dataset.tab;
+  history.replaceState(null,"",`#${tab}`);
   for(const b of tabs){const on=b===button;b.setAttribute("aria-selected",String(on));b.tabIndex=on?0:-1;$(b.dataset.tab).hidden=!on;}
   if(tab==="flow"&&!flowReady)initFlow().catch(fail);
   if(tab==="design"&&!$("design-results").hasChildNodes())evaluateDesign().catch(fail);
@@ -72,7 +73,7 @@ function flowArgs(){const n=Number($("resolution").value);return {n,exact:Number
 function pause(){playing=false;$("play").textContent="Start flow";$("play").setAttribute("aria-pressed","false");}
 async function initFlow(){
   pause();flowReady=false;const gen=++flowGeneration;$("play").disabled=true;$("reset").disabled=true;
-  const args=flowArgs();$("flow-grid").textContent=`${args.n}³ cells`;
+  const args=flowArgs();$("flow-grid").textContent=`${args.n}³ points`;
   const r=await request("flow-init",args);if(gen!==flowGeneration)return;
   flowReady=true;drawFlow(r.result,args.n);$("play").disabled=false;$("reset").disabled=false;
 }
@@ -139,4 +140,9 @@ async function evaluateDesign(){
 for(const k of ["fins","velocity"])$(k).addEventListener("input",()=>{drawDesign();$("design-results").replaceChildren();});
 $("design-run").addEventListener("click",()=>evaluateDesign().catch(fail));
 drawDesign();
-request("ready").then(()=>{$("design-run").disabled=false;return solveOptics();}).catch(fail);
+addEventListener("hashchange",()=>{const b=tabs.find(b=>`#${b.dataset.tab}`===location.hash);if(b&&b.dataset.tab!==tab)switchTab(b);});
+request("ready").then(()=>{
+  $("design-run").disabled=false;
+  const b=tabs.find(b=>`#${b.dataset.tab}`===location.hash);if(b&&b.dataset.tab!==tab)switchTab(b);
+  return solveOptics();
+}).catch(fail);

@@ -102,6 +102,11 @@ exact checks and display precision. The browser demo is illustrative at small
 grids; it does not claim automatic rigorous fluid refinement or a fully coupled
 atmosphere, water and light simulation.
 
+Optional browser QA, with Python Playwright and Chromium installed, against a
+local evolvetech.dev server: `python3 web/test_browser.py http://localhost:8080/play/emergence/`.
+It checks model selection, an unmet tolerance, exact fluid decay, design range
+failure, keyboard tabs, the production content policy and mobile layouts.
+
 ## Reproducibility and sources
 
 Code is in `fluid/crates/`, example designs in `fluid/projects/`, and the

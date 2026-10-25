@@ -17,6 +17,9 @@ leaves the browser. Rust computation uses f64; the flow display is an f32 slice.
   evaluated sizes. It inherits the series' validated absolute truncation
   claim of 2 × 10⁻⁸. The wrapper tests selection and an unmet 10⁻¹⁰ request;
   the domain's original tests check claims against the series separately.
+  An additional WebAssembly sweep checked 1,212 plotted/selected results across
+  all three materials and four tolerances; each discrepancy was below its
+  claim plus the reference's 2 × 10⁻⁸ claim (worst ratio 0.556).
 * The browser motor-driver graph keeps the original thermal/electrical
   definitions and three relevant requirements. Default nine fins and 2.5 m/s
   gives met junction and pressure checks and an undecided trace drop. At six

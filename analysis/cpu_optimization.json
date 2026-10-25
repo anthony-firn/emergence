@@ -1,0 +1,356 @@
+{
+  "baseline_commit": "6b3d5c9",
+  "optimized_solver_commit": "eb82f49",
+  "optimized_renderer_commit": "7763c41",
+  "host": "Intel Core i7-13620H",
+  "threads": 8,
+  "power_profile": "Battery, CPU maximum 50%, no turbo",
+  "fluid": [
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 0,
+      "version": "baseline",
+      "output": "smooth n=32 steps=40 wall_s=0.596466633 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 0,
+      "version": "cached",
+      "output": "smooth n=32 steps=40 wall_s=0.591914785 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 1,
+      "version": "cached",
+      "output": "smooth n=32 steps=40 wall_s=0.587108793 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 1,
+      "version": "baseline",
+      "output": "smooth n=32 steps=40 wall_s=0.651815459 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 2,
+      "version": "baseline",
+      "output": "smooth n=32 steps=40 wall_s=0.621481358 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 2,
+      "version": "cached",
+      "output": "smooth n=32 steps=40 wall_s=0.578599326 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 3,
+      "version": "cached",
+      "output": "smooth n=32 steps=40 wall_s=0.611896762 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 32,
+      "steps": 40,
+      "repeat": 3,
+      "version": "baseline",
+      "output": "smooth n=32 steps=40 wall_s=0.648247290 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 0,
+      "version": "baseline",
+      "output": "smooth n=48 steps=40 wall_s=1.600836596 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 0,
+      "version": "cached",
+      "output": "smooth n=48 steps=40 wall_s=1.683773750 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 1,
+      "version": "cached",
+      "output": "smooth n=48 steps=40 wall_s=1.595740730 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 1,
+      "version": "baseline",
+      "output": "smooth n=48 steps=40 wall_s=1.933852200 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 2,
+      "version": "baseline",
+      "output": "smooth n=48 steps=40 wall_s=1.571393257 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 2,
+      "version": "cached",
+      "output": "smooth n=48 steps=40 wall_s=1.832291341 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 3,
+      "version": "cached",
+      "output": "smooth n=48 steps=40 wall_s=1.587738117 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "smooth",
+      "n": 48,
+      "steps": 40,
+      "repeat": 3,
+      "version": "baseline",
+      "output": "smooth n=48 steps=40 wall_s=1.562513532 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 0,
+      "version": "baseline",
+      "output": "interface n=24 steps=20 wall_s=0.418364714 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 0,
+      "version": "cached",
+      "output": "interface n=24 steps=20 wall_s=0.402410359 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 1,
+      "version": "cached",
+      "output": "interface n=24 steps=20 wall_s=0.555238074 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 1,
+      "version": "baseline",
+      "output": "interface n=24 steps=20 wall_s=0.502755421 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 2,
+      "version": "baseline",
+      "output": "interface n=24 steps=20 wall_s=0.493880416 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 2,
+      "version": "cached",
+      "output": "interface n=24 steps=20 wall_s=0.410344447 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 3,
+      "version": "cached",
+      "output": "interface n=24 steps=20 wall_s=0.433425315 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 24,
+      "steps": 20,
+      "repeat": 3,
+      "version": "baseline",
+      "output": "interface n=24 steps=20 wall_s=0.548543471 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 0,
+      "version": "baseline",
+      "output": "interface n=32 steps=20 wall_s=0.778503746 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 0,
+      "version": "cached",
+      "output": "interface n=32 steps=20 wall_s=0.763265723 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 1,
+      "version": "cached",
+      "output": "interface n=32 steps=20 wall_s=0.802474334 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 1,
+      "version": "baseline",
+      "output": "interface n=32 steps=20 wall_s=0.795567783 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 2,
+      "version": "baseline",
+      "output": "interface n=32 steps=20 wall_s=0.883255144 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 2,
+      "version": "cached",
+      "output": "interface n=32 steps=20 wall_s=0.905146985 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 3,
+      "version": "cached",
+      "output": "interface n=32 steps=20 wall_s=0.874943008 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    },
+    {
+      "case": "interface",
+      "n": 32,
+      "steps": 20,
+      "repeat": 3,
+      "version": "baseline",
+      "output": "interface n=32 steps=20 wall_s=0.882732235 max_relative_dp=2.486899575e-14 max_du=2.576550084e-13 hash=e0dc0d8ed5058836"
+    }
+  ],
+  "render": [
+    {
+      "repeat": 0,
+      "version": "baseline",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.61s preparation\n192\u00d7120, 256 spp, 6.37s rendering, 0 truncated paths, mean luminance SE 1.960e0; /tmp/ns-cpu-bench/render-baseline-0",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.960059091743643\npreparation_wall_s=0.609559299\nrender_wall_s=6.373763985\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\n"
+    },
+    {
+      "repeat": 0,
+      "version": "optimized",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.75s preparation\n192\u00d7120, 256 spp, 2.21s rendering, 0 truncated paths, mean luminance SE 1.690e0; /tmp/ns-cpu-bench/render-optimized-0",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.689675707579715\npreparation_wall_s=0.749496884\nrender_wall_s=2.21122296\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=fixed\nmain_wavelength_paths=5898240\npilot_wavelength_paths=0\nmean_samples_per_pixel=256\nthermal_spectral_radiance_budget=0.000001\n"
+    },
+    {
+      "repeat": 1,
+      "version": "optimized",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.61s preparation\n192\u00d7120, 256 spp, 1.97s rendering, 0 truncated paths, mean luminance SE 1.690e0; /tmp/ns-cpu-bench/render-optimized-1",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.689675707579715\npreparation_wall_s=0.613452162\nrender_wall_s=1.972763125\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=fixed\nmain_wavelength_paths=5898240\npilot_wavelength_paths=0\nmean_samples_per_pixel=256\nthermal_spectral_radiance_budget=0.000001\n"
+    },
+    {
+      "repeat": 1,
+      "version": "baseline",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.62s preparation\n192\u00d7120, 256 spp, 6.33s rendering, 0 truncated paths, mean luminance SE 1.960e0; /tmp/ns-cpu-bench/render-baseline-1",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.960059091743643\npreparation_wall_s=0.619234284\nrender_wall_s=6.328664385\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\n"
+    },
+    {
+      "repeat": 2,
+      "version": "baseline",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.60s preparation\n192\u00d7120, 256 spp, 6.68s rendering, 0 truncated paths, mean luminance SE 1.960e0; /tmp/ns-cpu-bench/render-baseline-2",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.960059091743643\npreparation_wall_s=0.604932478\nrender_wall_s=6.682099837\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\n"
+    },
+    {
+      "repeat": 2,
+      "version": "optimized",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.64s preparation\n192\u00d7120, 256 spp, 2.18s rendering, 0 truncated paths, mean luminance SE 1.690e0; /tmp/ns-cpu-bench/render-optimized-2",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.689675707579715\npreparation_wall_s=0.638158034\nrender_wall_s=2.18172697\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=fixed\nmain_wavelength_paths=5898240\npilot_wavelength_paths=0\nmean_samples_per_pixel=256\nthermal_spectral_radiance_budget=0.000001\n"
+    },
+    {
+      "repeat": 3,
+      "version": "optimized",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.61s preparation\n192\u00d7120, 256 spp, 1.98s rendering, 0 truncated paths, mean luminance SE 1.690e0; /tmp/ns-cpu-bench/render-optimized-3",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.689675707579715\npreparation_wall_s=0.614735352\nrender_wall_s=1.9825533659999999\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=fixed\nmain_wavelength_paths=5898240\npilot_wavelength_paths=0\nmean_samples_per_pixel=256\nthermal_spectral_radiance_budget=0.000001\n"
+    },
+    {
+      "repeat": 3,
+      "version": "baseline",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.66s preparation\n192\u00d7120, 256 spp, 6.30s rendering, 0 truncated paths, mean luminance SE 1.960e0; /tmp/ns-cpu-bench/render-baseline-3",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.960059091743643\npreparation_wall_s=0.657492997\nrender_wall_s=6.295244058\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\n"
+    },
+    {
+      "version": "exact",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.82s preparation\n192\u00d7120, 256 spp, 2.74s rendering, 0 truncated paths, mean luminance SE 1.690e0; /tmp/ns-cpu-bench/render-exact",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.689675707579715\npreparation_wall_s=0.817913526\nrender_wall_s=2.741947279\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=exact\nmain_wavelength_paths=5898240\npilot_wavelength_paths=0\nmean_samples_per_pixel=256\nthermal_spectral_radiance_budget=0\n"
+    },
+    {
+      "version": "adaptive",
+      "output": "Evolved 32\u00b3 water/air cells, 12 fluid steps, t=1.641274e-6 s, max |u|=0.1517 m/s; 5240 interface triangles; 0.73s preparation\n192\u00d7120, 256 spp, 2.60s rendering, 0 truncated paths, mean luminance SE 1.717e0; /tmp/ns-cpu-bench/render-adaptive",
+      "metadata": "fluid_grid=32\nfluid_steps=12\nfluid_time_s=0.0000016412737227127463\ninterface_triangles=5240\nwidth=192\nheight=120\nsamples_per_pixel=256\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=1.7166957183084188\npreparation_wall_s=0.726683968\nrender_wall_s=2.5989316049999998\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=adaptive\nmain_wavelength_paths=5798272\npilot_wavelength_paths=1474560\nmean_samples_per_pixel=251.6611111111111\nthermal_spectral_radiance_budget=0.000001\n"
+    }
+  ],
+  "notes": [
+    "Four alternating pairs per workload; baseline and new executables run sequentially.",
+    "First smooth-32 pair overlapped a short clippy invocation; remaining runs were isolated.",
+    "Renderer timings include PNG/PFM writes, matching the existing demo timer.",
+    "Exact and adaptive modes each have one diagnostic timing."
+  ],
+  "convergence": [
+    {
+      "n": 16,
+      "output": "smooth n=16 steps=40 wall_s=0.167661622 l1_rho=5.139362012e-8 mass_error=3.330669074e-16 hash=ed0ab36cea1ae395"
+    },
+    {
+      "n": 24,
+      "output": "smooth n=24 steps=40 wall_s=0.347371174 l1_rho=4.582699525e-9 mass_error=4.218847494e-15 hash=d22bf0c95d03068d"
+    },
+    {
+      "n": 32,
+      "output": "smooth n=32 steps=40 wall_s=0.569652274 l1_rho=8.208428103e-10 mass_error=2.220446049e-16 hash=9ddaf87c163e9a25"
+    },
+    {
+      "n": 48,
+      "output": "smooth n=48 steps=40 wall_s=1.839631683 l1_rho=7.233541703e-11 mass_error=6.106226635e-15 hash=b0e1ada976201e45"
+    }
+  ],
+  "tests_passed": 41,
+  "full_size_render": {
+    "metadata": "fluid_grid=48\nfluid_steps=12\nfluid_time_s=0.0000009880941639344074\ninterface_triangles=11776\nwidth=640\nheight=400\nsamples_per_pixel=2048\nseed=42\nmax_depth=128\ntruncated_paths=0\nmean_standard_error_y=0.5654826446397346\npreparation_wall_s=1.680899454\nrender_wall_s=269.625571181\noptical_water_temperature_K=298\nillustrative_iron_temperature_K=1800\niron_optics=room_temperature_Johnson_Christy_not_melt_calibration\nrender_mode=fixed\nmain_wavelength_paths=524288000\npilot_wavelength_paths=0\nmean_samples_per_pixel=2048\nthermal_spectral_radiance_budget=0.000001\n",
+    "image": "radiation_cpu.png",
+    "historical_comparison_controlled": false
+  }
+}

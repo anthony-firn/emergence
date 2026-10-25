@@ -1,0 +1,16 @@
+[package]
+name = "immersed"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Incompressible Navier-Stokes on Cartesian grids with immersed CAD geometry and engineering boundary conditions"
+
+[dependencies]
+geometry = { path = "../geometry" }
+rayon = "1"
+rustfft = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+serde_json = "1"

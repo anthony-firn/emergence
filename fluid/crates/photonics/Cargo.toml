@@ -1,0 +1,13 @@
+[package]
+name = "photonics"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Wave optics of layered and structured materials: transfer matrices, photonic bands, dispersion and effective media"
+
+[dependencies]
+emergence = { path = "../emergence" }
+rayon = "1"
+
+[dev-dependencies]
+rayon = "1"

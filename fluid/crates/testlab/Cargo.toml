@@ -1,0 +1,22 @@
+[package]
+name = "testlab"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Virtual materials-testing lab: the standard material tests at every emergent level, with fold checks"
+
+[dependencies]
+materials = { path = "../materials" }
+md = { path = "../md" }
+compressible = { path = "../compressible" }
+heat = { path = "../heat" }
+polymer = { path = "../polymer" }
+magnetism = { path = "../magnetism" }
+photonics = { path = "../photonics" }
+wetting = { path = "../wetting" }
+granular = { path = "../granular" }
+
+[dev-dependencies]
+emergence = { path = "../emergence" }
+radiation = { path = "../radiation" }
+rayon = "1"

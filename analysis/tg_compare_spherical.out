@@ -1,0 +1,7 @@
+reference: peak -dE/dt = 0.012858 at t = 8.97
+run                          peak eps(2nuZ)  t_peak  max|d eps_E|  max|d eps_Z|  max|dE|/E0
+tg_cuda_n256.csv                   0.012912    8.90      7.62e-04      7.63e-04    1.00e-02
+tg_cuda_sph_n192.csv               0.013070    8.85      5.00e-04      5.00e-04    1.65e-02
+tg_cuda_sph_n256.csv               0.012851    9.00      1.83e-04      1.84e-04    1.42e-03
+tg_cuda_sph_n384.csv               0.012855    8.95      1.63e-05      1.63e-05    1.15e-04
+wrote analysis/tg_compare.png

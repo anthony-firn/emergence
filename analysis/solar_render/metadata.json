@@ -1,0 +1,19 @@
+{
+  "initial_observation": "GONG 2019-01-08T11:14 UTC",
+  "model": "prescribed surface flux transport, no new emergence; frozen PFSS per frame",
+  "diffusion": "L-stable SDIRK2, cached tridiagonal solves",
+  "continuum": "Eddington grey plane-parallel LTE, formal spectral transfer, CIE visible response",
+  "effective_temperature_K": 5772.003429146,
+  "continuum_png_exposure": 5.608065727456e-7,
+  "continuum_pfm": "linear RGB continuum radiance; no display exposure",
+  "magnetic_colors": "diagnostic asinh scale +/-20 G; gold=closed, green=open, grey=unresolved; no emission",
+  "camera": "fixed Carrington longitude 220 degrees; fixed latitude 7 degrees; straight orthographic rays, no ephemeris",
+  "seed_count": 240,
+  "trace_tolerance_R": 1e-6,
+  "source_surface_R": 2.5,
+  "harmonic_degree": 10,
+  "initial_removed_mean_G": 0.100274973,
+  "frames": 28,
+  "days": 27,
+  "runtime_s": 3.223015
+}

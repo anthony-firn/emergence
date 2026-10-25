@@ -1,0 +1,9 @@
+[package]
+name = "solidification"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Crystal growth from the melt: anisotropic Karma-Rappel phase-field solidification, its sharp-interface and isobaric folds, and a mushy-zone closure"
+
+[dependencies]
+rayon = "1"

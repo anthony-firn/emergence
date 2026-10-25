@@ -1,0 +1,16 @@
+[package]
+name = "waveoptics"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Physical wave optics of real experiments: diffraction ladder (Fraunhofer / Fresnel / Rayleigh-Sommerfeld), partially coherent sources, polarization, imaging devices (pinhole, lens, eye) and photon-counting detectors"
+
+[dependencies]
+emergence = { path = "../emergence" }
+num-complex = "0.4"
+rayon = "1"
+rustfft = "6"
+png = "0.17"
+
+[dev-dependencies]
+rayon = "1"

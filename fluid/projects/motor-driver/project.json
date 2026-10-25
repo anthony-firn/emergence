@@ -1,0 +1,131 @@
+{
+  "format": "fluid-project/1",
+  "name": "48 V motor driver: power stage cooling",
+  "description": "One high-side MOSFET on an extruded heat sink, fed by a 2 oz power trace and cooled by a ducted fan. Electrical owns the losses, thermal the stack-up, mechanical the sink and the duct, systems the limits.",
+  "teams": {
+    "electrical": "MOSFET losses, power trace",
+    "thermal": "interface pad, board temperature, heat-sink analysis",
+    "mechanical": "heat-sink geometry, duct airflow, mass",
+    "systems": "ambient, derating and fan limits",
+    "signal integrity": "encoder lines",
+    "fab": "PCB stack-up and laminate",
+    "fdm": "printed fan duct"
+  },
+  "materials": {
+    "tim_pad": {
+      "description": "Silicone gap pad",
+      "owner": "thermal",
+      "props": {
+        "k": { "value": "3 W/(m*K)", "tol": "20%", "source": "estimate: typical gap-pad datasheet" }
+      }
+    }
+  },
+  "params": {
+    "ambient": { "value": "45 degC", "owner": "systems", "label": "Maximum inlet air temperature" },
+    "board.temperature": { "value": "85 degC", "owner": "thermal", "label": "Power trace copper temperature (worst case)" },
+    "q1.current": { "value": "30 A", "tol": "5%", "owner": "electrical", "label": "Q1 RMS current" },
+    "q1.rds_on_25": { "value": "4.5 mOhm", "tol": ["4 mOhm", "5 mOhm"], "owner": "electrical", "label": "Q1 on-resistance at Tj = 25 degC", "note": "datasheet typical and maximum" },
+    "q1.rds_tc": { "value": "0.0065 1/K", "tol": "15%", "owner": "electrical", "label": "Q1 on-resistance temperature coefficient", "note": "estimate: slope of the datasheet's normalised Rds(on)-vs-Tj curve" },
+    "q1.switching_loss": { "value": "3 W", "tol": "30%", "owner": "electrical", "label": "Q1 switching loss (estimate from double-pulse test)" },
+    "q1.rjc": { "value": "0.5 K/W", "tol": "10%", "owner": "electrical", "label": "Q1 junction-to-case resistance (datasheet)" },
+    "q1.tab_width": { "value": "10 mm", "owner": "mechanical", "label": "Q1 tab width on the pad" },
+    "q1.tab_length": { "value": "15 mm", "owner": "mechanical", "label": "Q1 tab length on the pad (along the flow)" },
+    "tim.thickness": { "value": "0.5 mm", "tol": "0.05 mm", "owner": "thermal", "label": "Gap pad compressed thickness" },
+    "trace.width": { "value": "10 mm", "tol": "0.1 mm", "owner": "electrical", "label": "Power trace width (etch tolerance)" },
+    "trace.thickness": { "value": "70 um", "tol": "10%", "owner": "electrical", "label": "Copper thickness, 2 oz" },
+    "trace.length": { "value": "50 mm", "owner": "electrical", "label": "Power trace length" },
+    "pcb.prepreg": { "value": "0.2 mm", "tol": "10%", "owner": "fab", "label": "Outer prepreg thickness to the first plane" },
+    "pcb.eps_r": { "value": "4.2", "tol": "0.2", "owner": "fab", "label": "Laminate permittivity at 100 MHz" },
+    "enc.width": { "value": "0.38 mm", "tol": "0.025 mm", "owner": "signal integrity", "label": "Encoder line width (etch tolerance)" },
+    "duct.wall": { "value": "2 mm", "owner": "mechanical", "label": "Fan duct wall thickness" },
+    "duct.extension": { "value": "15 mm", "owner": "mechanical", "label": "Duct length beyond the sink at each end" },
+    "fdm.nozzle": { "value": "0.4 mm", "owner": "fdm", "label": "Nozzle / line width" },
+    "fdm.perimeters": { "value": "3", "owner": "fdm", "label": "Perimeters (and skin layers)" },
+    "fdm.infill": { "value": "20 %", "owner": "fdm", "label": "Infill density" },
+    "fdm.max_flow": { "value": "12 mm^3/s", "tol": "25%", "owner": "fdm", "label": "Hotend maximum volumetric flow, PLA", "note": "estimate: typical for a standard 0.4 mm hotend" },
+    "sink.width": { "value": "40 mm", "owner": "mechanical", "label": "Sink width (across flow)" },
+    "sink.length": { "value": "50 mm", "owner": "mechanical", "label": "Sink length (along flow)" },
+    "sink.base": { "value": "3 mm", "owner": "mechanical", "label": "Base thickness" },
+    "sink.fin_height": { "value": "20 mm", "owner": "mechanical", "label": "Fin height" },
+    "sink.fin_thickness": { "value": "1.2 mm", "tol": "0.05 mm", "owner": "mechanical", "label": "Fin thickness (extrusion tolerance)" },
+    "sink.fin_count": { "value": "9", "owner": "mechanical", "label": "Fin count" },
+    "duct.velocity": { "value": "2.5 m/s", "tol": "15%", "owner": "mechanical", "label": "Duct air velocity at the sink (fan at operating point)" }
+  },
+  "derived": {
+    "q1.rds_on": { "expr": "q1.rds_on_25 * (1 + q1.rds_tc * (q1.tj - 298.15[K]))", "owner": "electrical", "unit": "mOhm", "label": "Q1 on-resistance at its own junction temperature" },
+    "q1.conduction_loss": { "expr": "q1.current^2 * q1.rds_on", "owner": "electrical", "unit": "W" },
+    "q1.power": { "expr": "q1.conduction_loss + q1.switching_loss", "owner": "electrical", "unit": "W", "label": "Q1 total loss" },
+    "q1.tab_area": { "expr": "q1.tab_width * q1.tab_length", "owner": "mechanical", "unit": "mm^2", "label": "Q1 tab footprint" },
+    "q1.rth_total": { "expr": "q1.rjc + tim.resistance + sink.thermal_resistance", "owner": "thermal", "unit": "K/W", "label": "Junction to inlet air" },
+    "q1.tj": { "expr": "ambient + q1.power * q1.rth_total", "owner": "thermal", "unit": "degC", "label": "Q1 junction temperature (electro-thermal loop)", "range": ["25 degC", "175 degC"] }
+  },
+  "analyses": {
+    "trace": {
+      "kind": "pcb_trace",
+      "owner": "electrical",
+      "label": "Power trace",
+      "inputs": {
+        "width": "trace.width", "thickness": "trace.thickness", "length": "trace.length",
+        "current": "q1.current", "temperature": "board.temperature"
+      },
+      "materials": { "conductor": "copper" }
+    },
+    "enc": {
+      "kind": "pcb_microstrip",
+      "owner": "signal integrity",
+      "label": "Encoder line",
+      "inputs": { "width": "enc.width", "thickness": "trace.thickness", "height": "pcb.prepreg", "eps_r": "pcb.eps_r" }
+    },
+    "tim": {
+      "kind": "conduction_slab",
+      "owner": "thermal",
+      "label": "Gap pad under Q1",
+      "inputs": { "thickness": "tim.thickness", "area": "q1.tab_area" },
+      "materials": { "material": "tim_pad" }
+    },
+    "sink": {
+      "kind": "plate_fin_heatsink",
+      "owner": "thermal",
+      "label": "Heat sink in the duct",
+      "inputs": {
+        "width": "sink.width", "length": "sink.length", "base_thickness": "sink.base",
+        "fin_height": "sink.fin_height", "fin_thickness": "sink.fin_thickness", "fin_count": "sink.fin_count",
+        "approach_velocity": "duct.velocity", "air_temperature": "ambient",
+        "source_width": "q1.tab_width", "source_length": "q1.tab_length"
+      },
+      "materials": { "fin": "al6063", "coolant": "air" }
+    }
+  },
+  "parts": {
+    "duct_body": {
+      "model": "duct.json",
+      "material": "pla",
+      "owner": "mechanical",
+      "label": "Printed fan duct around the sink",
+      "cell": "0.25 mm",
+      "params": {
+        "width": "sink.width", "height": "sink.base + sink.fin_height",
+        "length": "sink.length + 2 * duct.extension", "wall": "duct.wall"
+      },
+      "fdm": { "nozzle": "fdm.nozzle", "perimeters": "fdm.perimeters", "infill": "fdm.infill", "max_flow": "fdm.max_flow" }
+    },
+    "sink_body": {
+      "model": "heatsink.json",
+      "material": "al6063",
+      "owner": "mechanical",
+      "label": "Heat sink extrusion",
+      "params": {
+        "width": "sink.width", "length": "sink.length", "base": "sink.base",
+        "fin_h": "sink.fin_height", "fin_t": "sink.fin_thickness", "count": "sink.fin_count"
+      }
+    }
+  },
+  "requirements": {
+    "REQ-PRINT": { "text": "Duct walls at least two extrusion lines thick", "of": "duct_body.min_wall - 2 * fdm.nozzle", "min": "0 mm", "owner": "fdm" },
+    "REQ-TJ": { "text": "Q1 junction at or below 100 degC at maximum ambient (derating policy)", "of": "q1.tj", "max": "100 degC", "owner": "systems" },
+    "REQ-Z0": { "text": "Encoder line impedance 50 ohm ± 10 %", "of": "enc.z0", "min": "45 Ohm", "max": "55 Ohm", "owner": "signal integrity" },
+    "REQ-DROP": { "text": "Power trace drop at most 50 mV", "of": "trace.voltage_drop", "max": "50 mV", "owner": "electrical" },
+    "REQ-MASS": { "text": "Heat sink at most 60 g", "of": "sink_body.mass", "max": "60 g", "owner": "mechanical" },
+    "REQ-FAN": { "text": "Sink pressure drop within the fan's 20 Pa at this flow", "of": "sink.pressure_drop", "max": "20 Pa", "owner": "systems" }
+  }
+}

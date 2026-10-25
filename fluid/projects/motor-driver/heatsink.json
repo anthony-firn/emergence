@@ -1,0 +1,19 @@
+{
+  "name": "extruded plate-fin heat sink",
+  "params": {
+    "width": 0.04, "length": 0.05, "base": 0.003,
+    "fin_h": 0.02, "fin_t": 0.0012, "count": 9
+  },
+  "cell": 0.0003,
+  "shape": {
+    "op": "union",
+    "parts": [
+      { "op": "box", "center": [0, 0, "base/2"], "half": ["width/2", "length/2", "base/2"] },
+      { "op": "array",
+        "shape": { "op": "box", "center": [0, 0, "base + fin_h/2"],
+                   "half": ["fin_t/2", "length/2", "fin_h/2"] },
+        "period": ["(width - fin_t)/(count - 1)", 0, 0],
+        "counts": ["count", 1, 1] }
+    ]
+  }
+}

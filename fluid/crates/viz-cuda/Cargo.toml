@@ -1,0 +1,14 @@
+[package]
+name = "viz-cuda"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "CUDA backend for the implicit renderer: the CAD field compiled to a device function, sphere-traced on the GPU"
+
+[dependencies]
+cad = { path = "../cad" }
+geometry = { path = "../geometry" }
+viz = { path = "../viz" }
+radiation = { path = "../radiation" }
+rayon = "1"
+cudarc = { version = "0.19", default-features = false, features = ["std", "driver", "nvrtc", "cuda-12090", "dynamic-loading"] }

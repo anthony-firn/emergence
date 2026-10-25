@@ -1,0 +1,22 @@
+{
+  "name": "DFG 3D-1Z (Schafer & Turek 1996), Re = 20; reference Braack & Richter 2006",
+  "fluid": { "density": 1.0, "kinematic_viscosity": 0.001 },
+  "domain": { "min": [0.0, 0.0, 0.0], "max": [2.4984375, 0.41, 0.41], "cell": 0.00640625 },
+  "boundaries": {
+    "x_min": { "type": "inlet", "velocity": [0.45, 0.0, 0.0], "profile": "parabolic" },
+    "x_max": { "type": "outlet" },
+    "y_min": { "type": "wall" },
+    "y_max": { "type": "wall" },
+    "z_min": { "type": "wall" },
+    "z_max": { "type": "wall" }
+  },
+  "bodies": [ { "file": "cylinder.step", "elements_per_2pi": 128 } ],
+  "run": { "steady": true, "t_end": 30.0, "cfl": 0.8, "tolerance": 1e-5, "initial": "inlet" },
+  "output": {
+    "directory": "out",
+    "reference": { "velocity": 0.2, "area": 0.041 },
+    "probes": [[0.45, 0.2, 0.205], [0.55, 0.2, 0.205]],
+    "vtk": true,
+    "every": 1.0
+  }
+}

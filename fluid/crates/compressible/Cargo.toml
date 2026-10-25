@@ -1,0 +1,15 @@
+[package]
+name = "compressible"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Compressible multi-material finite-volume solver: hybrid central/WENO, shocks, cavitation, solids"
+
+[dependencies]
+rayon = "1"
+radiation = { path = "../radiation" }
+standard-model = { path = "../standard-model" }
+gravity = { path = "../gravity" }
+
+[dev-dependencies]
+phononic = { path = "../phononic" }

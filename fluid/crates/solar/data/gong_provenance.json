@@ -1,0 +1,42 @@
+{
+  "maps": [
+    {
+      "url": "https://gong2.nso.edu/oQR/zqs/201901/mrzqs190108/mrzqs190108t1114c2212_050.fits.gz",
+      "compressed_sha256": "cace7a9d626f7e82c4cb368c358ead4f0dd6314f81acb5b0e6bfe8d2bd508e67",
+      "csv": "gong_20190108.csv",
+      "csv_sha256": "f8da56736c2d004b32d04b536028386e3f720498f8bc37744f5bffe3b2a329ae",
+      "map_date_utc": "2019-01-08T11:14:00",
+      "original_shape": [
+        180,
+        360
+      ],
+      "prepared_shape": [
+        60,
+        120
+      ],
+      "original_first_longitude_edge_deg": 50,
+      "units": "tesla"
+    },
+    {
+      "url": "https://gong2.nso.edu/oQR/zqs/201902/mrzqs190204/mrzqs190204t1104c2213_055.fits.gz",
+      "compressed_sha256": "fdef5ba15e3d8d3f90367acbfd34e409932b803100888ed4ede726d688320c69",
+      "csv": "gong_20190204.csv",
+      "csv_sha256": "5d604a913ca560bad8a0e144179c4741269993f3b5c8e0e707c729be27b5eb03",
+      "map_date_utc": "2019-02-04T11:04:00",
+      "original_shape": [
+        180,
+        360
+      ],
+      "prepared_shape": [
+        60,
+        120
+      ],
+      "original_first_longitude_edge_deg": 55,
+      "units": "tesla"
+    }
+  ],
+  "preprocessing": "3x3 equal-area block means, Gauss to tesla; absolute Carrington longitude alignment",
+  "scope": "Dated synoptic-map transport smoke comparison; maps are assembled over time, not simultaneous full-Sun measurements.",
+  "instrument_notes": "GONG radial-field approximation and fitted polar fields; see NSO product documentation.",
+  "source_documentation": "https://magmap.nso.edu/"
+}

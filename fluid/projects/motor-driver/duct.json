@@ -1,0 +1,10 @@
+{
+  "name": "printed fan duct: a rectangular tube around the heat sink, open at both ends",
+  "params": { "width": 0.04, "height": 0.023, "length": 0.08, "wall": 0.002 },
+  "cell": 0.00025,
+  "shape": {
+    "op": "difference",
+    "a": { "op": "box", "center": [0, 0, "height/2"], "half": ["width/2 + wall", "length/2", "height/2 + wall"] },
+    "b": { "op": "box", "center": [0, 0, "height/2"], "half": ["width/2", "length/2 + wall", "height/2"] }
+  }
+}

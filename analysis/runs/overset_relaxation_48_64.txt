@@ -1,0 +1,16 @@
+t=  1.00: K(momentum) = 0.917326 (-24.441%)  K(patch body force) = 15.056766 (+1140.214%)  wall solves Some([78, 94, 96])  53s
+t=  2.00: K(momentum) = 0.741383 (-38.933%)  K(patch body force) = 15.086977 (+1142.702%)  wall solves Some([76, 78, 80])  104s
+t=  3.00: K(momentum) = 0.625269 (-48.497%)  K(patch body force) = 15.116007 (+1145.093%)  wall solves Some([34, 76, 76])  153s
+t=  4.00: K(momentum) = 0.542940 (-55.279%)  K(patch body force) = 15.052787 (+1139.886%)  wall solves Some([74, 74, 34])  203s
+t=  5.00: K(momentum) = 0.481549 (-60.335%)  K(patch body force) = 15.130529 (+1146.289%)  wall solves Some([74, 34, 80])  248s
+t=  6.00: K(momentum) = 0.434034 (-64.249%)  K(patch body force) = 15.077296 (+1141.905%)  wall solves Some([34, 72, 26])  292s
+t=  7.00: K(momentum) = 0.396184 (-67.367%)  K(patch body force) = 15.099341 (+1143.720%)  wall solves Some([74, 72, 34])  336s
+t=  8.00: K(momentum) = 0.365338 (-69.907%)  K(patch body force) = 15.103813 (+1144.089%)  wall solves Some([32, 74, 32])  378s
+t=  9.00: K(momentum) = 0.339729 (-72.017%)  K(patch body force) = 15.120020 (+1145.424%)  wall solves Some([74, 70, 32])  421s
+t= 10.00: K(momentum) = 0.318137 (-73.795%)  K(patch body force) = 15.163181 (+1148.979%)  wall solves Some([30, 30, 72])  462s
+t= 11.00: K(momentum) = 0.299695 (-75.314%)  K(patch body force) = 15.131750 (+1146.390%)  wall solves Some([72, 90, 32])  505s
+t= 12.00: K(momentum) = 0.283769 (-76.626%)  K(patch body force) = 15.168449 (+1149.413%)  wall solves Some([32, 32, 74])  545s
+t= 13.00: K(momentum) = 0.269883 (-77.770%)  K(patch body force) = 15.167223 (+1149.312%)  wall solves Some([74, 34, 76])  586s
+t= 14.00: K(momentum) = 0.257674 (-78.776%)  K(patch body force) = 15.167464 (+1149.332%)  wall solves Some([68, 32, 74])  625s
+t= 15.00: K(momentum) = 0.246862 (-79.666%)  K(patch body force) = 15.127293 (+1146.023%)  wall solves Some([26, 26, 20])  660s
+exact K = 1.214046; coarse 48^3 (dx 0.131), patch 64^3 (physical dx 0.0312)

@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Solar render</title>
+<style>body{max-width:1400px;margin:30px auto;padding:20px;background:#080c12;color:#dce7f2;font:17px system-ui}video{width:100%}button{padding:10px 18px;margin:10px 10px 10px 0;background:#19313e;color:white;border:1px solid #476777;border-radius:6px}p{line-height:1.6}a{color:#8cd8c5}</style>
+<h1>Solar continuum and magnetic field</h1>
+<p>GONG boundary · 8 January 2019 · 27 days of prescribed surface transport without new emergence.</p>
+<button onclick="choose('transport.mp4','Fixed Carrington camera')">Surface transport</button>
+<button id="orbit" onclick="choose('inspection.mp4','Inspection camera orbit; not solar rotation')">Inspection camera</button>
+<p id="caption">Fixed Carrington camera</p>
+<video id="movie" controls preload="metadata" poster="preview.png" src="transport.mp4"></video>
+<p>The continuum is a grey LTE transfer calculation. Gold/green magnetic curves show closed/open geometry, not coronal emission. The views have different scales. The potential corona has no currents, heating or reconnection; these movies do not predict eruptions.</p>
+<p><a href="metadata.json">Provenance and model settings</a> · <a href="frames.csv">Per-frame diagnostics</a></p>
+<script>const movie=document.getElementById('movie');function choose(path,caption){movie.src=path;document.getElementById('caption').textContent=caption;movie.load()}</script></html>

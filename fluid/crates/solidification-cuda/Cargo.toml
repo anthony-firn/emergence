@@ -1,0 +1,10 @@
+[package]
+name = "solidification-cuda"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "CUDA (NVRTC) port of the Karma-Rappel anisotropic phase-field solidification step, f64/f32, with GPU = CPU checks"
+
+[dependencies]
+solidification = { path = "../solidification" }
+cudarc = { version = "0.19", default-features = false, features = ["std", "driver", "nvrtc", "cuda-12090", "dynamic-loading"] }

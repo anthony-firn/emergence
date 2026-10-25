@@ -1,0 +1,13 @@
+{
+  "final_pixels": "Rust only",
+  "generated_inputs": [
+    "oak-albedo.png",
+    "linen-albedo.png"
+  ],
+  "height": 800,
+  "postprocess": "albedo/geometry-guided spatial denoising, exposure, highlight shoulder, sRGB; original radiance retained",
+  "render_key": "a90158a8b25369c4",
+  "samples": 512,
+  "view": "still life",
+  "width": 1200
+}

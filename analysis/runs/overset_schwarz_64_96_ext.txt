@@ -1,0 +1,16 @@
+t=  1.00: K(momentum) = 1.073482 (-11.578%)  K(patch body force) = 1.406556 (+15.857%)  solves coarse Some([18, 18, 38]) patch Some([62, 66, 62])  388s
+t=  2.00: K(momentum) = 1.098820 (-9.491%)  K(patch body force) = 1.250007 (+2.962%)  solves coarse Some([16, 16, 16]) patch Some([56, 56, 56])  611s
+t=  3.00: K(momentum) = 1.126303 (-7.227%)  K(patch body force) = 1.233839 (+1.630%)  solves coarse Some([16, 18, 16]) patch Some([54, 54, 56])  746s
+t=  4.00: K(momentum) = 1.147988 (-5.441%)  K(patch body force) = 1.228452 (+1.187%)  solves coarse Some([16, 16, 16]) patch Some([34, 50, 52])  865s
+t=  5.00: K(momentum) = 1.164512 (-4.080%)  K(patch body force) = 1.225329 (+0.929%)  solves coarse Some([14, 14, 14]) patch Some([28, 54, 26])  967s
+t=  6.00: K(momentum) = 1.176943 (-3.056%)  K(patch body force) = 1.222281 (+0.678%)  solves coarse Some([14, 14, 14]) patch Some([24, 52, 54])  1059s
+t=  7.00: K(momentum) = 1.186283 (-2.287%)  K(patch body force) = 1.220768 (+0.554%)  solves coarse Some([14, 14, 14]) patch Some([18, 20, 16])  1140s
+t=  8.00: K(momentum) = 1.193208 (-1.716%)  K(patch body force) = 1.218894 (+0.399%)  solves coarse Some([16, 14, 14]) patch Some([16, 16, 38])  1209s
+t=  9.00: K(momentum) = 1.198284 (-1.298%)  K(patch body force) = 1.218923 (+0.402%)  solves coarse Some([12, 12, 12]) patch Some([16, 16, 16])  1264s
+t= 10.00: K(momentum) = 1.201932 (-0.998%)  K(patch body force) = 1.218028 (+0.328%)  solves coarse Some([12, 12, 12]) patch Some([16, 16, 16])  1316s
+t= 11.00: K(momentum) = 1.204627 (-0.776%)  K(patch body force) = 1.217343 (+0.272%)  solves coarse Some([12, 12, 12]) patch Some([16, 16, 16])  1365s
+t= 12.00: K(momentum) = 1.206616 (-0.612%)  K(patch body force) = 1.217594 (+0.292%)  solves coarse Some([12, 12, 12]) patch Some([16, 16, 16])  1410s
+t= 13.00: K(momentum) = 1.208011 (-0.497%)  K(patch body force) = 1.216688 (+0.218%)  solves coarse Some([12, 12, 12]) patch Some([14, 14, 16])  1456s
+t= 14.00: K(momentum) = 1.209194 (-0.400%)  K(patch body force) = 1.215845 (+0.148%)  solves coarse Some([12, 12, 12]) patch Some([48, 16, 16])  1497s
+t= 15.00: K(momentum) = 1.210124 (-0.323%)  K(patch body force) = 1.215944 (+0.156%)  solves coarse Some([12, 12, 12]) patch Some([12, 12, 12])  1534s
+exact K = 1.214046; coarse 64^3 (dx 0.098), hole R_h = 0.7 (extension), patch 96^3 (physical dx 0.0327, 3.0x finer), outer R_o = 1

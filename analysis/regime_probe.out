@@ -1,0 +1,13 @@
+t = 3: correlation of indicator with the local velocity error |u_32 - u_96|
+  truncation density  : Pearson +0.558  Spearman +0.560
+  1 / (k_max eta)     : Pearson +0.343  Spearman +0.290
+  |vorticity|         : Pearson -0.039  Spearman -0.015
+  regions with truncation density > 50% of max: 416
+    15 points, centroid (6.26, 1.24, 5.37), max 1.809e-1
+    15 points, centroid (6.26, 4.39, 2.22), max 1.809e-1
+    15 points, centroid (1.24, 6.26, 2.22), max 1.809e-1
+    15 points, centroid (1.24, 3.12, 5.37), max 1.809e-1
+  min k_max*eta = 0.22 (DNS practice wants >= 1.5)
+  water in a 1e-2 m box at 1 m/s: lambda|grad u|/c 6.3e-10, Mach 6.1e-4, lambda/dx 9.6e-7 -> continuum valid
+  nitrogen gas in a 1e-2 m box at 1 m/s: lambda|grad u|/c 5.9e-7, Mach 2.6e-3, lambda/dx 2.1e-4 -> continuum valid
+  nitrogen gas in a 1e-6 m box at 100 m/s: lambda|grad u|/c 5.9e-1, Mach 2.6e-1, lambda/dx 2.1e0 -> continuum NOT valid

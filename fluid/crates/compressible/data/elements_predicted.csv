@@ -1,0 +1,13 @@
+z,symbol,t_melt,t_boil,rho_solid,rho_liquid_mp,h_fus,h_vap,cp_molar,notes
+91,Pa,,4300.0,,,,,,t_boil:quoted[]
+97,Bk,,2900.0,,,7920.0,,,t_boil:quoted[] h_fus:calculated[]
+98,Cf,,1743.0,,,,,,t_boil:quoted[]
+99,Es,,1269.0,,,,,,t_boil:estimated[]
+104,Rf,2400.0,5800.0,,,,,,t_melt:predicted[Haire;rsc-Rf] t_boil:predicted[Haire;rsc-Rf]
+112,Cn,283.0,340.0,,,,,,t_melt:predicted[CRNL] t_boil:predicted[]
+113,Nh,700.0,1430.0,,,7610.0,130000.0,,t_melt:predicted[Haire] t_boil:predicted[Haire] h_fus:extrapolated[B&K] h_vap:predicted[EB]
+114,Fl,284.0,,,,,38000.0,,t_melt:predicted[Florez] h_vap:predicted[]
+115,Mc,670.0,1400.0,,,5940.0,138000.0,,t_melt:predicted[Haire] t_boil:predicted[Haire] h_fus:extrapolated[B&K] h_vap:predicted[]
+116,Lv,708.5,1085.0,,,7610.0,42000.0,,t_melt:extrapolated[B&K] t_boil:extrapolated[B&K] h_fus:extrapolated[B&K] h_vap:predicted[]
+117,Ts,723.0,883.0,,,,,,t_melt:predicted[Haire] t_boil:predicted[Haire]
+118,Og,325.0,450.0,7200.0,6600.0,,,,t_melt:predicted[oganesson-melting] t_boil:predicted[oganesson-melting] rho_solid:calculated[oganesson-melting] rho_liquid_mp:calculated[oganesson-melting]

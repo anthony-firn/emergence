@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emergence Lab — Anthony Firn</title>
+  <meta name="description" content="Run real Rust models in your browser: watch a model ladder unfold for light scattering, evolve a fluid, and test a cooling design with uncertainty.">
+  <link rel="canonical" href="https://www.evolvetech.dev/play/emergence/">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <link rel="stylesheet" href="/assets/v2/demo.css">
+  <link rel="stylesheet" href="lab.css">
+  <script type="module" src="lab.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="demo-header"><div class="shell">
+    <a class="brand" href="/"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+    <nav class="nav" aria-label="Primary"><a href="/#work">All work</a><a class="nav-cta" href="/projects/emergence/">About the project</a></nav>
+  </div></header>
+  <main id="main" class="shell demo-main">
+    <div class="intro"><div><p class="label">Emergence · Live Rust + WebAssembly</p><h1>Just enough physics<span>.</span></h1>
+      <p class="lede">Start with a cheap model. Check its error. Unfold to a finer model where it stops being good enough. Try the same idea in light, fluids and engineering design.</p></div>
+      <a class="source-link" href="https://github.com/anthony-firn/emergence">Explore the source ↗</a></div>
+    <p id="status" class="status-line" role="status">Loading the Rust models…</p>
+    <noscript><p>This lab needs JavaScript and WebAssembly. The <a href="https://github.com/anthony-firn/emergence">source and validation results</a> are available without them.</p></noscript>
+    <div class="tabs" role="tablist" aria-label="Experiments">
+      <button type="button" id="tab-optics" role="tab" aria-selected="true" aria-controls="optics" tabindex="0" data-tab="optics">01 <span>Light &amp; atmosphere</span></button>
+      <button type="button" id="tab-flow" role="tab" aria-selected="false" aria-controls="flow" tabindex="-1" data-tab="flow">02 <span>Fluid motion</span></button>
+      <button type="button" id="tab-design" role="tab" aria-selected="false" aria-controls="design" tabindex="-1" data-tab="design">03 <span>Design with bounds</span></button>
+    </div>
+
+    <section id="optics" role="tabpanel" aria-labelledby="tab-optics">
+      <div class="experiment"><div class="plot-panel">
+        <div class="panel-top"><p class="label">One sphere, three ways to solve it</p><span class="tag">Audited against Mie</span></div>
+        <svg id="optics-chart" viewBox="0 0 700 400" role="img" aria-label="Extinction efficiency against particle size: reference series and models selected by the ladder"></svg>
+        <div class="legend"><span><i class="dot rayleigh"></i>Rayleigh expansion</span><span><i class="dot closure"></i>Folded table</span><span><i class="dot series"></i>Mie series</span><span>― reference</span></div>
+      </div><div class="settings">
+        <h2>When does a shortcut stop working?</h2>
+        <p>Small particles admit a cheap expansion. Larger ones use a table folded from the full wave solution, or unfold to the series.</p>
+        <label>Particle material<select id="material"><option value="0">Mineral dust · 550 nm (estimate)</option><option value="1">Soot · 550 nm</option><option value="2">Water · 550 nm</option></select></label>
+        <label>Size parameter <output id="size-value" for="size">0.10</output><input id="size" type="range" min="-2" max="1.079181246" step="0.005" value="-1"></label>
+        <p class="hint">x = 2πr / λ in air; the chart spans x = 0.01 to 12.</p>
+        <label>Allowed absolute error<select id="tolerance"><option value="0.001">10⁻³ · coarse</option><option value="0.00001" selected>10⁻⁵ · finer</option><option value="0.0000001">10⁻⁷ · very fine</option><option value="0.0000000001">10⁻¹⁰ · below reference accuracy</option></select></label>
+        <div class="readout" id="optics-result" aria-live="polite">Preparing the first closure table…</div>
+      </div></div>
+      <div class="method"><p><strong>The check is part of the demo.</strong> Every plotted result is compared with the existing Wiscombe-truncated Mie series. Rayleigh claims are asymptotic; table and series claims are validated. The reference itself claims 2 × 10⁻⁸, so a tighter request must be reported unmet.</p><p>Fixed monochromatic refractive indices, homogeneous spheres and independent scattering. This is one optical building block for atmosphere and water rendering. The native repository includes radiation transport, fluids and spectral rendering; a coupled weather model is beyond this demo. <a href="https://github.com/anthony-firn/emergence/blob/main/analysis/emergence_engine.md">Methods, benchmarks and limits ↗</a></p></div>
+    </section>
+
+    <section id="flow" role="tabpanel" aria-labelledby="tab-flow" hidden>
+      <div class="experiment"><div class="plot-panel flow-panel">
+        <div class="panel-top"><p class="label">An actual 3D spectral solve</p><span class="tag" id="flow-grid">24³ cells</span></div>
+        <canvas id="flow-canvas" width="640" height="640" role="img" aria-label="A slice through the evolving periodic fluid; cyan and orange show opposite signs of vorticity"></canvas>
+        <div class="legend"><span><i class="dot closure"></i>Negative vorticity</span><span><i class="dot rayleigh"></i>Positive vorticity</span><span>Arrows: in-plane velocity</span></div>
+      </div><div class="settings">
+        <h2>A small window into the solver.</h2>
+        <p>The same f64 Rust solver used by the native CPU reference. The browser runs it in a Worker while you explore a slice.</p>
+        <label>Initial flow<select id="flow-preset"><option value="0">3D Taylor–Green vortex</option><option value="1">Planar Taylor–Green · exact check</option></select></label>
+        <label>Resolution<select id="resolution"><option value="16">16³ · faster</option><option value="24" selected>24³</option><option value="32">32³ · finer</option></select></label>
+        <label>Reynolds number<select id="reynolds"><option value="40">40 · more viscous</option><option value="200" selected>200</option><option value="1600">1600 · less viscous</option></select></label>
+        <label>Slice through z <output id="slice-value" for="slice">0%</output><input id="slice" type="range" min="0" max="99" value="0"></label>
+        <div class="btn-row"><button class="btn primary" id="play" type="button" disabled>Start flow</button><button class="btn" id="reset" type="button" disabled>Reset</button></div>
+        <dl class="metrics" id="flow-result"><div><dt>Simulation time</dt><dd>0.000</dd></div></dl>
+        <p id="flow-validity" class="hint" aria-live="polite">Choose the planar flow to compare energy with an exact solution.</p>
+      </div></div>
+      <div class="method"><p><strong>Read the error with the picture.</strong> Viscosity is integrated exactly inside fourth-order Runge–Kutta; the nonlinear term is dealiased with the 2/3 rule. The outer-shell energy fraction is a resolution warning, not an error bound. These small grids are for exploration. Re = 1600 turbulence needs much finer native runs for accurate dissipation.</p><p>For the planar vortex, E(t) = ¼ exp(−4νt); the readout measures relative error against that exact solution. The native emergence ladder can escalate grid resolution using an a posteriori certificate. This interactive view lets you choose the grid directly. <a href="https://github.com/anthony-firn/emergence/blob/main/analysis/certificate_results.md">Certificate validation ↗</a></p></div>
+    </section>
+
+    <section id="design" role="tabpanel" aria-labelledby="tab-design" hidden>
+      <div class="experiment"><div class="plot-panel design-panel">
+        <div class="panel-top"><p class="label">Electrical → thermal → fluids → requirements</p><span class="tag">Motor-driver cooling</span></div>
+        <svg id="design-scene" viewBox="0 0 700 330" role="img" aria-label="Schematic of a finned heat sink cooled by a ducted flow"></svg>
+        <div class="handoffs"><span>Electrical losses</span><b>→</b><span>Temperature &amp; airflow</span><b>→</b><span>Design limits</span></div>
+        <div id="design-results" class="checks" aria-live="polite"></div>
+      </div><div class="settings">
+        <h2>Does the design still pass?</h2>
+        <p>A cooler-looking nominal number can hide a failing tolerance. Change the geometry or airflow and follow the original project graph through to its requirements.</p>
+        <label>Heat-sink fins <output id="fins-value" for="fins">9</output><input id="fins" type="range" min="5" max="14" step="1" value="9"></label>
+        <label>Air velocity <output id="velocity-value" for="velocity">2.5 m/s</output><input id="velocity" type="range" min="0.5" max="4" step="0.1" value="2.5"></label>
+        <button class="btn primary" id="design-run" type="button" disabled>Evaluate design</button>
+        <p class="hint">Try 6 fins and 3.5 m/s: the channel leaves the laminar model’s range. The graph reports that its thermal requirement is unavailable.</p>
+        <p class="hint">Input tolerances, material estimates and numerical error all travel with the answer. “Met” is conditional on this model’s stated assumptions and error claims.</p>
+        <a href="https://github.com/anthony-firn/emergence/tree/main/fluid/projects/motor-driver">Open the full CAD + design example ↗</a>
+      </div></div>
+      <div class="method"><p>This evaluates the repository’s original motor-driver thermal and electrical models: the temperature-dependent MOSFET loss loop, gap pad, developing laminar heat-sink channels and PCB trace. Bounds carry each model’s rigor; the developing-flow discretization estimate is not a proof of real-device accuracy.</p><p>The native project also includes parametric CAD, mass, printing and signal-integrity checks. Those are separate from this browser view. Material sources and assumptions are retained in the project JSON and model code. <a href="https://github.com/anthony-firn/emergence/blob/main/analysis/project_model.md">Design validation and assumptions ↗</a></p></div>
+    </section>
+    <aside class="notice"><h2>One pattern, many systems.</h2><p>The public workspace also covers compressible and two-phase fluids, water and air interfaces, heat, materials, chip and CPU design, optics, radiation and rendering. Each domain documents its own checked results and unfinished couplings. <a href="https://github.com/anthony-firn/emergence">Read the project overview ↗</a></p></aside>
+  </main>
+  <footer class="demo-footer"><div class="shell"><a href="/">← Anthony Firn · EvolveTech</a><span>Computed locally. Model claims and observed errors shown together.</span></div></footer>
+</body>
+</html>

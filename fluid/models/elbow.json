@@ -1,0 +1,23 @@
+{
+  "name": "NPS 2 schedule 40 elbow run",
+  "params": { "od": 0.0603, "wall": 0.00391, "leg_length": 0.12, "bend": "1.5 * od" },
+  "cell": 0.0012,
+  "shape": {
+    "op": "kit",
+    "kit": "pipe_run",
+    "args": {
+      "pipe": { "outer": "od", "wall": "wall" },
+      "part": "wall",
+      "sides": 48,
+      "run": {
+        "start": [0, 0, 0],
+        "direction": [1, 0, 0],
+        "legs": [
+          { "leg": "straight", "length": "leg_length" },
+          { "leg": "elbow", "radius": "bend", "angle": "pi/2", "axis": [0, 0, 1] },
+          { "leg": "straight", "length": "leg_length" }
+        ]
+      }
+    }
+  }
+}

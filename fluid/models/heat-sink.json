@@ -1,0 +1,19 @@
+{
+  "name": "pin-fin heat sink",
+  "params": {
+    "base": 0.04, "plate": 0.004, "pin": 0.0025, "height": 0.02,
+    "pitch": 0.006, "count": 6
+  },
+  "cell": 0.0004,
+  "shape": {
+    "op": "union",
+    "parts": [
+      { "op": "box", "center": [0, 0, "plate/2"], "half": ["base/2", "base/2", "plate/2"] },
+      { "op": "array",
+        "shape": { "op": "cylinder_z", "center": [0, 0, "plate + height/2"],
+                   "radius": "pin/2", "height": "height" },
+        "period": ["pitch", "pitch", 0],
+        "counts": ["count", "count", 1] }
+    ]
+  }
+}

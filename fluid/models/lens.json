@@ -1,0 +1,16 @@
+{
+  "name": "25 mm biconvex lens",
+  "params": { "r": 0.1, "ct": 0.006, "semi": 0.0125 },
+  "cell": 0.0002,
+  "shape": {
+    "op": "kit",
+    "kit": "lens",
+    "args": {
+      "front": { "radius": 0.1 },
+      "back": { "radius": -0.1 },
+      "thickness": 0.006,
+      "semi_diameter": 0.0125,
+      "points": 120
+    }
+  }
+}

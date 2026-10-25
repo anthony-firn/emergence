@@ -1,0 +1,6 @@
+[c=0.05] N=32 eta=1.9276571095877652e-3 driven off=0 wall=0: U=1.242670e-3 K(momentum)=0.9768 K(int g)=0.9768 (exact 1.2139) iters [6, 6, 6] resid ["2e-11", "2e-11", "2e-11"]
+[c=0.1] N=32 eta=3.8553142191755305e-3 driven off=0 wall=0: U=1.381618e-3 K(momentum)=0.8786 K(int g)=0.8786 (exact 1.2139) iters [6, 6, 5] resid ["2e-12", "2e-12", "4e-11"]
+[c=0.05] N=64 eta=4.819142773969413e-4 driven off=0 wall=0: U=1.107376e-3 K(momentum)=1.0962 K(int g)=1.0962 (exact 1.2139) iters [9, 8, 7] resid ["3e-11", "7e-11", "1e-10"]
+[c=0.1] N=64 eta=9.638285547938826e-4 driven off=0 wall=0: U=1.149721e-3 K(momentum)=1.0558 K(int g)=1.0558 (exact 1.2139) iters [7, 7, 7] resid ["2e-11", "1e-11", "8e-12"]
+[c=0.05] N=96 eta=2.1418412328752946e-4 driven off=0 wall=0: U=1.037452e-3 K(momentum)=1.1701 K(int g)=1.1701 (exact 1.2139) iters [13, 12, 12] resid ["4e-11", "1e-10", "7e-11"]
+[c=0.1] N=96 eta=4.283682465750589e-4 driven off=0 wall=0: U=1.064762e-3 K(momentum)=1.1401 K(int g)=1.1401 (exact 1.2139) iters [10, 10, 9] resid ["7e-11", "6e-11", "1e-10"]

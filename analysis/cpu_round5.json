@@ -1,0 +1,1397 @@
+{
+  "baseline_commit": "3cfd80e",
+  "candidate_commit": "dcef97a",
+  "date": "2026-10-05",
+  "hardware": "Intel Core i7-13620H",
+  "power_profile": "System76 Battery, CPU 10\u201350%, no turbo",
+  "build": "Rust release, thin LTO, codegen-units=1",
+  "viscous_kernel_and_steps": {
+    "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+    "threads": 8,
+    "repeats": 4,
+    "summaries": [
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "median_seconds": {
+          "before": 0.3951654385,
+          "after": 0.230435321
+        },
+        "ranges_seconds": {
+          "before": [
+            0.366638312,
+            0.417074056
+          ],
+          "after": [
+            0.217968955,
+            0.237849308
+          ]
+        },
+        "speedup": 1.7148648774204196,
+        "state_hash": "d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "median_seconds": {
+          "before": 0.7173063285,
+          "after": 0.386353831
+        },
+        "ranges_seconds": {
+          "before": [
+            0.665730123,
+            0.756045066
+          ],
+          "after": [
+            0.369758966,
+            0.394903181
+          ]
+        },
+        "speedup": 1.8566046741231874,
+        "state_hash": "6718fcae3e4bd54a"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "median_seconds": {
+          "before": 0.9236954989999999,
+          "after": 0.764548104
+        },
+        "ranges_seconds": {
+          "before": [
+            0.774159966,
+            1.039816021
+          ],
+          "after": [
+            0.710991834,
+            0.856427874
+          ]
+        },
+        "speedup": 1.2081587727016323,
+        "state_hash": "cd932174401995f2"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "median_seconds": {
+          "before": 0.0793674405,
+          "after": 0.071890101
+        },
+        "ranges_seconds": {
+          "before": [
+            0.075699881,
+            0.088146345
+          ],
+          "after": [
+            0.067899148,
+            0.082079408
+          ]
+        },
+        "speedup": 1.10401069682737,
+        "state_hash": "58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "median_seconds": {
+          "before": 0.066157579,
+          "after": 0.0373852625
+        },
+        "ranges_seconds": {
+          "before": [
+            0.063607162,
+            0.073422682
+          ],
+          "after": [
+            0.03648081,
+            0.039066145
+          ]
+        },
+        "speedup": 1.7696165434173423,
+        "state_hash": "988b7ee0fbabeaa3"
+      }
+    ],
+    "runs": [
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.377145406 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.217968955 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.226090420 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.413185471 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.417074056 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.234780222 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.237849308 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "32",
+          "100"
+        ],
+        "output": "rhs n=32 steps=100 wall_s=0.366638312 balance=6.890771590e-14 hash=d2e51bc806e1a6f0"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.756045066 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.381256700 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.391450962 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.699809814 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.665730123 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.369758966 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.394903181 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "rhs",
+        "n": 48,
+        "steps": 60,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "rhs",
+          "48",
+          "60"
+        ],
+        "output": "rhs n=48 steps=60 wall_s=0.734802843 balance=2.787530366e-14 hash=6718fcae3e4bd54a"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.997313865 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.760717279 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.710991834 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.774159966 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.850077133 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.856427874 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=0.768378929 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "step",
+        "n": 24,
+        "steps": 60,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "24",
+          "60"
+        ],
+        "output": "step n=24 steps=60 wall_s=1.039816021 balance=1.443289932e-15 hash=cd932174401995f2"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.088146345 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.074294769 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.082079408 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.075699881 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.079232369 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.067899148 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.069485433 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 256,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "256",
+          "1000"
+        ],
+        "output": "line n=256 steps=1000 wall_s=0.079502512 balance=1.452171716e-13 hash=58291fe8e8522bfc"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.065041250 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.036638045 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.038132480 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.067273908 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.073422682 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.039066145 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.036480810 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      },
+      {
+        "case": "line",
+        "n": 4096,
+        "steps": 200,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "line",
+          "4096",
+          "200"
+        ],
+        "output": "line n=4096 steps=200 wall_s=0.063607162 balance=2.060678017e-14 hash=988b7ee0fbabeaa3"
+      }
+    ]
+  },
+  "longer_fullstep_32": {
+    "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+    "threads": 8,
+    "repeats": 4,
+    "summaries": [
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "median_seconds": {
+          "before": 2.5638614444999996,
+          "after": 2.2914697535
+        },
+        "ranges_seconds": {
+          "before": [
+            2.447793023,
+            2.760796107
+          ],
+          "after": [
+            2.2195738,
+            2.579128256
+          ]
+        },
+        "speedup": 1.1188720429689056,
+        "state_hash": "5e7b364eff356813"
+      }
+    ],
+    "runs": [
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.465514843 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.285439254 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.579128256 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.662208046 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.760796107 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.219573800 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_viscous",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.297500253 balance=8.548717290e-15 hash=5e7b364eff356813"
+      },
+      {
+        "case": "step",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/cpu_viscous_before",
+          "step",
+          "32",
+          "100"
+        ],
+        "output": "step n=32 steps=100 wall_s=2.447793023 balance=8.548717290e-15 hash=5e7b364eff356813"
+      }
+    ]
+  },
+  "timestep_queries": {
+    "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+    "threads": 8,
+    "repeats": 4,
+    "summaries": [
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "median_seconds": {
+          "before": 0.9291238595,
+          "after": 0.919150382
+        },
+        "ranges_seconds": {
+          "before": [
+            0.907092607,
+            0.987012757
+          ],
+          "after": [
+            0.915177044,
+            0.934032804
+          ]
+        },
+        "speedup": 1.0108507570636032,
+        "state_hash": "d94dc2c87e075905"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "median_seconds": {
+          "before": 0.426587357,
+          "after": 0.4290275335
+        },
+        "ranges_seconds": {
+          "before": [
+            0.416934699,
+            0.442378817
+          ],
+          "after": [
+            0.4242093,
+            0.4449843
+          ]
+        },
+        "speedup": 0.9943123079302322,
+        "state_hash": "5909599a88b4a1e5"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "median_seconds": {
+          "before": 0.1872772075,
+          "after": 0.20913008049999998
+        },
+        "ranges_seconds": {
+          "before": [
+            0.179671722,
+            0.190638214
+          ],
+          "after": [
+            0.205741817,
+            0.211608542
+          ]
+        },
+        "speedup": 0.8955058356609775,
+        "state_hash": "4bffbffca7e02765"
+      }
+    ],
+    "runs": [
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.918234369 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.920189624 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.915177044 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.907092607 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.940013350 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.918111140 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.934032804 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "mixture",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "mixture",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.987012757 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=d94dc2c87e075905"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.442378817 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.431215320 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.444984300 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.416934699 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.421452546 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.426839747 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.424209300 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "allspeed",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "allspeed",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.431722168 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=5909599a88b4a1e5"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.185210537 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.211608542 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.208579565 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.189343878 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.179671722 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.205741817 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.209680596 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      },
+      {
+        "case": "viscous",
+        "n": 32,
+        "steps": 1000,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round5/baseline/fluid/target/release/examples/cpu_timestep",
+          "viscous",
+          "32",
+          "1000"
+        ],
+        "output": "n=32 queries=1000 wall_s=0.190638214 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=4bffbffca7e02765"
+      }
+    ]
+  },
+  "regressions": [
+    {
+      "case": "smooth",
+      "version": "before",
+      "stdout": "smooth n=24 steps=20 wall_s=0.160240769 l1_rho=4.582687860e-9 mass_error=2.664535259e-15 hash=784051aa9ffce2fd\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "4.582687860e-9",
+        "mass_error": "2.664535259e-15",
+        "hash": "784051aa9ffce2fd"
+      }
+    },
+    {
+      "case": "smooth",
+      "version": "after",
+      "stdout": "smooth n=24 steps=20 wall_s=0.137688957 l1_rho=4.582687860e-9 mass_error=2.664535259e-15 hash=784051aa9ffce2fd\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "4.582687860e-9",
+        "mass_error": "2.664535259e-15",
+        "hash": "784051aa9ffce2fd"
+      }
+    },
+    {
+      "case": "interface",
+      "version": "before",
+      "stdout": "interface n=24 steps=20 wall_s=0.434487832 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "max_relative_dp": "2.098321517e-14",
+        "max_du": "2.118166753e-13",
+        "hash": "8e5d6460c63d1b06"
+      }
+    },
+    {
+      "case": "interface",
+      "version": "after",
+      "stdout": "interface n=24 steps=20 wall_s=0.386329013 max_relative_dp=2.098321517e-14 max_du=2.118166753e-13 hash=8e5d6460c63d1b06\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "max_relative_dp": "2.098321517e-14",
+        "max_du": "2.118166753e-13",
+        "hash": "8e5d6460c63d1b06"
+      }
+    },
+    {
+      "case": "open",
+      "version": "before",
+      "stdout": "open n=24 steps=20 wall_s=0.225387876 max_dp=9.286793257e-5 hash=43b77a4f0b5069d3\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "max_dp": "9.286793257e-5",
+        "hash": "43b77a4f0b5069d3"
+      }
+    },
+    {
+      "case": "open",
+      "version": "after",
+      "stdout": "open n=24 steps=20 wall_s=0.203095612 max_dp=9.286793257e-5 hash=43b77a4f0b5069d3\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "max_dp": "9.286793257e-5",
+        "hash": "43b77a4f0b5069d3"
+      }
+    },
+    {
+      "case": "weno",
+      "version": "before",
+      "stdout": "weno n=24 steps=20 wall_s=0.307752133 l1_rho=3.622120917e-8 mass_error=2.775557562e-15 hash=69cffca8bd6aac4d\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "3.622120917e-8",
+        "mass_error": "2.775557562e-15",
+        "hash": "69cffca8bd6aac4d"
+      }
+    },
+    {
+      "case": "weno",
+      "version": "after",
+      "stdout": "weno n=24 steps=20 wall_s=0.339241556 l1_rho=3.622120917e-8 mass_error=2.775557562e-15 hash=69cffca8bd6aac4d\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "3.622120917e-8",
+        "mass_error": "2.775557562e-15",
+        "hash": "69cffca8bd6aac4d"
+      }
+    },
+    {
+      "case": "fdweno",
+      "version": "before",
+      "stdout": "fdweno n=24 steps=20 wall_s=0.413589664 l1_rho=5.138903121e-8 mass_error=5.551115123e-15 hash=6f2e573467ab7515\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "5.138903121e-8",
+        "mass_error": "5.551115123e-15",
+        "hash": "6f2e573467ab7515"
+      }
+    },
+    {
+      "case": "fdweno",
+      "version": "after",
+      "stdout": "fdweno n=24 steps=20 wall_s=0.348078699 l1_rho=5.138903121e-8 mass_error=5.551115123e-15 hash=6f2e573467ab7515\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "5.138903121e-8",
+        "mass_error": "5.551115123e-15",
+        "hash": "6f2e573467ab7515"
+      }
+    }
+  ],
+  "becker_debug_200_steps": [
+    {
+      "case": "becker",
+      "version": "before",
+      "wall_s": 0.055279831984080374,
+      "stdout": "Mach 2, mu 0.02: shock thickness (max slope) 0.0684\nit 0 dt 2.7377777777786542e-3 t 0.0000 rho_max 2.6667 rho_min 1.0000@0 L1 0.000e0 left (rho 1.0000 u 2.0000 p 0.7143) right (rho 2.6667 u 0.7500 p 3.2143)\nit 20 dt 2.732794904341022e-3 t 0.0547 rho_max 2.6908 rho_min 0.9895@20 L1 4.990e-3 left (rho 1.0000 u 2.0000 p 0.7142) right (rho 2.6667 u 0.7500 p 3.2143)\nit 40 dt 2.726949514294631e-3 t 0.1093 rho_max 2.7016 rho_min 0.9720@20 L1 1.044e-2 left (rho 0.9982 u 1.9965 p 0.7097) right (rho 2.6667 u 0.7500 p 3.2143)\nit 60 dt 2.725582438312027e-3 t 0.1638 rho_max 2.7001 rho_min 0.9662@20 L1 1.548e-2 left (rho 0.9951 u 1.9865 p 0.6976) right (rho 2.6666 u 0.7500 p 3.2142)\nit 80 dt 2.733607639637613e-3 t 0.2184 rho_max 2.6945 rho_min 0.9630@18 L1 1.942e-2 left (rho 0.9898 u 1.9819 p 0.6849) right (rho 2.6664 u 0.7501 p 3.2139)\nit 100 dt 2.7393132404571158e-3 t 0.2732 rho_max 2.6920 rho_min 0.9591@18 L1 2.250e-2 left (rho 0.9767 u 1.9856 p 0.6666) right (rho 2.6657 u 0.7507 p 3.2126)\nit 120 dt 2.74123530874751e-3 t 0.3280 rho_max 2.6903 rho_min 0.9534@16 L1 2.448e-2 left (rho 0.9635 u 1.9926 p 0.6480) right (rho 2.6646 u 0.7524 p 3.2106)\nit 140 dt 2.7417076487896543e-3 t 0.3828 rho_max 2.6888 rho_min 0.9499@18 L1 2.584e-2 left (rho 0.9535 u 1.9988 p 0.6325) right (rho 2.6603 u 0.7545 p 3.2035)\nit 160 dt 2.7415970658463376e-3 t 0.4376 rho_max 2.6875 rho_min 0.9442@2 L1 2.744e-2 left (rho 0.9465 u 2.0033 p 0.6205) right (rho 2.6536 u 0.7573 p 3.1928)\nit 180 dt 2.741039476573642e-3 t 0.4925 rho_max 2.6868 rho_min 0.9376@2 L1 2.984e-2 left (rho 0.9410 u 2.0055 p 0.6104) right (rho 2.6463 u 0.7602 p 3.1816)\n",
+      "stderr": ""
+    },
+    {
+      "case": "becker",
+      "version": "after",
+      "wall_s": 0.058944408025126904,
+      "stdout": "Mach 2, mu 0.02: shock thickness (max slope) 0.0684\nit 0 dt 2.7377777777786542e-3 t 0.0000 rho_max 2.6667 rho_min 1.0000@0 L1 0.000e0 left (rho 1.0000 u 2.0000 p 0.7143) right (rho 2.6667 u 0.7500 p 3.2143)\nit 20 dt 2.732794904341022e-3 t 0.0547 rho_max 2.6908 rho_min 0.9895@20 L1 4.990e-3 left (rho 1.0000 u 2.0000 p 0.7142) right (rho 2.6667 u 0.7500 p 3.2143)\nit 40 dt 2.726949514294631e-3 t 0.1093 rho_max 2.7016 rho_min 0.9720@20 L1 1.044e-2 left (rho 0.9982 u 1.9965 p 0.7097) right (rho 2.6667 u 0.7500 p 3.2143)\nit 60 dt 2.725582438312027e-3 t 0.1638 rho_max 2.7001 rho_min 0.9662@20 L1 1.548e-2 left (rho 0.9951 u 1.9865 p 0.6976) right (rho 2.6666 u 0.7500 p 3.2142)\nit 80 dt 2.733607639637613e-3 t 0.2184 rho_max 2.6945 rho_min 0.9630@18 L1 1.942e-2 left (rho 0.9898 u 1.9819 p 0.6849) right (rho 2.6664 u 0.7501 p 3.2139)\nit 100 dt 2.7393132404571158e-3 t 0.2732 rho_max 2.6920 rho_min 0.9591@18 L1 2.250e-2 left (rho 0.9767 u 1.9856 p 0.6666) right (rho 2.6657 u 0.7507 p 3.2126)\nit 120 dt 2.74123530874751e-3 t 0.3280 rho_max 2.6903 rho_min 0.9534@16 L1 2.448e-2 left (rho 0.9635 u 1.9926 p 0.6480) right (rho 2.6646 u 0.7524 p 3.2106)\nit 140 dt 2.7417076487896543e-3 t 0.3828 rho_max 2.6888 rho_min 0.9499@18 L1 2.584e-2 left (rho 0.9535 u 1.9988 p 0.6325) right (rho 2.6603 u 0.7545 p 3.2035)\nit 160 dt 2.7415970658463376e-3 t 0.4376 rho_max 2.6875 rho_min 0.9442@2 L1 2.744e-2 left (rho 0.9465 u 2.0033 p 0.6205) right (rho 2.6536 u 0.7573 p 3.1928)\nit 180 dt 2.741039476573642e-3 t 0.4925 rho_max 2.6868 rho_min 0.9376@2 L1 2.984e-2 left (rho 0.9410 u 2.0055 p 0.6104) right (rho 2.6463 u 0.7602 p 3.1816)\n",
+      "stderr": ""
+    }
+  ],
+  "tests": {
+    "current_passed": 63,
+    "new_tests": 8,
+    "baseline_new_test_passed": 4,
+    "baseline_new_test_failed": [
+      "viscous_timestep_finds_the_hottest_cell_even_when_it_is_denser",
+      "viscous_timestep_includes_current_dirichlet_and_characteristic_flux_layers",
+      "hot_conductive_flux_is_bounded_by_the_light_neighbors_heat_capacity",
+      "viscous_timestep_uses_temperature_bulk_and_actual_heat_capacity_ratio"
+    ]
+  },
+  "becker_full": [
+    {
+      "version": "before",
+      "mode": "hybrid",
+      "debug": false,
+      "wall_s": 19.32081180199748,
+      "stdout": "Mach 2, mu 0.02: shock thickness (max slope) 0.0684\n  Hybrid N=  50 (dx/\u03b4 = 0.400): L1(\u03c1) 3.150e-3 rate     -  WENO faces  78.6%\n  Hybrid N= 100 (dx/\u03b4 = 0.200): L1(\u03c1) 4.196e-4 rate  2.91  WENO faces  61.4%\n  Hybrid N= 200 (dx/\u03b4 = 0.100): L1(\u03c1) 2.018e-5 rate  4.38  WENO faces   8.4%\n  Hybrid N= 400 (dx/\u03b4 = 0.050): L1(\u03c1) 9.246e-7 rate  4.45  WENO faces   1.0%\n",
+      "stderr": ""
+    },
+    {
+      "version": "after",
+      "mode": "hybrid",
+      "debug": false,
+      "wall_s": 17.77371807396412,
+      "stdout": "Mach 2, mu 0.02: shock thickness (max slope) 0.0684\n  Hybrid N=  50 (dx/\u03b4 = 0.400): L1(\u03c1) 3.150e-3 rate     -  WENO faces  78.6%\n  Hybrid N= 100 (dx/\u03b4 = 0.200): L1(\u03c1) 4.196e-4 rate  2.91  WENO faces  61.4%\n  Hybrid N= 200 (dx/\u03b4 = 0.100): L1(\u03c1) 2.018e-5 rate  4.38  WENO faces   8.4%\n  Hybrid N= 400 (dx/\u03b4 = 0.050): L1(\u03c1) 9.246e-7 rate  4.45  WENO faces   1.0%\n",
+      "stderr": ""
+    }
+  ]
+}

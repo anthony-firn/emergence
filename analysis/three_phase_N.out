@@ -1,0 +1,13 @@
+Nitrogen (N): model triple point T 63.144 K, p 1.3294e4 Pa (data T Some(63.151), p Some(12520.0))
+  equilibrium round trips (state recovered from v, e):
+    solid                        → solid                  dT/T -1.4e-16  dp/p +8.8e-13  dy 0.0e0
+    liquid                       → liquid                 dT/T +2.0e-16  dp/p +0.0e0  dy 0.0e0
+    vapour                       → vapour                 dT/T -4.2e-16  dp/p -4.3e-16  dy 0.0e0
+    melting at 1 atm             → solid+liquid           dT/T +3.3e-15  dp/p +1.9e-12  dy 1.9e-14
+    boiling at 1 atm             → liquid+vapour          dT/T +3.7e-16  dp/p -1.4e-16  dy 2.2e-16
+    sublimation at 0.3 p_t       → solid+vapour           dT/T +1.2e-16  dp/p +2.3e-16  dy 1.1e-16
+    triple point                 → solid+liquid+vapour    dT/T +0.0e0  dp/p +0.0e0  dy 3.9e-16
+    triple point, vapour-rich    → solid+liquid+vapour    dT/T +0.0e0  dp/p +0.0e0  dy 1.5e-15
+  mixture: ρ 7.042 kg/m³, volume fractions [0.002, 0.005, 0.993], Wood sound speed 51.60 m/s
+  expansion  : centre p/p_t 0.989694, T 63.092 K, mass fractions [0.8353, 0.0000, 0.1647] (start [0.3, 0.6, 0.1]), Δmass -2.0e-2, ΔE -2.0e-2 (outflow BCs), 121 steps, active cells 200
+  compression: centre p/p_t 1.009957, T 63.198 K, mass fractions [0.0000, 0.9365, 0.0635] (start [0.3, 0.6, 0.1]), Δmass 2.0e-2, ΔE 2.0e-2 (outflow BCs), 106 steps, active cells 200

@@ -1,0 +1,20 @@
+{
+  "name": "formed sheet-metal bracket",
+  "params": { "t": 0.0015, "radius": 0.003, "web": 0.05, "flange": 0.025, "width": 0.04 },
+  "cell": 0.0004,
+  "shape": {
+    "op": "kit",
+    "kit": "sheet_part",
+    "args": {
+      "thickness": 0.0015,
+      "k_factor": 0.42,
+      "width": 0.04,
+      "flanges": [0.025, 0.05, 0.025],
+      "bends": [
+        { "angle": 1.5707963267948966, "inside_radius": 0.003 },
+        { "angle": 1.5707963267948966, "inside_radius": 0.003 }
+      ],
+      "per_bend": 24
+    }
+  }
+}

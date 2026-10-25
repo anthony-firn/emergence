@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-05",
+  "code_commit": "aa58b9d032d75a90b6b4c27791e52d3b00150f10",
+  "rustc": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+  "rayon_num_threads": 8,
+  "method": "Three sequential release runs after compilation; median per metric. CPU power profile unchanged. Gravity queries themselves are serial.",
+  "medians": {
+    "benchmark": {
+      "tree_build_s": 0.007689,
+      "direct_query_s": 0.130081,
+      "tree_query_s": 0.021066,
+      "query_speedup": 6.021,
+      "acceleration_relative_rms": 0.0001330094121
+    },
+    "sun": {
+      "full_s": 0.262603,
+      "folded_60x1_s": 0.003484,
+      "speedup": 75.386,
+      "fold_max_mean_difference_T": 3.252606517e-18
+    },
+    "hindcast": {
+      "runtime_s": 0.01959,
+      "forecast_rmse_G": 2.935806626,
+      "persistence_rmse_G": 3.424812275
+    }
+  },
+  "stdout": {
+    "benchmark": [
+      "synthetic uniform cube: sources=32768 queries=256 theta=0.35 epsilon/R=0.01\ntree_build_s=0.007783 direct_query_s=0.130497 tree_query_s=0.020896\nquery_speedup=6.245 acceleration_relative_rms=1.330094121e-4\ndirect_pairs=467391 reference_pairs=8388352\n",
+      "synthetic uniform cube: sources=32768 queries=256 theta=0.35 epsilon/R=0.01\ntree_build_s=0.007689 direct_query_s=0.126840 tree_query_s=0.021066\nquery_speedup=6.021 acceleration_relative_rms=1.330094121e-4\ndirect_pairs=467391 reference_pairs=8388352\n",
+      "synthetic uniform cube: sources=32768 queries=256 theta=0.35 epsilon/R=0.01\ntree_build_s=0.007309 direct_query_s=0.130081 tree_query_s=0.022786\nquery_speedup=5.709 acceleration_relative_rms=1.330094121e-4\ndirect_pairs=467391 reference_pairs=8388352\n"
+    ],
+    "sun": [
+      "published Model S: knots=2482 mass_kg=1.989019753e30 outer_table_radius_m=6.964854298e8\ncenter_density_kg_m3=1.538893600e5 center_temperature_K=1.566847000e7 surface_gravity_m_s2=2.736659397e2\nexterior_photon_100s: local_energy_ratio=0.999997925463 killing_energy_relative_error=-1.742106038e-10\ninitial_PFSS: lmax=8 source_surface/R=2.5 open_flux_Wb=2.091546133e14\nconditional_1yr: grid=60x120 steps=366 full_s=0.262612 folded_60x1_s=0.003484 speedup=75.386\nfold_max_mean_difference_T=3.252606517e-18 full_dipole_G=1.266294992 folded_dipole_G=1.266294992 signed_flux_drift_Wb=-9.066151493e0\nNo new emergences: this is conditional transport, not a predicted solar cycle or eruption.\n",
+      "published Model S: knots=2482 mass_kg=1.989019753e30 outer_table_radius_m=6.964854298e8\ncenter_density_kg_m3=1.538893600e5 center_temperature_K=1.566847000e7 surface_gravity_m_s2=2.736659397e2\nexterior_photon_100s: local_energy_ratio=0.999997925463 killing_energy_relative_error=-1.742106038e-10\ninitial_PFSS: lmax=8 source_surface/R=2.5 open_flux_Wb=2.091546133e14\nconditional_1yr: grid=60x120 steps=366 full_s=0.262603 folded_60x1_s=0.003499 speedup=75.040\nfold_max_mean_difference_T=3.252606517e-18 full_dipole_G=1.266294992 folded_dipole_G=1.266294992 signed_flux_drift_Wb=-9.066151493e0\nNo new emergences: this is conditional transport, not a predicted solar cycle or eruption.\n",
+      "published Model S: knots=2482 mass_kg=1.989019753e30 outer_table_radius_m=6.964854298e8\ncenter_density_kg_m3=1.538893600e5 center_temperature_K=1.566847000e7 surface_gravity_m_s2=2.736659397e2\nexterior_photon_100s: local_energy_ratio=0.999997925463 killing_energy_relative_error=-1.742106038e-10\ninitial_PFSS: lmax=8 source_surface/R=2.5 open_flux_Wb=2.091546133e14\nconditional_1yr: grid=60x120 steps=366 full_s=0.262479 folded_60x1_s=0.003467 speedup=75.710\nfold_max_mean_difference_T=3.252606517e-18 full_dipole_G=1.266294992 folded_dipole_G=1.266294992 signed_flux_drift_Wb=-9.066151493e0\nNo new emergences: this is conditional transport, not a predicted solar cycle or eruption.\n"
+    ],
+    "hindcast": [
+      "GONG synoptic maps: 2019-01-08T11:14 -> 2019-02-04T11:04 UTC\ngrid=60x120 interval_days=26.993055556 steps=27 runtime_s=0.019552\nassumption=no new flux emergence; prescribed default flows; no target fitting\npreprocessing=aligned equal-area 3x3 means, Nyquist removal, explicit flux balance\nremoved_initial_mean_G=0.100274973 removed_target_mean_G=0.108258766\nforecast_rmse_G=2.935806626 persistence_rmse_G=3.424812275 mse_skill=Some(0.2651793541247537)\naxial_dipole_G: initial=1.237658785 forecast=1.247926693 observed=1.189862850\nsigned_flux_drift_Wb=4.245036081e-2\nSynoptic maps span a rotation and include fitted polar fields. One case is not validated forecast skill.\n",
+      "GONG synoptic maps: 2019-01-08T11:14 -> 2019-02-04T11:04 UTC\ngrid=60x120 interval_days=26.993055556 steps=27 runtime_s=0.023900\nassumption=no new flux emergence; prescribed default flows; no target fitting\npreprocessing=aligned equal-area 3x3 means, Nyquist removal, explicit flux balance\nremoved_initial_mean_G=0.100274973 removed_target_mean_G=0.108258766\nforecast_rmse_G=2.935806626 persistence_rmse_G=3.424812275 mse_skill=Some(0.2651793541247537)\naxial_dipole_G: initial=1.237658785 forecast=1.247926693 observed=1.189862850\nsigned_flux_drift_Wb=4.245036081e-2\nSynoptic maps span a rotation and include fitted polar fields. One case is not validated forecast skill.\n",
+      "GONG synoptic maps: 2019-01-08T11:14 -> 2019-02-04T11:04 UTC\ngrid=60x120 interval_days=26.993055556 steps=27 runtime_s=0.019590\nassumption=no new flux emergence; prescribed default flows; no target fitting\npreprocessing=aligned equal-area 3x3 means, Nyquist removal, explicit flux balance\nremoved_initial_mean_G=0.100274973 removed_target_mean_G=0.108258766\nforecast_rmse_G=2.935806626 persistence_rmse_G=3.424812275 mse_skill=Some(0.2651793541247537)\naxial_dipole_G: initial=1.237658785 forecast=1.247926693 observed=1.189862850\nsigned_flux_drift_Wb=4.245036081e-2\nSynoptic maps span a rotation and include fitted polar fields. One case is not validated forecast skill.\n"
+    ]
+  },
+  "scope": "Synthetic force benchmark and one dated synoptic-map transport comparison. No cycle/eruption prediction or target parameter fitting.",
+  "validation": {
+    "library_integration_tests": 128,
+    "documentation_tests": 1,
+    "strict_clippy": "gravity, solar, standard-model; all targets",
+    "formatting": "gravity, solar, standard-model and new compressible files"
+  }
+}

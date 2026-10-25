@@ -1,0 +1,32 @@
+{
+  "comment": "South-west corner office, 12 m x 10 m x 3 m, on an intermediate floor (floor and ceiling internal). Numbers are fixed design data; strings name the project inputs that drive them. Layer thicknesses in mm.",
+  "site": { "latitude": 40.78, "longitude": -73.97, "meridian": -75.0, "tau_b": 0.48, "tau_d": 2.1, "ground_reflectance": 0.2, "day_of_year": 202 },
+  "floor_area": 120.0,
+  "volume": 360.0,
+  "assemblies": {
+    "external_wall": { "flow": "horizontal", "layers": [
+      { "thickness": 13, "k": 0.16, "rho": 800, "cp": 1090 },
+      { "thickness": "wall_insulation", "k": 0.035, "rho": 30, "cp": 1450 },
+      { "thickness": 100, "k": 0.77, "rho": 1700, "cp": 1000 } ] },
+    "slab": { "flow": "downward", "layers": [ { "thickness": 200, "k": 1.4, "rho": 2300, "cp": 900 } ] },
+    "partition": { "flow": "horizontal", "layers": [ { "thickness": 100, "k": 0.25, "rho": 800, "cp": 1000 } ] }
+  },
+  "opaque": [
+    { "name": "south wall", "assembly": "external_wall", "area": "south_wall_area", "azimuth": 0, "tilt": 90, "absorptance": 0.6 },
+    { "name": "west wall", "assembly": "external_wall", "area": "west_wall_area", "azimuth": 90, "tilt": 90, "absorptance": 0.6 },
+    { "name": "floor", "assembly": "slab", "area": 120, "internal": true },
+    { "name": "ceiling", "assembly": "slab", "area": 120, "internal": true },
+    { "name": "core partitions", "assembly": "partition", "area": 66, "internal": true }
+  ],
+  "windows": [
+    { "name": "south glazing", "area": "glazing_south", "u": "glazing_u", "shgc": "glazing_shgc", "azimuth": 0, "tilt": 90 },
+    { "name": "west glazing", "area": "glazing_west", "u": "glazing_u", "shgc": "glazing_shgc", "azimuth": 90, "tilt": 90 }
+  ],
+  "gains": {
+    "people": "occupants", "person_sensible": 75, "person_latent": 55,
+    "lighting": "lighting", "equipment": "equipment",
+    "radiant": [0.6, 0.67, 0.3],
+    "schedule": [8, 18]
+  },
+  "outdoor_air": "outdoor_air"
+}

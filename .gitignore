@@ -1,0 +1,15 @@
+/fluid/target/
+/fluid/renders/
+/fluid/cases/*/out/
+/fluid/virus_*.csv
+/web/dist/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+analysis/photographic_scene/**/rows-*.pfm
+analysis/photographic_scene/**/log-*.txt
+analysis/photographic_scene/**/*.pfm

@@ -1,0 +1,13 @@
+{
+  "name": "spur gear, module 2, 24 teeth",
+  "params": { "module": 2, "teeth": 24, "face": 8, "bore": 10 },
+  "cell": 0.12,
+  "shape": {
+    "op": "kit",
+    "kit": "spur_gear",
+    "args": {
+      "module": 2, "teeth": 24, "thickness": 8, "bore": 10,
+      "pressure_angle": 0.3490658503988659, "flank_points": 32
+    }
+  }
+}

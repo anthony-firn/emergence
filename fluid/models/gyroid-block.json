@@ -1,0 +1,12 @@
+{
+  "name": "gyroid sheet lattice in a block",
+  "params": { "cell": 0.008, "wall": 0.0006, "nx": 3, "ny": 3, "nz": 2 },
+  "cell": 0.00025,
+  "shape": {
+    "op": "clip",
+    "shape": { "op": "periodic", "kind": "gyroid",
+               "cell": ["cell", "cell", "cell"], "level": 0, "thickness": "wall" },
+    "min": [0, 0, 0],
+    "max": ["nx*cell", "ny*cell", "nz*cell"]
+  }
+}

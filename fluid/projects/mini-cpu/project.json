@@ -1,0 +1,49 @@
+{
+  "format": "fluid-project/1",
+  "name": "mini8 many-core accelerator: clock, power and junction temperature",
+  "description": "An array of mini8 cores (an 8-bit accumulator CPU written in Verilog) on one die. The RTL is synthesized onto cells simulated transistor by transistor; timing and power follow the supply and the junction temperature, and the junction temperature follows the power through the package: one loop, owned by three teams.",
+  "teams": {
+    "silicon": "RTL, supply, activity, wire load",
+    "packaging": "package and heat sink",
+    "systems": "ambient, clock target, power budget"
+  },
+  "params": {
+    "ambient": { "value": "45 degC", "owner": "systems", "label": "Maximum ambient" },
+    "core.clock": { "value": "400 MHz", "owner": "systems", "label": "Clock target" },
+    "core.vdd": { "value": "1.2 V", "tol": "5%", "owner": "silicon", "label": "Core supply (regulator tolerance)" },
+    "core.activity": { "value": "25 %", "owner": "silicon", "label": "Input toggle probability per cycle", "note": "estimate from the workload" },
+    "core.wire_cap": { "value": "1 fF", "tol": "50%", "owner": "silicon", "label": "Wire load per connection (pre-layout estimate)" },
+    "core.input_delay": { "value": "100 ps", "owner": "silicon", "label": "Input arrival after the edge" },
+    "die.cores": { "value": "20000", "owner": "silicon", "label": "Cores on the die" },
+    "pkg.rjc": { "value": "0.4 K/W", "tol": "10%", "owner": "packaging", "label": "Junction to case" },
+    "pkg.rca": { "value": "3 K/W", "tol": "15%", "owner": "packaging", "label": "Case to ambient (passive heat sink)" }
+  },
+  "derived": {
+    "die.tj": {
+      "expr": "ambient + cpu.power * (pkg.rjc + pkg.rca)",
+      "owner": "packaging",
+      "unit": "degC",
+      "label": "Junction temperature (leakage loop)",
+      "range": ["-23 degC", "151 degC"]
+    },
+    "core.margin": { "expr": "cpu.fmax / core.clock", "owner": "silicon", "label": "fmax over the clock target" }
+  },
+  "analyses": {
+    "cpu": {
+      "kind": "chip_design",
+      "owner": "silicon",
+      "label": "mini8 core array",
+      "config": { "rtl": "mini8.v" },
+      "inputs": {
+        "vdd": "core.vdd", "temperature": "die.tj", "frequency": "core.clock", "activity": "core.activity",
+        "wire_cap": "core.wire_cap", "input_delay": "core.input_delay", "instances": "die.cores"
+      }
+    }
+  },
+  "requirements": {
+    "REQ-CLOCK": { "text": "Every core meets the clock with 10 % margin at every corner", "of": "core.margin", "min": "1.1", "owner": "silicon" },
+    "REQ-HOLD": { "text": "No hold violations", "of": "cpu.hold_slack", "min": "0 ps", "owner": "silicon" },
+    "REQ-TJ": { "text": "Junction at most 105 degC", "of": "die.tj", "max": "105 degC", "owner": "packaging" },
+    "REQ-POWER": { "text": "Die power within the 15 W supply budget", "of": "cpu.power", "max": "15 W", "owner": "systems" }
+  }
+}

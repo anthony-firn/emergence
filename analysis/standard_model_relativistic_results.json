@@ -1,0 +1,5 @@
+{
+  "command": "cd fluid && cargo run --release -p standard-model --example relativistic",
+  "stdout": "boost: gamma=1e12 recovered_rest_GeV=5.109989500000e-4 pair_mass_GeV=1.021997900000e-3\naccelerating_muon: proper_decay_s=2.529252540e-6 lab_decay_s=4.586622949e-6 birth_x_m=1.047218596e3 field_energy_GeV=3.669273565e-1 energy_ledger_rel=1.175e-16 momentum_ledger_rel=3.525e-16\nqed: beta_CM=0.8 sigma_ann_m2=1.233350838e-29 sigma_pair_m2=1.578689073e-29 threshold_sigma_v_m3_s=7.478838581e-21 roundtrip_energy_rel=0.000e0\nweak: flavor=nu_e sin2_theta_input=0.23112 E_GeV=0.001 sigma_m2=7.169164202e-49 recoil_max_GeV=7.964957532e-4 sampled_mean_recoil_GeV=3.815355525e-4 samples=20000\n",
+  "scope": "Special-relativistic constant-field trajectories and selected Born QED / Fermi elastic kernels; no radiation reaction, confinement or gravity."
+}

@@ -1,0 +1,44 @@
+{
+  "full": {
+    "settings": {
+      "final_pixels": "Rust only",
+      "generated_inputs": [
+        "oak-albedo.png",
+        "linen-albedo.png"
+      ],
+      "height": 800,
+      "postprocess": "albedo/geometry-guided spatial denoising, exposure, highlight shoulder, sRGB; original radiance retained",
+      "render_key": "a90158a8b25369c4",
+      "samples": 512,
+      "view": "still life",
+      "width": 1200
+    },
+    "render_seconds_excluding_build_and_assembly": 948.262,
+    "bands": 8,
+    "png_dimensions": [
+      1200,
+      800
+    ]
+  },
+  "liquid-detail": {
+    "settings": {
+      "final_pixels": "Rust only",
+      "generated_inputs": [
+        "oak-albedo.png",
+        "linen-albedo.png"
+      ],
+      "height": 533,
+      "postprocess": "albedo/geometry-guided spatial denoising, exposure, highlight shoulder, sRGB; original radiance retained",
+      "render_key": "a90158a8b25369c4",
+      "samples": 256,
+      "view": "liquid detail",
+      "width": 800
+    },
+    "render_seconds_excluding_build_and_assembly": 446.083,
+    "bands": 3,
+    "png_dimensions": [
+      800,
+      533
+    ]
+  }
+}

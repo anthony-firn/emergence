@@ -1,0 +1,20 @@
+[package]
+name = "cad"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Parametric CAD: sketches, implicit solids, sweeps, meshing, and generators for parts, PCBs, silicon process stacks, textiles and lattices that feed the simulation crates"
+
+[dependencies]
+geometry = { path = "../geometry" }
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+architected = { path = "../architected" }
+immersed = { path = "../immersed" }
+materials = { path = "../materials" }
+photonics = { path = "../photonics" }
+semiconductor = { path = "../semiconductor" }
+waveoptics = { path = "../waveoptics" }

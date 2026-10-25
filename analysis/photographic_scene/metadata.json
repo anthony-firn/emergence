@@ -1,0 +1,10 @@
+{
+  "display_filter": "two-pass bilateral; original linear PFM retained unfiltered",
+  "exhausted_queries": 10,
+  "height": 666,
+  "limits": "estimated RGB reflectances; ideal smooth coats; eight-bounce truncation; no measured scene validation",
+  "renderer": "project CAD sphere tracing with example-local RGB Lambert/Fresnel transport",
+  "samples_per_pixel": 192,
+  "seconds": 149.583360446,
+  "width": 1000
+}

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solar continuum and magnetic transport</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#080c12;color:#dce7f2}body{max-width:1500px;margin:auto;padding:30px}h1{font-size:30px;font-weight:550;margin:0 0 8px}p{line-height:1.55;color:#abbccc}.panels{display:grid;grid-template-columns:1fr 1fr;gap:20px}.panel{background:#000;border:1px solid #263340;border-radius:12px;overflow:hidden}.panel img{width:100%;display:block}.panel h2{font-size:17px;padding:12px 18px;margin:0;background:#101721}.bar{display:flex;align-items:center;gap:18px;margin:20px 0}input{flex:1}button{border:1px solid #405263;background:#162430;color:inherit;border-radius:6px;padding:9px 15px}label{font-variant-numeric:tabular-nums}a{color:#8ddaca}.legend span{display:inline-block;margin-right:20px}.gold{color:#fbb84b}.green{color:#77e8b5}.blue{color:#75a8ff}.red{color:#ff8c77}@media(max-width:700px){body{padding:16px}.panels{grid-template-columns:1fr}}
+</style>
+<h1>Solar continuum and magnetic transport</h1>
+<p>GONG initial map · 8 January 2019 · no new magnetic emergence. __CAMERA__</p>
+<div class="panels"><div class="panel"><h2>Visible continuum · grey LTE atmosphere</h2><img src="continuum.png" alt="Computed limb-darkened solar continuum"></div><div class="panel"><h2>Radial magnetic field and computed coronal topology</h2><img id="field" src="frame0000.png" alt="Magnetic surface map with traced PFSS field curves"></div></div>
+<div class="bar"><button id="play" type="button">Play</button><input id="time" type="range" min="0" max="0" value="0" step="1" aria-label="Simulation time"><label id="clock">Day 0.00</label></div>
+<p class="legend"><span class="red">Positive radial field</span><span class="blue">Negative radial field</span><span class="gold">Closed field curve</span><span class="green">Open field curve</span><span>Grey: unresolved curve</span></p>
+<p>The magnetic disk uses an asinh display scale clipped at ±20 G. Colored curves show geometry, not visible or EUV emission. The source boundary is 2.5 solar radii. Curve counts are seed counts, not magnetic flux fractions.</p>
+<p>Continuum intensity comes from a plane-parallel grey atmosphere and Planck transfer, with nominal solar luminosity/radius. It has no modeled spots, granulation, spectral lines, or coronal emission. The photosphere hides far-side curves. The potential corona has no currents, heating or reconnection. This is conditional surface transport, not a validated solar-cycle or eruption forecast.</p>
+<p><a href="metadata.json">Render metadata</a> · <a href="frames.csv">Per-frame diagnostics</a> · <a href="continuum.pfm">Linear continuum radiance</a></p>
+<script>
+const count=__FRAMES__,slider=document.getElementById('time'),field=document.getElementById('field'),clock=document.getElementById('clock'),play=document.getElementById('play');slider.max=count-1;
+let timer=null;function update(){const i=Number(slider.value);field.src='frame'+String(i).padStart(4,'0')+'.png';clock.textContent='Day '+(count===1?0:27*i/(count-1)).toFixed(2)}
+slider.addEventListener('input',update);play.addEventListener('click',()=>{if(timer){clearInterval(timer);timer=null;play.textContent='Play'}else{play.textContent='Pause';timer=setInterval(()=>{slider.value=(Number(slider.value)+1)%count;update()},250)}});update();
+</script></html>

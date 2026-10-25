@@ -1,0 +1,100 @@
+  Z     name           grade  state(model/data)   vapour curve: rms/max |ΔT|/T   triple point model vs data
+  1 H   Hydrogen       C      Gas   /Gas         2.06% /  2.70% (2 pts)      T    13.96 vs    13.80 K, p   6.646e3 vs   7.041e3 Pa
+  2 He  Helium         C      Gas   /Gas        19.41% / 19.41% (1 pts)      T     1.02 vs     2.18 K, p  7.857e-1 vs   5.043e3 Pa
+  3 Li  Lithium        B      Solid /Solid       2.61% /  3.71% (6 pts)      
+  4 Be  Beryllium      B      Solid /Solid       0.80% /  1.34% (6 pts)      
+  5 B   Boron          B      Solid /Solid       2.79% /  4.84% (6 pts)      
+  6 C   Carbon         C      Solid /Solid      16.25% / 24.65% (5 pts)      T  3823.55 vs  4762.15 K, p   4.784e4 vs   1.030e7 Pa
+  7 N   Nitrogen       C      Gas   /Gas         0.42% /  0.69% (6 pts)      T    63.14 vs    63.15 K, p   1.329e4 vs   1.252e4 Pa
+  8 O   Oxygen         C      Gas   /Gas         0.45% /  0.71% (3 pts)      T    54.38 vs    54.36 K, p   1.485e2 vs   1.463e2 Pa
+  9 F   Fluorine       C      Gas   /Gas         3.60% /  8.06% (6 pts)      T    53.51 vs    53.48 K, p   2.607e2 vs   9.000e4 Pa
+ 10 Ne  Neon           C      Gas   /Gas         3.05% /  5.60% (6 pts)      T    24.56 vs    24.56 K, p   4.537e4 vs   4.337e4 Pa
+ 11 Na  Sodium         B      Solid /Solid       0.18% /  0.27% (6 pts)      
+ 12 Mg  Magnesium      B      Solid /Solid       0.66% /  1.08% (6 pts)      
+ 13 Al  Aluminum       B      Solid /Solid       1.32% /  2.05% (6 pts)      
+ 14 Si  Silicon        B      Solid /Solid       3.00% /  4.34% (6 pts)      
+ 15 P   Phosphorus     C      Solid /Solid       1.24% /  1.51% (6 pts)      
+ 16 S   Sulfur         C      Solid /Solid      40.09% / 60.88% (6 pts)      
+ 17 Cl  Chlorine       C      Gas   /Gas         0.73% /  1.06% (6 pts)      
+ 18 Ar  Argon          C      Gas   /Gas         0.67% /  1.01% (5 pts)      T    83.80 vs    83.81 K, p   6.938e4 vs   6.889e4 Pa
+ 19 K   Potassium      B      Solid /Solid       1.16% /  1.48% (6 pts)      
+ 20 Ca  Calcium        B      Solid /Solid       0.19% /  0.31% (6 pts)      
+ 21 Sc  Scandium       B      Solid /Solid       1.08% /  1.34% (6 pts)      
+ 22 Ti  Titanium       B      Solid /Solid       0.31% /  0.43% (6 pts)      
+ 23 V   Vanadium       B      Solid /Solid       0.87% /  1.42% (6 pts)      
+ 24 Cr  Chromium       B      Solid /Solid       0.54% /  0.90% (6 pts)      
+ 25 Mn  Manganese      B      Solid /Solid       1.85% /  3.02% (6 pts)      
+ 26 Fe  Iron           B      Solid /Solid       1.57% /  2.51% (6 pts)      
+ 27 Co  Cobalt         B      Solid /Solid       0.37% /  0.65% (6 pts)      
+ 28 Ni  Nickel         B      Solid /Solid       0.13% /  0.19% (6 pts)      
+ 29 Cu  Copper         B      Solid /Solid       0.29% /  0.47% (6 pts)      
+ 30 Zn  Zinc           B      Solid /Solid       0.40% /  0.52% (6 pts)      
+ 31 Ga  Gallium        B      Solid /Solid       0.57% /  0.78% (6 pts)      
+ 32 Ge  Germanium      B      Solid /Solid       0.39% /  0.63% (6 pts)      
+ 33 As  Arsenic        C      Solid /Solid       1.21% /  1.79% (6 pts)      not found (data T 1090.15 K, p 3.700e6 Pa)
+ 34 Se  Selenium       B      Solid /Solid       1.03% /  1.41% (6 pts)      
+ 35 Br  Bromine        C      Liquid/Liquid      3.98% /  6.16% (5 pts)      T   265.95 vs   265.90 K, p   4.631e3 vs   5.879e3 Pa
+ 36 Kr  Krypton        C      Gas   /Gas         0.48% /  0.79% (6 pts)      T   115.77 vs   115.78 K, p   7.399e4 vs   7.353e4 Pa
+ 37 Rb  Rubidium       B      Solid /Solid       2.26% /  3.32% (6 pts)      
+ 38 Sr  Strontium      C      Solid /Solid       0.65% /  0.92% (6 pts)      
+ 39 Y   Yttrium        B      Solid /Solid       2.11% /  2.91% (6 pts)      
+ 40 Zr  Zirconium      C      Solid /Solid       0.14% /  0.23% (6 pts)      
+ 41 Nb  Niobium        B      Solid /Solid       0.60% /  0.99% (6 pts)      
+ 42 Mo  Molybdenum     B      Solid /Solid       1.81% /  2.41% (6 pts)      
+ 43 Tc  Technetium     C      Solid /Solid       5.81% /  7.41% (6 pts)      
+ 44 Ru  Ruthenium      B      Solid /Solid       1.53% /  1.96% (6 pts)      
+ 45 Rh  Rhodium        B      Solid /Solid       1.01% /  1.32% (6 pts)      
+ 46 Pd  Palladium      B      Solid /Solid       1.15% /  1.98% (6 pts)      
+ 47 Ag  Silver         B      Solid /Solid       0.14% /  0.21% (6 pts)      
+ 48 Cd  Cadmium        B      Solid /Solid       0.21% /  0.36% (6 pts)      
+ 49 In  Indium         C      Solid /Solid       1.08% /  1.81% (6 pts)      
+ 50 Sn  Tin            B      Solid /Solid       0.75% /  1.27% (6 pts)      
+ 51 Sb  Antimony       B      Solid /Solid      15.94% / 23.22% (6 pts)      
+ 52 Te  Tellurium      B      Solid /Solid       0.31% /  0.50% (4 pts)      
+ 53 I   Iodine         C      Solid /Solid       2.33% /  3.66% (5 pts)      T   386.85 vs   386.75 K, p   1.156e4 vs   1.211e4 Pa
+ 54 Xe  Xenon          C      Gas   /Gas         1.01% /  1.48% (6 pts)      T   161.39 vs   161.41 K, p   8.214e4 vs   8.177e4 Pa
+ 55 Cs  Cesium         B      Solid /Solid       1.59% /  1.93% (6 pts)      
+ 56 Ba  Barium         B      Solid /Solid       2.21% /  2.64% (6 pts)      
+ 57 La  Lanthanum      B      Solid /Solid       0.37% /  0.47% (6 pts)      
+ 58 Ce  Cerium         B      Solid /Solid       0.30% /  0.37% (6 pts)      
+ 59 Pr  Praseodymium   B      Solid /Solid       3.14% /  4.08% (6 pts)      
+ 60 Nd  Neodymium      B      Solid /Solid       1.35% /  1.66% (6 pts)      
+ 61 Pm  Promethium     B      Solid /Solid            —                      
+ 62 Sm  Samarium       B      Solid /Solid       3.68% /  4.71% (6 pts)      
+ 63 Eu  Europium       B      Solid /Solid       5.79% /  7.89% (6 pts)      
+ 64 Gd  Gadolinium     B      Solid /Solid       4.05% /  5.48% (6 pts)      
+ 65 Tb  Terbium        B      Solid /Solid       4.89% /  6.81% (6 pts)      
+ 66 Dy  Dysprosium     B      Solid /Solid       5.20% /  6.75% (6 pts)      
+ 67 Ho  Holmium        B      Solid /Solid       0.60% /  0.84% (6 pts)      
+ 68 Er  Erbium         B      Solid /Solid       2.50% /  3.62% (6 pts)      
+ 69 Tm  Thulium        B      Solid /Solid       0.71% /  1.22% (6 pts)      
+ 70 Yb  Ytterbium      B      Solid /Solid       2.08% /  4.64% (6 pts)      
+ 71 Lu  Lutetium       B      Solid /Solid       3.85% /  5.34% (6 pts)      
+ 72 Hf  Hafnium        B      Solid /Solid       3.90% /  6.03% (6 pts)      
+ 73 Ta  Tantalum       B      Solid /Solid       0.76% /  1.58% (6 pts)      
+ 74 W   Tungsten       B      Solid /Solid       0.19% /  0.25% (6 pts)      
+ 75 Re  Rhenium        B      Solid /Solid       1.03% /  1.62% (6 pts)      
+ 76 Os  Osmium         B      Solid /Solid       2.20% /  3.12% (6 pts)      
+ 77 Ir  Iridium        B      Solid /Solid       1.80% /  2.72% (6 pts)      
+ 78 Pt  Platinum       B      Solid /Solid       0.10% /  0.15% (6 pts)      
+ 79 Au  Gold           B      Solid /Solid       1.46% /  1.93% (6 pts)      
+ 80 Hg  Mercury        B      Liquid/Liquid      0.07% /  0.11% (6 pts)      
+ 81 Tl  Thallium       B      Solid /Solid       0.45% /  0.79% (6 pts)      
+ 82 Pb  Lead           B      Solid /Solid       0.81% /  1.24% (6 pts)      
+ 83 Bi  Bismuth        B      Solid /Solid       0.20% /  0.31% (6 pts)      
+ 84 Po  Polonium       C      Solid /Solid       0.31% /  0.46% (3 pts)      
+ 86 Rn  Radon          C      Gas   /Gas         0.65% /  1.12% (6 pts)      
+ 88 Ra  Radium         C      Solid /Solid      19.86% / 21.56% (6 pts)      
+ 89 Ac  Actinium       C      Solid /Solid            —                      
+ 90 Th  Thorium        B      Solid /Solid       0.19% /  0.30% (6 pts)      
+ 92 U   Uranium        B      Solid /Solid            —                      
+ 93 Np  Neptunium      C      Solid /Solid      11.34% / 11.61% (2 pts)      
+ 94 Pu  Plutonium      C      Solid /Solid       0.33% /  0.63% (6 pts)      
+ 95 Am  Americium      C      Solid /Solid       1.85% /  2.00% (2 pts)      
+ 96 Cm  Curium         C      Solid /Solid       7.81% /  8.00% (2 pts)      
+
+grades: A 0 · B 65 · C 28 · D (not modelled) 25
+standard state at 298 K, 1 atm: 93/93 correct
+vapour curve, grade B: 63 elements, median rms |ΔT|/T 1.03%, worst 15.94%
+vapour curve, grade C: 27 elements, median rms |ΔT|/T 1.24%, worst 40.09%
+triple points (12): median |ΔT|/T 0.03%, median |ln(p_model/p_data)| 0.06 (factor 1.06)

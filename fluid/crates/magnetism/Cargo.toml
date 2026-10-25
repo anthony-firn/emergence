@@ -1,0 +1,10 @@
+[package]
+name = "magnetism"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Magnetic materials ladder: atomistic Heisenberg spins, micromagnetics and Stoner-Wohlfarth hysteresis"
+
+[dependencies]
+materials = { path = "../materials" }
+rayon = "1"

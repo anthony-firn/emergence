@@ -1,0 +1,9 @@
+[package]
+name = "hvac"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Heating, ventilation, air conditioning and cooling design: psychrometrics, comfort, envelopes, solar gains, zone loads, ducts and pipes, refrigeration cycles and coils, each checked against an exact or published reference"
+
+[dependencies]
+compressible = { path = "../compressible" }

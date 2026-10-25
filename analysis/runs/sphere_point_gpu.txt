@@ -1,0 +1,6 @@
+N=  32 R=1.0472 point markers=154: K = 1.924488 (exact 1.831400, err +5.0829%)  0.6s
+N=  48 R=1.0472 point markers=336: K = 1.891375 (exact 1.831400, err +3.2748%)  0.6s
+N=  64 R=1.0472 point markers=646: K = 1.873112 (exact 1.831400, err +2.2776%)  1.8s
+N=  96 R=1.0472 point markers=1386: K = 1.859021 (exact 1.831400, err +1.5082%)  2.5s
+N= 128 R=1.0472 point markers=2523: K = 1.851574 (exact 1.831400, err +1.1015%)  4.8s
+N= 192 R=1.0472 point markers=5631: K = 1.844721 (exact 1.831400, err +0.7273%)  22.7s

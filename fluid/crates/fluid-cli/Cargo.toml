@@ -1,0 +1,21 @@
+[package]
+name = "fluid-cli"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "fluid"
+path = "src/main.rs"
+
+[features]
+default = []
+cuda = ["dep:spectral-cuda"]
+
+[dependencies]
+cad = { path = "../cad" }
+geometry = { path = "../geometry" }
+immersed = { path = "../immersed" }
+project = { path = "../project" }
+spectral-core = { path = "../spectral-core" }
+spectral-cuda = { path = "../spectral-cuda", optional = true }

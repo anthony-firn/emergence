@@ -1,0 +1,8 @@
+[package]
+name = "electrochem"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Electrochemistry and batteries across the emergent ladder: Nernst/Butler-Volmer interface, diffusion benchmarks, SPM/DFN cell models, ECM fold and heat generation"
+
+[dependencies]

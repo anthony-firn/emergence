@@ -1,0 +1,6 @@
+epicyclic frequency^2 kappa^2 = -2.00  (<0: Rayleigh-unstable)
+max |a.k|/(|a||k|) along trajectory = 3.6e-09  (transversality preserved)
+seed amplitude 1.0e-08 -> peak 3.01e+03 at t = 44.1 (gain e^26.4)
+|k| grows 1.00 -> 10.85; final amplitude 6.9e-30 (viscosity wins: the pulse is self-limiting)
+at peak: <u_x u_y> = +5.08e+05, <u_x u_z> = -7.19e+05 (nonzero mean momentum fluxes)
+wrote analysis/pulse_mechanism.png

@@ -1,0 +1,3172 @@
+{
+  "date": "2026-10-05",
+  "baseline": "50664c9",
+  "candidate": "035602d",
+  "hardware": "Intel Core i7-13620H",
+  "power_profile": "System76 Battery: CPU 10\u201350%, no turbo",
+  "build": "Rust release, thin LTO, codegen-units=1",
+  "thermal": {
+    "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+    "threads": 8,
+    "repeats": 4,
+    "summaries": [
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "median_seconds": {
+          "before": 0.4507013465,
+          "after": 0.447575464
+        },
+        "ranges_seconds": {
+          "before": [
+            0.426707463,
+            0.553987331
+          ],
+          "after": [
+            0.403956753,
+            0.597160653
+          ]
+        },
+        "speedup": 1.0069840345403742,
+        "state_hash": "1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "median_seconds": {
+          "before": 0.8578580760000001,
+          "after": 0.7367376210000001
+        },
+        "ranges_seconds": {
+          "before": [
+            0.810826544,
+            1.02527724
+          ],
+          "after": [
+            0.649415842,
+            0.827400407
+          ]
+        },
+        "speedup": 1.164401072440958,
+        "state_hash": "df9f256e3735cd5c"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "median_seconds": {
+          "before": 1.255694624,
+          "after": 0.9645785705000001
+        },
+        "ranges_seconds": {
+          "before": [
+            1.205936558,
+            1.437188037
+          ],
+          "after": [
+            0.941773611,
+            0.987097227
+          ]
+        },
+        "speedup": 1.3018064701034118,
+        "state_hash": "54a134ae44b35a76"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "median_seconds": {
+          "before": 1.40880779,
+          "after": 1.1251399405
+        },
+        "ranges_seconds": {
+          "before": [
+            1.302764294,
+            1.592346457
+          ],
+          "after": [
+            1.097709544,
+            1.191036164
+          ]
+        },
+        "speedup": 1.2521178382254754,
+        "state_hash": "8d9acc77c7ff7c07"
+      }
+    ],
+    "runs": [
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.456899000 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.429191605 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.597160653 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.553987331 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.444503693 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.403956753 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.465959323 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 24,
+        "steps": 40,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "24",
+          "40"
+        ],
+        "output": "gas n=24 steps=40 wall_s=0.426707463 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.810826544 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.722478462 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.649415842 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.835270374 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=1.025277240 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.827400407 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.750996780 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "gas",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "gas",
+          "32",
+          "30"
+        ],
+        "output": "gas n=32 steps=30 wall_s=0.880445778 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=1.250734905 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=0.987097227 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=0.948585470 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=1.260654343 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=1.437188037 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=0.941773611 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=0.980571671 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "two",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "two",
+          "32",
+          "30"
+        ],
+        "output": "two n=32 steps=30 wall_s=1.205936558 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.381688182 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.113427089 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.136852792 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.435927398 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.592346457 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.097709544 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_thermal",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.191036164 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      },
+      {
+        "case": "three",
+        "n": 32,
+        "steps": 30,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/cpu_thermal_before",
+          "three",
+          "32",
+          "30"
+        ],
+        "output": "three n=32 steps=30 wall_s=1.302764294 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+      }
+    ]
+  },
+  "ordinary_flow": {
+    "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+    "threads": 8,
+    "repeats": 4,
+    "summaries": [
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "median_seconds": {
+          "before": 1.349211302,
+          "after": 1.3687284174999998
+        },
+        "ranges_seconds": {
+          "before": [
+            1.269871045,
+            1.512427587
+          ],
+          "after": [
+            1.236823616,
+            1.680285492
+          ]
+        },
+        "speedup": 0.9857406953414118,
+        "state_hash": "864d54e6054d7165"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "median_seconds": {
+          "before": 1.4706133179999998,
+          "after": 1.497145226
+        },
+        "ranges_seconds": {
+          "before": [
+            1.416052362,
+            1.481788619
+          ],
+          "after": [
+            1.456529688,
+            1.600112056
+          ]
+        },
+        "speedup": 0.9822783337653309,
+        "state_hash": "1d6da73a672f9e43"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "median_seconds": {
+          "before": 0.6795408405000001,
+          "after": 0.7172762785
+        },
+        "ranges_seconds": {
+          "before": [
+            0.60624422,
+            0.766779475
+          ],
+          "after": [
+            0.667142914,
+            0.826268585
+          ]
+        },
+        "speedup": 0.9473906510906593,
+        "state_hash": "385a474a5df1f209"
+      }
+    ],
+    "runs": [
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.312107630 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.272960573 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.464496262 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.512427587 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.386314974 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.236823616 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.680285492 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "smooth",
+        "n": 32,
+        "steps": 100,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "smooth",
+          "32",
+          "100"
+        ],
+        "output": "smooth n=32 steps=100 wall_s=1.269871045 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.472759880 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.502935161 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.600112056 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.481788619 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.416052362 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.456529688 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.491355291 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "interface",
+        "n": 32,
+        "steps": 40,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "interface",
+          "32",
+          "40"
+        ],
+        "output": "interface n=32 steps=40 wall_s=1.468466756 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 0,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.606244220 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 0,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.716348680 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 1,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.718203877 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 1,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.663438694 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 2,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.695642987 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 2,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.826268585 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 3,
+        "version": "after",
+        "command": [
+          "<checkout>/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.667142914 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      },
+      {
+        "case": "open",
+        "n": 24,
+        "steps": 60,
+        "repeat": 3,
+        "version": "before",
+        "command": [
+          "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+          "open",
+          "24",
+          "60"
+        ],
+        "output": "open n=24 steps=60 wall_s=0.766779475 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+      }
+    ]
+  },
+  "regressions": [
+    {
+      "example": "cpu_validate",
+      "case": "weno",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+        "weno",
+        "24",
+        "20"
+      ],
+      "output": "weno n=24 steps=20 wall_s=0.305166522 l1_rho=3.622120917e-8 mass_error=2.775557562e-15 hash=69cffca8bd6aac4d\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "3.622120917e-8",
+        "mass_error": "2.775557562e-15",
+        "hash": "69cffca8bd6aac4d"
+      }
+    },
+    {
+      "example": "cpu_validate",
+      "case": "weno",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_validate",
+        "weno",
+        "24",
+        "20"
+      ],
+      "output": "weno n=24 steps=20 wall_s=0.275615773 l1_rho=3.622120917e-8 mass_error=2.775557562e-15 hash=69cffca8bd6aac4d\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "3.622120917e-8",
+        "mass_error": "2.775557562e-15",
+        "hash": "69cffca8bd6aac4d"
+      }
+    },
+    {
+      "example": "cpu_validate",
+      "case": "fdweno",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+        "fdweno",
+        "24",
+        "20"
+      ],
+      "output": "fdweno n=24 steps=20 wall_s=0.357922681 l1_rho=5.138903121e-8 mass_error=5.551115123e-15 hash=6f2e573467ab7515\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "5.138903121e-8",
+        "mass_error": "5.551115123e-15",
+        "hash": "6f2e573467ab7515"
+      }
+    },
+    {
+      "example": "cpu_validate",
+      "case": "fdweno",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_validate",
+        "fdweno",
+        "24",
+        "20"
+      ],
+      "output": "fdweno n=24 steps=20 wall_s=0.347030513 l1_rho=5.138903121e-8 mass_error=5.551115123e-15 hash=6f2e573467ab7515\n",
+      "fields": {
+        "n": "24",
+        "steps": "20",
+        "l1_rho": "5.138903121e-8",
+        "mass_error": "5.551115123e-15",
+        "hash": "6f2e573467ab7515"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "rhs",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_viscous",
+        "rhs",
+        "32",
+        "10"
+      ],
+      "output": "rhs n=32 steps=10 wall_s=0.027397334 balance=1.639178160e-15 hash=633a40d237a5fd9d\n",
+      "fields": {
+        "n": "32",
+        "steps": "10",
+        "balance": "1.639178160e-15",
+        "hash": "633a40d237a5fd9d"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "rhs",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_viscous",
+        "rhs",
+        "32",
+        "10"
+      ],
+      "output": "rhs n=32 steps=10 wall_s=0.027218971 balance=1.639178160e-15 hash=633a40d237a5fd9d\n",
+      "fields": {
+        "n": "32",
+        "steps": "10",
+        "balance": "1.639178160e-15",
+        "hash": "633a40d237a5fd9d"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "step",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_viscous",
+        "step",
+        "24",
+        "10"
+      ],
+      "output": "step n=24 steps=10 wall_s=0.106738752 balance=3.108624469e-15 hash=76c1a432fa4a97c0\n",
+      "fields": {
+        "n": "24",
+        "steps": "10",
+        "balance": "3.108624469e-15",
+        "hash": "76c1a432fa4a97c0"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "step",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_viscous",
+        "step",
+        "24",
+        "10"
+      ],
+      "output": "step n=24 steps=10 wall_s=0.102130263 balance=3.108624469e-15 hash=76c1a432fa4a97c0\n",
+      "fields": {
+        "n": "24",
+        "steps": "10",
+        "balance": "3.108624469e-15",
+        "hash": "76c1a432fa4a97c0"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "line",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_viscous",
+        "line",
+        "256",
+        "100"
+      ],
+      "output": "line n=256 steps=100 wall_s=0.007479164 balance=5.245803791e-15 hash=1ab630a5e8e434ce\n",
+      "fields": {
+        "n": "256",
+        "steps": "100",
+        "balance": "5.245803791e-15",
+        "hash": "1ab630a5e8e434ce"
+      }
+    },
+    {
+      "example": "cpu_viscous",
+      "case": "line",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_viscous",
+        "line",
+        "256",
+        "100"
+      ],
+      "output": "line n=256 steps=100 wall_s=0.008368402 balance=5.245803791e-15 hash=1ab630a5e8e434ce\n",
+      "fields": {
+        "n": "256",
+        "steps": "100",
+        "balance": "5.245803791e-15",
+        "hash": "1ab630a5e8e434ce"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "mixture",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_timestep",
+        "mixture",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.061447843 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=1cb7c9ec9fbdd1a5\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "1.77448179561335228e-4",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "1cb7c9ec9fbdd1a5"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "mixture",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_timestep",
+        "mixture",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.073460216 min_dt=1.77448179561335228e-4 fluid_time=0.00000000000000000e0 hash=1cb7c9ec9fbdd1a5\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "1.77448179561335228e-4",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "1cb7c9ec9fbdd1a5"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "allspeed",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_timestep",
+        "allspeed",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.041832375 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=59bd1e9641bd1c3d\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "1.79064138726385824e-2",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "59bd1e9641bd1c3d"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "allspeed",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_timestep",
+        "allspeed",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.040603203 min_dt=1.79064138726385824e-2 fluid_time=0.00000000000000000e0 hash=59bd1e9641bd1c3d\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "1.79064138726385824e-2",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "59bd1e9641bd1c3d"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "viscous",
+      "version": "before",
+      "command": [
+        "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_timestep",
+        "viscous",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.018044887 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=bd020e40cfca63d5\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "3.29941675773866625e-5",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "bd020e40cfca63d5"
+      }
+    },
+    {
+      "example": "cpu_timestep",
+      "case": "viscous",
+      "version": "after",
+      "command": [
+        "<checkout>/fluid/target/release/examples/cpu_timestep",
+        "viscous",
+        "32",
+        "50"
+      ],
+      "output": "n=32 queries=50 wall_s=0.020759138 min_dt=3.29941675773866625e-5 fluid_time=0.00000000000000000e0 hash=bd020e40cfca63d5\n",
+      "fields": {
+        "n": "32",
+        "queries": "50",
+        "min_dt": "3.29941675773866625e-5",
+        "fluid_time": "0.00000000000000000e0",
+        "hash": "bd020e40cfca63d5"
+      }
+    }
+  ],
+  "tests": {
+    "passed": 68,
+    "new": 5,
+    "baseline_failures": [
+      "short_reflecting_ghosts_match_mirrored_images_including_corners",
+      "deep_reflections_use_the_opposite_current_boundary_condition",
+      "short_reflecting_axes_preserve_rest_states_without_positivity_fallback"
+    ]
+  },
+  "prior_trials": [
+    {
+      "candidate": "944a951",
+      "thermal": {
+        "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+        "threads": 8,
+        "repeats": 4,
+        "summaries": [
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "median_seconds": {
+              "before": 0.529619777,
+              "after": 0.448677171
+            },
+            "ranges_seconds": {
+              "before": [
+                0.43351355,
+                0.550474558
+              ],
+              "after": [
+                0.438831928,
+                0.481032354
+              ]
+            },
+            "speedup": 1.1804027733784566,
+            "state_hash": "1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 0.9851464910000001,
+              "after": 0.7606496025
+            },
+            "ranges_seconds": {
+              "before": [
+                0.960696184,
+                1.015581602
+              ],
+              "after": [
+                0.742925179,
+                0.88992425
+              ]
+            },
+            "speedup": 1.2951383761486945,
+            "state_hash": "df9f256e3735cd5c"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 1.247843144,
+              "after": 1.0653418024999999
+            },
+            "ranges_seconds": {
+              "before": [
+                1.159214595,
+                1.372082039
+              ],
+              "after": [
+                1.038106776,
+                1.090473768
+              ]
+            },
+            "speedup": 1.1713077822270097,
+            "state_hash": "54a134ae44b35a76"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 1.4022205135,
+              "after": 1.203334857
+            },
+            "ranges_seconds": {
+              "before": [
+                1.264150739,
+                1.706327407
+              ],
+              "after": [
+                1.13046888,
+                1.288713762
+              ]
+            },
+            "speedup": 1.1652787296429161,
+            "state_hash": "8d9acc77c7ff7c07"
+          }
+        ],
+        "runs": [
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.523767766 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.481032354 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.454575729 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.433513550 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.535471788 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.438831928 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.442778613 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.550474558 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=1.015581602 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.777088256 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.742925179 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.978964799 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.991328183 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.889924250 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.744210949 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.960696184 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.372082039 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.090473768 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.038106776 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.212475681 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.159214595 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.082904103 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.047779502 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.283210607 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.389467132 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.130468880 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.226317403 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.706327407 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.264150739 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.288713762 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.180352311 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.414973895 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          }
+        ]
+      },
+      "ordinary_flow": {
+        "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+        "threads": 8,
+        "repeats": 4,
+        "summaries": [
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "median_seconds": {
+              "before": 1.4457921155,
+              "after": 1.5044781399999998
+            },
+            "ranges_seconds": {
+              "before": [
+                1.337887444,
+                1.507490572
+              ],
+              "after": [
+                1.445166749,
+                1.622353481
+              ]
+            },
+            "speedup": 0.9609924378828131,
+            "state_hash": "864d54e6054d7165"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "median_seconds": {
+              "before": 1.5067066429999998,
+              "after": 1.608471354
+            },
+            "ranges_seconds": {
+              "before": [
+                1.430210259,
+                1.58645125
+              ],
+              "after": [
+                1.569587493,
+                1.650294546
+              ]
+            },
+            "speedup": 0.9367320339607365,
+            "state_hash": "1d6da73a672f9e43"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "median_seconds": {
+              "before": 0.7348002819999999,
+              "after": 0.7256357815000001
+            },
+            "ranges_seconds": {
+              "before": [
+                0.638890217,
+                0.799500724
+              ],
+              "after": [
+                0.701284336,
+                0.799732415
+              ]
+            },
+            "speedup": 1.0126296149303105,
+            "state_hash": "385a474a5df1f209"
+          }
+        ],
+        "runs": [
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.507490572 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.535771522 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.622353481 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.483593487 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.407990744 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.473184758 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.445166749 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.337887444 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.504426256 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.569587493 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.570169153 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.508987030 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.586451250 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.646773555 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.650294546 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.430210259 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.799500724 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.701284336 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.741583041 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.760354125 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.709246439 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.799732415 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.709688522 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.638890217 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          }
+        ]
+      }
+    },
+    {
+      "candidate": "63d7d4a",
+      "thermal": {
+        "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+        "threads": 8,
+        "repeats": 4,
+        "summaries": [
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "median_seconds": {
+              "before": 0.569139337,
+              "after": 0.445426915
+            },
+            "ranges_seconds": {
+              "before": [
+                0.516478411,
+                0.604909454
+              ],
+              "after": [
+                0.416717702,
+                0.46720573
+              ]
+            },
+            "speedup": 1.277738991142913,
+            "state_hash": "1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 0.854874742,
+              "after": 0.7078039475
+            },
+            "ranges_seconds": {
+              "before": [
+                0.762655039,
+                1.019066408
+              ],
+              "after": [
+                0.670484231,
+                0.7384132
+              ]
+            },
+            "speedup": 1.2077846485873125,
+            "state_hash": "df9f256e3735cd5c"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 1.2219958764999999,
+              "after": 1.0480286855
+            },
+            "ranges_seconds": {
+              "before": [
+                1.189863314,
+                1.409093126
+              ],
+              "after": [
+                1.020212828,
+                1.116020331
+              ]
+            },
+            "speedup": 1.1659946845033182,
+            "state_hash": "54a134ae44b35a76"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "median_seconds": {
+              "before": 1.4496756144999998,
+              "after": 1.1232249815
+            },
+            "ranges_seconds": {
+              "before": [
+                1.368598437,
+                1.512066233
+              ],
+              "after": [
+                1.068650356,
+                1.143954239
+              ]
+            },
+            "speedup": 1.290636905674983,
+            "state_hash": "8d9acc77c7ff7c07"
+          }
+        ],
+        "runs": [
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.604909454 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.431339766 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.467205730 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.516478411 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.592082330 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.416717702 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.459514064 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 24,
+            "steps": 40,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "24",
+              "40"
+            ],
+            "output": "gas n=24 steps=40 wall_s=0.546196344 substeps=360 energy_error=5.329070518e-15 min_t=1.999818259e0 max_t=2.000178290e0 hash=1076d7bd577d72c8"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.804391938 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.688661388 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.738413200 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.905357546 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=1.019066408 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.670484231 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.726946507 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "gas",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "gas",
+              "32",
+              "30"
+            ],
+            "output": "gas n=32 steps=30 wall_s=0.762655039 substeps=480 energy_error=2.664535259e-15 min_t=1.999107273e0 max_t=2.000890429e0 hash=df9f256e3735cd5c"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.189863314 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.071033718 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.025023653 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.409093126 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.194491982 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.020212828 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.116020331 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "two",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "two",
+              "32",
+              "30"
+            ],
+            "output": "two n=32 steps=30 wall_s=1.249499771 substeps=570 energy_error=3.108624469e-15 min_t=1.999389664e0 max_t=2.000608140e0 hash=54a134ae44b35a76"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.512066233 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.143954239 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.068650356 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.368598437 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.432285957 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.111110437 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_thermal",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.135339526 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          },
+          {
+            "case": "three",
+            "n": 32,
+            "steps": 30,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/cpu_thermal_before",
+              "three",
+              "32",
+              "30"
+            ],
+            "output": "three n=32 steps=30 wall_s=1.467065272 substeps=570 energy_error=5.329070518e-15 min_t=1.999499897e0 max_t=2.000497967e0 hash=8d9acc77c7ff7c07"
+          }
+        ]
+      },
+      "ordinary_flow": {
+        "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+        "threads": 8,
+        "repeats": 4,
+        "summaries": [
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "median_seconds": {
+              "before": 1.3639041805,
+              "after": 1.431837161
+            },
+            "ranges_seconds": {
+              "before": [
+                1.305122861,
+                1.632843699
+              ],
+              "after": [
+                1.388947246,
+                1.761790463
+              ]
+            },
+            "speedup": 0.9525553726706217,
+            "state_hash": "864d54e6054d7165"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "median_seconds": {
+              "before": 1.444073553,
+              "after": 1.490258331
+            },
+            "ranges_seconds": {
+              "before": [
+                1.413516716,
+                1.541053802
+              ],
+              "after": [
+                1.438770701,
+                1.654523645
+              ]
+            },
+            "speedup": 0.9690088778305914,
+            "state_hash": "1d6da73a672f9e43"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "median_seconds": {
+              "before": 0.663745681,
+              "after": 0.6645448025
+            },
+            "ranges_seconds": {
+              "before": [
+                0.619907673,
+                0.70603156
+              ],
+              "after": [
+                0.626540552,
+                0.888486264
+              ]
+            },
+            "speedup": 0.9987974904069766,
+            "state_hash": "385a474a5df1f209"
+          }
+        ],
+        "runs": [
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.305122861 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.452519220 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.411155102 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.313935835 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.632843699 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.761790463 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.388947246 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "smooth",
+            "n": 32,
+            "steps": 100,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "smooth",
+              "32",
+              "100"
+            ],
+            "output": "smooth n=32 steps=100 wall_s=1.413872526 l1_rho=8.208501250e-10 mass_error=7.660538870e-15 hash=864d54e6054d7165"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.413516716 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.438770701 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.654523645 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.443414058 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.444733048 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.470868597 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.509648065 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "interface",
+            "n": 32,
+            "steps": 40,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "interface",
+              "32",
+              "40"
+            ],
+            "output": "interface n=32 steps=40 wall_s=1.541053802 max_relative_dp=2.842170943e-14 max_du=2.901012763e-13 hash=1d6da73a672f9e43"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 0,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.619907673 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 0,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.673681510 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 1,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.626540552 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 1,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.669525374 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 2,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.706031560 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 2,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.655408095 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 3,
+            "version": "after",
+            "command": [
+              "<checkout>/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.888486264 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          },
+          {
+            "case": "open",
+            "n": 24,
+            "steps": 60,
+            "repeat": 3,
+            "version": "before",
+            "command": [
+              "/tmp/ns-cpu-round6/baseline/fluid/target/release/examples/cpu_validate",
+              "open",
+              "24",
+              "60"
+            ],
+            "output": "open n=24 steps=60 wall_s=0.657965988 max_dp=9.286793755e-5 hash=385a474a5df1f209"
+          }
+        ]
+      }
+    }
+  ]
+}

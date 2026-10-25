@@ -1,0 +1,110 @@
+{
+  "format": "fluid-project/1",
+  "name": "Corner office: loads, plant, ducts and comfort",
+  "description": "The south-west corner office of a New York office floor. Architecture owns the facade, electrical the lighting, equipment and panel, mechanical the ventilation, ducts, fan and the R-32 cooling plant, systems the design climate and set points, the owner the comfort and efficiency targets. One change to the glazing moves the cooling load, the plant, the compressor power and the electrical demand.",
+  "teams": {
+    "architecture": "facade: glazing, insulation",
+    "electrical": "lighting, equipment, panel",
+    "mechanical": "ventilation, ducts, fan, plant",
+    "systems": "design climate and set points",
+    "owner": "comfort and efficiency targets"
+  },
+  "params": {
+    "climate.dry_bulb": { "value": "33 degC", "owner": "systems", "label": "Summer design dry bulb", "note": "estimate: check the site's ASHRAE 0.4 % value" },
+    "climate.range": { "value": "8 K", "owner": "systems", "label": "Summer daily range", "note": "estimate" },
+    "climate.wet_bulb": { "value": "23.5 degC", "owner": "systems", "label": "Mean coincident wet bulb", "note": "estimate" },
+    "climate.winter": { "value": "-10 degC", "owner": "systems", "label": "Winter design dry bulb", "note": "estimate: ASHRAE 99.6 %" },
+    "room.cooling": { "value": "24 degC", "owner": "systems", "label": "Cooling set point" },
+    "room.rh": { "value": "50 %", "owner": "systems", "label": "Cooling humidity set point" },
+    "room.heating": { "value": "21 degC", "owner": "systems", "label": "Heating set point" },
+    "facade.glazing_south": { "value": "14 m^2", "owner": "architecture", "label": "South glazing area" },
+    "facade.glazing_west": { "value": "9 m^2", "owner": "architecture", "label": "West glazing area" },
+    "facade.u": { "value": "1.4 W/(m^2*K)", "tol": "10%", "owner": "architecture", "label": "Glazing U-value (whole window)" },
+    "facade.shgc": { "value": "0.38", "tol": "0.03", "owner": "architecture", "label": "Glazing solar heat gain coefficient" },
+    "facade.insulation": { "value": "100 mm", "owner": "architecture", "label": "Wall insulation thickness" },
+    "elec.lighting": { "value": "720 W", "tol": "15%", "owner": "electrical", "label": "Lighting (6 W/m²)" },
+    "elec.equipment": { "value": "1200 W", "tol": "25%", "owner": "electrical", "label": "Plug loads (10 W/m²)" },
+    "elec.panel": { "value": "8 kW", "owner": "electrical", "label": "Panel allocation for this office" },
+    "occ.people": { "value": "12", "owner": "owner", "label": "Occupants" },
+    "mech.outdoor_air": { "value": "70 L/s", "tol": "10%", "owner": "mechanical", "label": "Outdoor air (ASHRAE 62.1: 2.5 L/s/person + 0.3 L/s/m²) and infiltration" },
+    "mech.supply_dt": { "value": "11 K", "owner": "mechanical", "label": "Supply air below room" },
+    "mech.duct_width": { "value": "450 mm", "owner": "mechanical", "label": "Main supply duct width" },
+    "mech.duct_height": { "value": "300 mm", "owner": "mechanical", "label": "Main supply duct height" },
+    "mech.ahu_drop": { "value": "250 Pa", "tol": "20%", "owner": "mechanical", "label": "Filter, coil and diffuser drop", "note": "estimate from catalogue data" },
+    "mech.evaporating": { "value": "7 degC", "owner": "mechanical", "label": "Evaporating temperature" },
+    "mech.condensing": { "value": "45 degC", "tol": "2 K", "owner": "mechanical", "label": "Condensing temperature at design ambient" },
+    "mech.eta": { "value": "0.7", "tol": "0.05", "owner": "mechanical", "label": "Compressor isentropic efficiency (catalogue)" },
+    "mech.cooling_rating": { "value": "9 kW", "owner": "mechanical", "label": "Selected cooling capacity" },
+    "mech.heating_rating": { "value": "4 kW", "owner": "mechanical", "label": "Selected heating capacity" },
+    "comfort.radiant": { "value": "25 degC", "tol": "1 K", "owner": "owner", "label": "Mean radiant temperature near the glazing", "note": "estimate" },
+    "comfort.air_speed": { "value": "0.15 m/s", "owner": "owner", "label": "Air speed in the occupied zone" },
+    "comfort.clo": { "value": "0.5", "owner": "owner", "label": "Summer clothing" }
+  },
+  "derived": {
+    "geom.south_wall": { "expr": "36[m^2] - facade.glazing_south", "owner": "architecture", "unit": "m^2" },
+    "geom.west_wall": { "expr": "30[m^2] - facade.glazing_west", "owner": "architecture", "unit": "m^2" },
+    "mech.system_drop": { "expr": "duct.pressure_drop + mech.ahu_drop", "owner": "mechanical", "unit": "Pa", "label": "Supply system drop at design flow" },
+    "elec.demand": { "expr": "elec.lighting + elec.equipment + plant.compressor_power + fan.power", "owner": "electrical", "unit": "W", "label": "Electrical demand at the cooling peak" }
+  },
+  "analyses": {
+    "office": {
+      "kind": "zone_loads",
+      "owner": "mechanical",
+      "label": "Corner office loads",
+      "config": { "zone": "office.zone.json" },
+      "inputs": {
+        "design_dry_bulb": "climate.dry_bulb", "daily_range": "climate.range", "coincident_wet_bulb": "climate.wet_bulb",
+        "winter_design": "climate.winter", "cooling_setpoint": "room.cooling", "cooling_rh": "room.rh", "heating_setpoint": "room.heating",
+        "supply_delta_t": "mech.supply_dt",
+        "glazing_south": "facade.glazing_south", "glazing_west": "facade.glazing_west", "glazing_u": "facade.u", "glazing_shgc": "facade.shgc",
+        "wall_insulation": "facade.insulation", "south_wall_area": "geom.south_wall", "west_wall_area": "geom.west_wall",
+        "occupants": "occ.people", "lighting": "elec.lighting", "equipment": "elec.equipment", "outdoor_air": "mech.outdoor_air"
+      }
+    },
+    "plant": {
+      "kind": "refrigeration_cycle",
+      "owner": "mechanical",
+      "label": "R-32 split system",
+      "config": { "refrigerant": "R32" },
+      "inputs": {
+        "evaporating": "mech.evaporating", "condensing": "mech.condensing", "superheat": "5[K]", "subcooling": "3[K]",
+        "isentropic_efficiency": "mech.eta", "capacity": "office.cooling_total"
+      }
+    },
+    "duct": {
+      "kind": "duct_run",
+      "owner": "mechanical",
+      "label": "Main supply duct",
+      "inputs": {
+        "flow": "office.supply_airflow", "width": "mech.duct_width", "height": "mech.duct_height", "length": "25[m]",
+        "roughness": "0.09[mm]", "k_sum": "3.5", "fluid_temperature": "286.15[K]"
+      },
+      "materials": { "fluid": "air" }
+    },
+    "fan": {
+      "kind": "fan",
+      "owner": "mechanical",
+      "label": "Supply fan",
+      "config": { "curve": "0 420 0.40; 450 340 0.68; 800 160 0.58" },
+      "inputs": { "design_flow": "office.supply_airflow", "design_pressure": "mech.system_drop" }
+    },
+    "comfort": {
+      "kind": "thermal_comfort",
+      "owner": "owner",
+      "label": "Occupant comfort at the cooling set point",
+      "inputs": {
+        "air_temperature": "room.cooling", "radiant_temperature": "comfort.radiant", "air_speed": "comfort.air_speed",
+        "rh": "room.rh", "met": "1.2", "clo": "comfort.clo"
+      }
+    }
+  },
+  "requirements": {
+    "REQ-COOL": { "text": "Selected cooling capacity covers the peak load", "of": "mech.cooling_rating - office.cooling_total", "min": "0 W", "owner": "mechanical" },
+    "REQ-HEAT": { "text": "Selected heating capacity covers the design heating load", "of": "mech.heating_rating - office.heating", "min": "0 W", "owner": "mechanical" },
+    "REQ-FAN": { "text": "The fan delivers the design airflow", "of": "fan.flow - office.supply_airflow", "min": "0 L/s", "owner": "mechanical" },
+    "REQ-NOISE": { "text": "Main duct velocity at most 6 m/s (noise)", "of": "duct.velocity", "max": "6 m/s", "owner": "mechanical" },
+    "REQ-COMFORT": { "text": "PMV within ±0.5 at design (ISO 7730 category B)", "of": "comfort.pmv", "min": "-0.5", "max": "0.5", "owner": "owner" },
+    "REQ-COP": { "text": "Cooling COP at least 3.5 at design", "of": "plant.cop_cooling", "min": "3.5", "owner": "owner" },
+    "REQ-PANEL": { "text": "Electrical demand within the panel allocation", "of": "elec.demand", "max": "8 kW", "owner": "electrical" }
+  }
+}

@@ -1,0 +1,32 @@
+name: CPU models and browser build
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RAYON_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fluid
+      - name: Engine and browser-model checks
+        working-directory: fluid
+        run: cargo test --locked -p emergence -p emergence-web
+      - name: Exact fluid references
+        working-directory: fluid
+        run: cargo test --locked -p spectral-core --test exact
+      - name: Optical expansion versus series
+        working-directory: fluid
+        run: cargo test --locked -p photonics --test mie_ladder rayleigh2_returns_less_than_it_claims
+      - name: CPU command-line build
+        working-directory: fluid
+        run: cargo check --locked -p fluid-cli
+      - name: Compile browser models
+        run: python3 web/build.py

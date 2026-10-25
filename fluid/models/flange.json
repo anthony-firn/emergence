@@ -1,0 +1,26 @@
+{
+  "name": "bolted flange",
+  "params": {
+    "bolts": 6,
+    "bolt_circle": 0.08,
+    "bolt": 0.0033,
+    "thickness": 0.006,
+    "bore": 0.025,
+    "od": "bolt_circle + 5*bolt",
+    "hub": 0.012
+  },
+  "cell": 0.0006,
+  "shape": {
+    "op": "difference",
+    "a": { "op": "union", "parts": [
+      { "op": "cylinder_z", "center": [0, 0, "thickness/2"], "radius": "od/2", "height": "thickness" },
+      { "op": "cylinder_z", "center": [0, 0, "thickness + hub/2"], "radius": "bore/2 + 0.005", "height": "hub" }
+    ] },
+    "b": { "op": "union", "parts": [
+      { "op": "cylinder_z", "center": [0, 0, 0], "radius": "bore/2", "height": "4*(thickness + hub)" },
+      { "op": "polar_array", "axis": [0, 0, 1], "count": "bolts",
+        "shape": { "op": "cylinder_z", "center": ["bolt_circle/2", 0, "thickness/2"],
+                   "radius": "bolt", "height": "4*thickness" } }
+    ] }
+  }
+}

@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["crates/spectral-core", "crates/spectral-cuda", "crates/fluid-cli", "crates/compressible", "crates/compressible-cuda", "crates/semiconductor", "crates/radiation", "crates/photonics", "crates/phononic", "crates/standard-model", "crates/gravity", "crates/solar", "crates/materials", "crates/architected", "crates/photothermal", "crates/md", "crates/heat", "crates/testlab", "crates/wetting", "crates/electrochem", "crates/solidification", "crates/polymer", "crates/electrofluid", "crates/magnetism", "crates/granular", "crates/solidification-cuda", "crates/md-cuda", "crates/emergence", "crates/geometry", "crates/cad", "crates/viz", "crates/viz-cuda", "crates/immersed", "crates/waveoptics", "crates/project", "crates/chip", "crates/hvac", "crates/emergence-web"]
+
+default-members = ["crates/emergence", "crates/spectral-core", "crates/photonics", "crates/project", "crates/emergence-web", "crates/fluid-cli"]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+debug = 1
+
+[profile.test]
+opt-level = 3
+
+# Keep the native profiling information; omit it only from the public browser binary.
+[profile.web]
+inherits = "release"
+debug = 0
+strip = "debuginfo"

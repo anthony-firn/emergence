@@ -1,0 +1,8 @@
+[package]
+name = "architected"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Mechanical metamaterials: beam-lattice frame FEM, periodic homogenisation, and the fold to an effective continuum"
+
+[dependencies]

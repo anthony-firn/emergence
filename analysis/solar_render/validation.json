@@ -1,0 +1,23 @@
+{
+  "tests": 135,
+  "strict_clippy": "solar, all targets",
+  "videos": {
+    "duration_seconds": 7.0,
+    "encoded_frames": 168,
+    "model_snapshots": 28
+  },
+  "sha256": {
+    "continuum.png": "f8a6d1715c6ba57c9281df9cfb720fb66fd69994724332d4bb5a281911cb1477",
+    "inspection.mp4": "d33afc1fb8a06354c4956ae4f018f62acaf03d85070322953f5c6efa399de7c3",
+    "metadata.json": "71daa083f93aac1e8abf2078489cdf6f2524f41a294f8d91c71c7f273ddaa0c3",
+    "frame0027.png": "7b6721cc9c3f086125c821bfe81d0932d7d86354fdd9d150f8d28b55c7b37314",
+    "inspection_metadata.json": "9d0e477fea22c7278b3dd2dd41caa742cd6c6b496f680cb5986db66d53a47261",
+    "frames.csv": "a81728b242d429889106a4e624642cb7d8bc7c8b1052bb1e9f307269a790f107",
+    "preview.png": "f000ed6fccefa249fe0840348940a61094532bc7443812736ed2254188523de6",
+    "frame0000.png": "4fbb011503fa1f8147ec5d4bd941e0d23f8b837e10f5cf1027f8475d1726eb0e",
+    "index.html": "a125fd2800355f1e7c28e814e7b86cbb035af88d52c17b5f8021b8ac61240b51",
+    "transport.mp4": "145c3fd972462169487dedc4be1cd550e48f6a31d1e0a8d7eec3018743c1a013"
+  },
+  "simulation_commit": "f447045b58c934d5220143916a7b4843513315c0",
+  "exporter_sha256": "bce75a9933b4ad4b126fac78ee8b1b3e5ef74b7caae40e814c99b51d2d85d1c3"
+}

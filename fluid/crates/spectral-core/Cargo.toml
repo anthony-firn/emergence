@@ -1,0 +1,13 @@
+[package]
+name = "spectral-core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Pseudo-spectral incompressible Navier–Stokes reference solver (f64, CPU)"
+
+[dependencies]
+emergence = { path = "../emergence" }
+num-complex = "0.4"
+rayon = "1"
+rustfft = "6"
+realfft = "3"

@@ -1,0 +1,18 @@
+[package]
+name = "project"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "The shared project model: one typed, unit-checked graph of parameters, materials, CAD parts, analyses and requirements that every discipline reads and writes, with error bounds carried across every hand-off"
+
+[dependencies]
+cad = { path = "../cad" }
+chip = { path = "../chip" }
+emergence = { path = "../emergence" }
+geometry = { path = "../geometry" }
+hvac = { path = "../hvac" }
+compressible = { path = "../compressible" }
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+viz = { path = "../viz" }

@@ -1,0 +1,22 @@
+{
+  "name": "DFG 2D-1 (Schafer & Turek 1996), Re = 20",
+  "fluid": { "density": 1.0, "kinematic_viscosity": 0.001 },
+  "domain": { "min": [0.0, 0.0, 0.0], "max": [2.2, 0.41, 0.005], "cell": 0.005 },
+  "boundaries": {
+    "x_min": { "type": "inlet", "velocity": [0.3, 0.0, 0.0], "profile": "parabolic" },
+    "x_max": { "type": "outlet" },
+    "y_min": { "type": "wall" },
+    "y_max": { "type": "wall" },
+    "z_min": { "type": "periodic" },
+    "z_max": { "type": "periodic" }
+  },
+  "bodies": [ { "file": "cylinder.step", "elements_per_2pi": 128 } ],
+  "run": { "steady": true, "t_end": 60.0, "cfl": 0.8, "tolerance": 1e-6, "initial": "inlet" },
+  "output": {
+    "directory": "out",
+    "reference": { "velocity": 0.2, "area": 0.0005 },
+    "probes": [[0.15, 0.2, 0.0025], [0.25, 0.2, 0.0025]],
+    "vtk": true,
+    "every": 2.0
+  }
+}

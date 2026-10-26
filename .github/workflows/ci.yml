@@ -16,6 +16,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: fluid
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: CAD revision and geometry checks
+        run: node --test web/test_cad_repository.mjs web/test_cad_studio.mjs
       - name: Engine and browser-model checks
         working-directory: fluid
         run: cargo test --locked -p emergence -p emergence-web

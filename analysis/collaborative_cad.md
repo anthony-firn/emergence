@@ -6,6 +6,63 @@ assembly, add parametric parts, branch, review, prepare drawings and exchange
 revisions. It is an early mechanical authoring and handoff tool, not a qualified
 replacement for all CAD/CAM and manufacturing workflows.
 
+## Browser editors and professional workflow direction
+
+The website now exposes three workspaces, with direct links at
+cad/#mechanical, cad/#pcb and cad/#silicon. Their interaction patterns
+take cues from the [SolidWorks feature tree](https://help.solidworks.com/2023/english/Solidworks/sldworks/c_FeatureManager_Design_Tree_Conventions.htm),
+[Altium interactive routing](https://www.altium.com/documentation/altium-designer/pcb/routing/interactive)
+and [Cadence Innovus implementation](https://www.cadence.com/en_US/home/resources/datasheets/innovus-implementation-system-ds.html).
+These references describe the direction, not equivalent capability.
+
+Mechanical authoring adds an origin-centred rectangular/circular XY profile
+with explicit dimensions and extrusion distance, a profile preview with exact
+analytic volume, feature descriptions, duplicate extrusion, standard orthographic
+views and rebuild/check commands. The resulting parts remain the same native
+box/cylinder solids, drawing definitions and revisioned features. This does not
+introduce a general geometric constraint solver, face references or B-rep.
+
+The PCB editor has editable illustrative through-hole footprints, 90-degree
+rotations, pad-net assignments, a logical connectivity list, top/bottom copper
+visibility, airwires and explicit pad-to-pad connections with a 45-degree bend.
+Geometry checks cover circular pad and straight track clearance, track width,
+copper-to-edge distance and body containment. Crossings between different nets
+on one layer are detected; crossings on different layers do not imply a short.
+Moving, rotating or reassigning a component removes its attached connections.
+Connectivity counts only centre-terminated explicit pad links; incidental
+same-net copper intersections are not inferred. There is no obstacle avoidance,
+schematic circuit simulation, via/plane model or Gerber/drill output. Component
+sizes and pad radii are illustrative estimates, not qualified land patterns.
+
+The silicon editor places rectangular functional blocks in micrometres, with
+snap, editable size/position, locking, core keepout, rectangular spacing halos
+and a requested block-area target. It detects overlapping blocks and core-boundary
+violations. Area usage is the **sum of requested block areas**, divided by the
+inner core area; overlaps are reported separately and are not subtracted from
+that sum. SVG export is an annotated concept floorplan. No PDK, technology
+mapping, cell placement/routing, extraction, timing, DRC/LVS or GDSII is provided
+by this browser editor. The separate native chip flow retains its existing
+synthesis, equivalence, timing and power validation in analysis/chip.md.
+
+PCB and silicon are separate local documents (emergence-studio/1) with bounded,
+validated JSON import/export and undo/redo. Their files and storage keys are
+separate from the mechanical revision graph. They do not sync through the
+mechanical peer connection. Failed imports and edits leave the document intact.
+Unavailable browser storage is reported, with file export still available.
+
+The studio model tests check exact segment-distance cases (crossing, parallel,
+collinear, degenerate and endpoint distance), footprint rotation, connectivity,
+same-layer copper crossings, pad clearance and rectangular area/bounds/halos.
+The retained exact distances 0, 3 and 5 and the 12.5% area fixture have zero
+absolute discrepancy. The circular clearance fixture accepts exactly 0.4 mm
+and detects a 0.001 mm deficit. These are geometric algorithm checks, not a
+physical accuracy certificate or fabrication validation.
+
+Run node --test web/test_cad_studio.mjs. The browser suite
+web/test_cad_studios_browser.py exercises profile dimensions, routing, move
+invalidation, locking, snapped dragging, rejected edits, persistence,
+JSON/BOM/SVG, production CSP, keyboard tabs and both themes at 320–1360 px.
+
 ## Geometry and cross-domain models
 
 The reference sink has editable width, length, base thickness, fin count,

@@ -88,6 +88,10 @@ function renderTree(){
     b.type=toggle.type="button";b.setAttribute("aria-pressed",String(selected===f.id));b.addEventListener("click",()=>selectPart(f.id));
     toggle.setAttribute("aria-label",`${hiddenParts.has(f.id)?"Show":"Hide"} ${f.name}`);toggle.addEventListener("click",()=>{hiddenParts.has(f.id)?hiddenParts.delete(f.id):hiddenParts.add(f.id);renderTree();draw();});row.append(b,toggle);$("feature-tree").append(row);
   }
+  [...$("feature-tree").children].forEach((row,i)=>{
+    const f=assemblyParts(params,features)[i];
+    if(f.shape==="box"||f.shape==="cylinder")row.after(el("div","└ Sketch · "+(f.shape==="box"?"rectangle":"circle")+" on XY · Extrude "+f.height+" mm","feature-detail"));
+  });
   draw();
 }
 $("home-view").addEventListener("click", () => scene.fit());
@@ -132,11 +136,37 @@ function renderPartProperties(part){
     input.addEventListener("change",()=>{if(input.value===""||!input.checkValidity()){input.value=part[key];return;}remember();part[key]=Number(input.value);reviewDrawings(part.id);if(part.shape==="cylinder"&&key==="width")part.depth=part.width;saveDraft();renderDraft();draw();});row.append(input);root.append(row);
   }
   const drawing=el("button","Prepare shop drawing");drawing.type="button";drawing.addEventListener("click",()=>{drawingPart=part.id;showView("drawings");});
-  const remove=el("button","Delete part");remove.type="button";remove.addEventListener("click",()=>{remember();features=features.filter(f=>f.id!==part.id);delete drawings[part.id];selected="sink";saveDraft();renderTree();renderParameters();});root.append(drawing,remove);
+  const duplicate=el("button","Duplicate extrusion");duplicate.type="button";duplicate.addEventListener("click",()=>{
+    if(features.length>=16){toast("The prototype supports sixteen custom solids.");return;}
+    remember();const copy={...part,id:"part-"+crypto.randomUUID().slice(0,12),name:(part.name+" copy").slice(0,60),x:Math.min(100,part.x+5)};features.push(copy);saveDraft();selectPart(copy.id);
+  });
+  const remove=el("button","Delete part");remove.type="button";remove.addEventListener("click",()=>{remember();features=features.filter(f=>f.id!==part.id);delete drawings[part.id];selected="sink";saveDraft();renderTree();renderParameters();});root.append(drawing,duplicate,remove);
 }
 $("add-part").addEventListener("click",()=>$("part-dialog").showModal());
+$("sketch-part").addEventListener("click",()=>{$("part-dialog").showModal();renderSketch();});
+$("open-drawings").addEventListener("click",()=>showView("drawings"));
+$("rebuild").addEventListener("click",()=>{draw();queueEvaluation();toast("Geometry rebuilt. Running the Rust design checks.");});
+document.querySelectorAll("[data-camera]").forEach(b=>b.addEventListener("click",()=>scene.standardView(b.dataset.camera)));
+function renderSketch(){
+  const circle=$("part-shape").value==="cylinder",w=Number($("sketch-width").value),d=circle?w:Number($("sketch-depth").value),h=Number($("sketch-height").value);
+  $("sketch-depth-field").hidden=circle;$("sketch-depth").disabled=circle;$("sketch-width-label").textContent=circle?"Diameter / mm":"Width / mm";
+  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 320 170");svg.setAttribute("role","img");svg.setAttribute("aria-label","Dimensioned profile on XY plane");
+  const add=(tag,attrs,text)=>{const e=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text)e.textContent=text;svg.append(e);return e;};
+  if(![w,d,h].every(n=>Number.isFinite(n)&&n>=1&&n<=50)){$("sketch-preview").replaceChildren(el("p","Enter dimensions from 1 to 50 mm.","small muted"));return;}
+  const scale=90/Math.max(1,w,d),sw=w*scale,sd=d*scale;
+  add("line",{x1:25,y1:85,x2:295,y2:85,stroke:"var(--line-2)","stroke-dasharray":"4 4"});
+  add("line",{x1:160,y1:15,x2:160,y2:145,stroke:"var(--line-2)","stroke-dasharray":"4 4"});
+  if(circle)add("circle",{cx:160,cy:80,r:sw/2,fill:"var(--tint-2)",stroke:"var(--cyan)","stroke-width":1.5});
+  else add("rect",{x:160-sw/2,y:80-sd/2,width:sw,height:sd,fill:"var(--tint-2)",stroke:"var(--cyan)","stroke-width":1.5});
+  add("circle",{cx:160,cy:80,r:2,fill:"var(--ember)"});
+  add("text",{x:160,y:145,fill:"var(--text)","font-size":11,"text-anchor":"middle"},circle?"⌀ "+w+" mm":w+" × "+d+" mm");
+  add("text",{x:160,y:162,fill:"var(--muted)","font-size":9,"text-anchor":"middle"},"Extrude "+h+" mm · analytic volume "+((circle?Math.PI*w*w/4:w*d)*h).toFixed(2)+" mm³");
+  $("sketch-preview").replaceChildren(svg);
+}
+for(const id of ["part-shape","sketch-width","sketch-depth","sketch-height"])$(id).addEventListener("input",renderSketch);
+renderSketch();
 $("part-form").addEventListener("submit",action(e=>{e.preventDefault();if(features.length>=16)throw new Error("The prototype supports sixteen custom solids.");remember();
-  const part={id:`part-${crypto.randomUUID().slice(0,12)}`,name:$("part-name").value.trim(),shape:$("part-shape").value,domain:$("part-domain").value,x:params.width/2+20,y:0,z:0,width:12,depth:$("part-shape").value==="cylinder"?12:8,height:6};
+  const part={id:`part-${crypto.randomUUID().slice(0,12)}`,name:$("part-name").value.trim(),shape:$("part-shape").value,domain:$("part-domain").value,x:params.width/2+20,y:0,z:0,width:Number($("sketch-width").value),depth:$("part-shape").value==="cylinder"?Number($("sketch-width").value):Number($("sketch-depth").value),height:Number($("sketch-height").value)};
   features.push(part);saveDraft();$("part-dialog").close();selectPart(part.id);toast("Part added to your draft. Edit dimensions, then save a revision.");
 }));
 $("apply-preset").addEventListener("click",()=>{remember();const preset=$("preset").value;

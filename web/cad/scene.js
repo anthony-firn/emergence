@@ -23,14 +23,14 @@ export class Scene {
     this.features=[];this.selected="sink";this.hidden=new Set();
     canvas.addEventListener("pointerdown", e => { this.drag = [e.clientX, e.clientY];this.origin=[e.clientX,e.clientY]; canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener("pointermove", e => { if (!this.drag) return;
-      this.yaw += (e.clientX - this.drag[0]) * .008; this.pitch = Math.max(.1, Math.min(1.3, this.pitch + (e.clientY - this.drag[1]) * .008)); this.drag = [e.clientX, e.clientY]; this.draw(); });
+      this.yaw += (e.clientX - this.drag[0]) * .008; this.pitch = Math.max(0, Math.min(Math.PI/2, this.pitch + (e.clientY - this.drag[1]) * .008)); this.drag = [e.clientX, e.clientY]; this.draw(); });
     canvas.addEventListener("pointerup", e => { if(this.origin&&Math.hypot(e.clientX-this.origin[0],e.clientY-this.origin[1])<4){const r=canvas.getBoundingClientRect();this.pick(e.clientX-r.left,e.clientY-r.top);}this.drag = null;this.origin=null; }); canvas.addEventListener("pointercancel", () => this.drag = null);
     canvas.addEventListener("wheel", e => { e.preventDefault(); this.zoom = Math.max(.55, Math.min(2, this.zoom * Math.exp(-e.deltaY * .001))); this.draw(); }, { passive: false });
     canvas.addEventListener("keydown", e => {
       if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","+","=","-","0"].includes(e.key)) return;
       e.preventDefault();
       if (e.key === "ArrowLeft") this.yaw -= .1; if (e.key === "ArrowRight") this.yaw += .1;
-      if (e.key === "ArrowUp") this.pitch = Math.min(1.3,this.pitch+.1); if (e.key === "ArrowDown") this.pitch = Math.max(.1,this.pitch-.1);
+      if (e.key === "ArrowUp") this.pitch = Math.min(Math.PI/2,this.pitch+.1); if (e.key === "ArrowDown") this.pitch = Math.max(0,this.pitch-.1);
       if (["+","="].includes(e.key)) this.zoom = Math.min(2,this.zoom+.1); if (e.key === "-") this.zoom = Math.max(.55,this.zoom-.1);
       if (e.key === "0") this.fit(); this.draw();
     });
@@ -38,6 +38,11 @@ export class Scene {
     this.scheme = matchMedia("(prefers-color-scheme: light)"); this.scheme.addEventListener("change", () => this.draw());
   }
   fit() { this.yaw = -.6; this.pitch = .52; this.zoom = 1; this.draw(); }
+  standardView(name) {
+    const views={iso:[-.6,.52],top:[0,Math.PI/2],front:[0,0],right:[Math.PI/2,0]};
+    if(!views[name])return;
+    [this.yaw,this.pitch]=views[name];this.draw();
+  }
   update(params, domain, exploded, features=[], selected="sink", hidden=new Set()) { this.params = params; this.domain = domain; this.exploded = exploded;this.features=features;this.selected=selected;this.hidden=hidden; this.draw(); }
   pick(x,y) {
     for(const polygon of [...(this.polys||[])].reverse()){

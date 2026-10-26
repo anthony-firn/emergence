@@ -69,6 +69,25 @@ negative result: on Taylor–Green it did not beat the best fixed grid.
 
 ## Browser lab
 
+The **[browser CAD workspaces](https://www.evolvetech.dev/play/emergence/cad/)**
+now cover three early editing workflows:
+
+- **[Mechanical](https://www.evolvetech.dev/play/emergence/cad/#mechanical):**
+  dimension a rectangular/circular profile, extrude it, duplicate parts, inspect
+  standard views and prepare revisioned shop drawings. Assemblies retain branch,
+  review and peer-sync tools.
+- **[PCB](https://www.evolvetech.dev/play/emergence/cad/#pcb):** place illustrative
+  footprints, assign pad nets, connect pads on two copper layers and inspect
+  clearance, width, edge and explicit-connectivity checks. Export JSON and BOM CSV.
+- **[Silicon](https://www.evolvetech.dev/play/emergence/cad/#silicon):** edit a
+  rectangular block floorplan, lock macros and check overlap, core keepout,
+  placement halos and requested block area. Export JSON and a concept SVG.
+
+PCB and silicon save as separate local documents with undo/redo. They are not
+yet part of the mechanical revision graph or peer sync. PCB fabrication packages,
+PDK-backed IC layout, timing sign-off and GDSII are unfinished. The native chip
+synthesis and analysis flow remains separate from this browser floorplanner.
+
 **[Collaborative CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**:
 edit cooling geometry, add and place box/cylinder parts, branch and review changes,
 and exchange revisions through WebRTC or portable project files. Dimensions drive

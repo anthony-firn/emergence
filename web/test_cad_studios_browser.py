@@ -21,7 +21,7 @@ def check(url, screenshots=None):
         page = context.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
         def capture(kind):
-            page.evaluate("scrollTo(0, 0); document.querySelector('#toast').hidden=true")
+            page.evaluate("scrollTo({top:0,behavior:'instant'}); document.querySelector('#toast').hidden=true")
             page.screenshot(path=str(screenshots / ("emergence-cad-" + kind + ".png")))
 
         page.goto(url, wait_until="networkidle")

@@ -86,6 +86,13 @@ fn store(lib: &CellLib) {
     }
 }
 
+/// Install a library characterised elsewhere, as the browser does: it has no
+/// disk cache and characterising cells there would take minutes.
+pub fn preload(lib: CellLib) {
+    let key = (lib.corner.vdd.to_bits(), lib.corner.temp.to_bits());
+    memo().lock().unwrap().insert(key, Arc::new(lib));
+}
+
 /// The library at `corner`: from memory, else the disk cache, else
 /// characterised (and cached).
 pub fn at(corner: Corner) -> Result<Arc<CellLib>, String> {

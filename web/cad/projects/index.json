@@ -1,0 +1,6 @@
+{
+ "examples": [
+  { "id": "drone", "file": "inspection-drone.json", "name": "Inspection quadcopter", "summary": "Vehicle scale. The weight spiral closes through eight domains: mass, thrust, ESC current, MOSFET heat, heat-sink size and mass again." },
+  { "id": "edge-shelter", "file": "edge-compute-shelter.json", "name": "Edge compute shelter", "summary": "Building scale. Accelerator nodes heat a BESTEST 600 shelter, and the shelter air is every node's inlet: how many nodes fit?" }
+ ]
+}

@@ -1,0 +1,877 @@
+{
+ "format": "emergence-project/1",
+ "documents": {
+  "project": {
+   "name": "Edge compute shelter",
+   "summary": "A roadside shelter of accelerator nodes. Every node's heat goes into the shelter, and the shelter's air is every node's inlet: die leakage, the VRM MOSFET and the fan duct all run at the room temperature they create. The coupled loop runs through silicon, PCB, mechanical, fluids and architecture; the question is how many nodes fit.",
+   "domains": [
+    "mech",
+    "parts",
+    "pcb",
+    "silicon",
+    "fluids",
+    "architecture"
+   ],
+   "headline": [
+    {
+     "port": "architecture.room_temperature",
+     "label": "Shelter air"
+    },
+    {
+     "port": "architecture.equipment_load",
+     "label": "IT heat in the shelter"
+    },
+    {
+     "port": "silicon.junction",
+     "label": "Accelerator junction"
+    },
+    {
+     "port": "silicon.power",
+     "label": "Accelerator die power"
+    },
+    {
+     "port": "mech.q1_tj",
+     "label": "VRM MOSFET junction"
+    },
+    {
+     "port": "fluids.flow",
+     "label": "Node fan flow"
+    }
+   ],
+   "studies": [
+    {
+     "id": "nodes",
+     "label": "Nodes in the shelter",
+     "domain": "architecture",
+     "path": "units"
+    },
+    {
+     "id": "supply",
+     "label": "Shelter supply air",
+     "domain": "architecture",
+     "path": "rooms.room.supply"
+    },
+    {
+     "id": "outdoor",
+     "label": "Outdoor temperature",
+     "domain": "architecture",
+     "path": "site.outdoor"
+    },
+    {
+     "id": "npu",
+     "label": "Tensor-array power",
+     "domain": "silicon",
+     "path": "blocks.npu.power"
+    },
+    {
+     "id": "clock",
+     "label": "Accelerator clock",
+     "domain": "silicon",
+     "path": "chip.frequency"
+    },
+    {
+     "id": "vrm-current",
+     "label": "VRM phase current",
+     "domain": "mech",
+     "path": "params.current",
+     "max": 40
+    },
+    {
+     "id": "fins",
+     "label": "VRM sink fin height",
+     "domain": "mech",
+     "path": "params.finHeight",
+     "max": 35
+    }
+   ],
+   "optimize": {
+    "title": "Fill the shelter",
+    "summary": "Most nodes in the shelter with the air at or below its limit, the VRM MOSFET at or below 100 °C and the accelerator junction at or below 95 °C. Each trial is a full coupled solve.",
+    "objective": {
+     "port": "architecture.equipment_load",
+     "sense": "max"
+    },
+    "constraints": [
+     {
+      "port": "architecture.room_temperature",
+      "max": 35,
+      "label": "Shelter air ≤ 35 °C"
+     },
+     {
+      "port": "mech.q1_tj",
+      "max": 100,
+      "label": "VRM MOSFET ≤ 100 °C"
+     },
+     {
+      "port": "silicon.junction",
+      "max": 95,
+      "label": "Accelerator junction ≤ 95 °C"
+     }
+    ],
+    "variables": [
+     {
+      "domain": "architecture",
+      "path": "units",
+      "label": "Nodes",
+      "min": 1,
+      "max": 200,
+      "step": 1,
+      "integer": true
+     }
+    ],
+    "trials": 40
+   },
+   "tour": [
+    {
+     "studio": "system",
+     "title": "A building that heats its own machines",
+     "text": "This project is a different file from the drone, solved by the same system. Each accelerator node sends its die, VRM and board heat into the shelter; the shelter's air temperature comes back as every node's inlet. The solver iterates that loop until it settles."
+    },
+    {
+     "studio": "architecture",
+     "title": "Add eight more nodes",
+     "text": "More nodes means more heat in the same supply air. Watch the shelter warm, and the warmer inlet raise the accelerator's leakage and the VRM MOSFET's temperature.",
+     "command": "architecture.site units=32",
+     "watch": [
+      "architecture.equipment_load",
+      "architecture.room_temperature",
+      "silicon.junction",
+      "mech.q1_tj"
+     ],
+     "checks": [
+      "architecture/room"
+     ]
+    },
+    {
+     "studio": "silicon",
+     "title": "Clock the accelerator faster",
+     "text": "The control CPU and fan PWM blocks are synthesised from public RTL and timed at the die's own junction temperature, which now depends on the shelter.",
+     "command": "silicon.chip frequency=200",
+     "watch": [
+      "silicon.power",
+      "silicon.junction",
+      "architecture.room_temperature"
+     ],
+     "checks": [
+      "silicon/setup-cpu"
+     ]
+    },
+    {
+     "studio": "mechanical",
+     "title": "Load the VRM harder",
+     "text": "The core-rail phase current heats the VRM MOSFET; its heat sink sits in the node's fan duct, and both its loss and the board's copper loss go into the shelter.",
+     "command": "mech.set current 36",
+     "watch": [
+      "mech.q1_power",
+      "mech.q1_tj",
+      "pcb.copper_loss"
+     ],
+     "checks": [
+      "mech/REQ-TJ"
+     ]
+    },
+    {
+     "studio": "system",
+     "title": "Same system, different project",
+     "text": "Nothing here is specific to drones or shelters: domains, links, studies, the optimiser and this tour all come from the project file. End the tour to restore the design."
+    }
+   ],
+   "scene": {
+    "placements": {
+     "parts": {
+      "at": [
+       0,
+       0,
+       0
+      ]
+     },
+     "mech": {
+      "at": [
+       60,
+       -40,
+       10
+      ]
+     },
+     "pcb": {
+      "at": [
+       40,
+       40,
+       4
+      ]
+     },
+     "silicon": {
+      "at": [
+       -40,
+       20,
+       4
+      ]
+     }
+    },
+    "site": {
+     "room": "room",
+     "z": 900
+    }
+   },
+   "credits": [
+    {
+     "title": "Tiny Tapeout dual-channel PWM motor controller (tt_um_hadjal001_motor_controller)",
+     "url": "https://github.com/HADJAL001/tt-motor-controller",
+     "domain": "silicon",
+     "licence": "Apache-2.0",
+     "note": "Used as the node's fan PWM block; adapted to the native Verilog subset."
+    },
+    {
+     "title": "mini8 CPU",
+     "url": "https://github.com/anthony-firn/emergence/tree/main/fluid/projects/mini-cpu",
+     "domain": "silicon",
+     "licence": "Apache-2.0"
+    },
+    {
+     "title": "ANSI/ASHRAE Standard 140 BESTEST case 600 (shelter geometry and envelope)",
+     "url": "https://simulationresearch.lbl.gov/modelica/releases/v9.0.0/help/Buildings_ThermalZones_Detailed_Validation_BESTEST_Cases6xx.html",
+     "domain": "architecture",
+     "note": "Solved as a ventilated steady-state room, not the standard's annual test."
+    }
+   ]
+  },
+  "system": {
+   "links": [
+    {
+     "id": "vrm-board",
+     "from": "mech.current_out",
+     "to": "pcb.load_current",
+     "enabled": true,
+     "note": "The VRM phase current flows in the OUT and GND copper"
+    },
+    {
+     "id": "mech-fluids-gap",
+     "from": "mech.gap",
+     "to": "fluids.sink_gap",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-height",
+     "from": "mech.finHeight_out",
+     "to": "fluids.sink_height",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-length",
+     "from": "mech.length_out",
+     "to": "fluids.sink_length",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-width",
+     "from": "mech.width_out",
+     "to": "fluids.sink_width",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-fins",
+     "from": "mech.fins_out",
+     "to": "fluids.fin_count",
+     "enabled": true
+    },
+    {
+     "id": "fluids-mech",
+     "from": "fluids.duct_velocity",
+     "to": "mech.velocity",
+     "enabled": true,
+     "note": "Node fan flow sets the VRM sink's approach velocity"
+    },
+    {
+     "id": "vrm-air",
+     "from": "mech.q1_power",
+     "to": "fluids.heat_load",
+     "enabled": true,
+     "note": "VRM heat warms the node's exhaust air"
+    },
+    {
+     "id": "room-vrm",
+     "from": "architecture.room_temperature",
+     "to": "mech.ambient",
+     "enabled": true,
+     "note": "Shelter air is every node's inlet air"
+    },
+    {
+     "id": "room-fan",
+     "from": "architecture.room_temperature",
+     "to": "fluids.air_temperature",
+     "enabled": true
+    },
+    {
+     "id": "room-die",
+     "from": "architecture.room_temperature",
+     "to": "silicon.ambient",
+     "enabled": true,
+     "note": "Accelerator package ambient is the shelter air"
+    },
+    {
+     "id": "node-die",
+     "from": "silicon.power",
+     "to": "architecture.equipment_power",
+     "enabled": true,
+     "note": "Each node's accelerator heat goes to the shelter"
+    },
+    {
+     "id": "node-vrm",
+     "from": "mech.q1_power",
+     "to": "architecture.equipment_power",
+     "enabled": true,
+     "note": "Each node's VRM loss"
+    },
+    {
+     "id": "node-board",
+     "from": "pcb.dissipation",
+     "to": "architecture.equipment_power",
+     "enabled": true,
+     "note": "Each node's board copper and component heat"
+    }
+   ],
+   "confirmed": {}
+  },
+  "mech": {
+   "params": {
+    "fins": 9,
+    "velocity": 2,
+    "current": 25,
+    "ambient": 45,
+    "heat": 0,
+    "opticalSize": 0.1,
+    "width": 40,
+    "length": 50,
+    "finHeight": 20,
+    "base": 3,
+    "finThickness": 1.2,
+    "traceWidth": 10,
+    "opticalPower": 0,
+    "absorption": 50
+   },
+   "features": [],
+   "drawings": {}
+  },
+  "parts": {
+   "parts": [
+    {
+     "id": "chassis",
+     "name": "Node chassis",
+     "template": "enclosure",
+     "model": {
+      "name": "enclosure",
+      "params": {
+       "w": 90,
+       "d": 70,
+       "h": 40,
+       "wall": 2,
+       "round": 4,
+       "vent": 3,
+       "vents": 6
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "shell",
+        "thickness": "wall",
+        "shape": {
+         "op": "box",
+         "center": [
+          0,
+          0,
+          "h/2"
+         ],
+         "half": [
+          "w/2",
+          "d/2",
+          "h/2"
+         ],
+         "round": "round"
+        }
+       },
+       "b": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "box",
+          "center": [
+           0,
+           0,
+           "h"
+          ],
+          "half": [
+           "w/2 - wall",
+           "d/2 - wall",
+           "wall"
+          ]
+         },
+         {
+          "op": "array",
+          "shape": {
+           "op": "box",
+           "center": [
+            0,
+            "-d/2",
+            "h/2"
+           ],
+           "half": [
+            "vent/2",
+            "wall*2",
+            "h/4"
+           ]
+          },
+          "period": [
+           "vent*2.5",
+           0,
+           0
+          ],
+          "counts": [
+           "vents",
+           1,
+           1
+          ]
+         }
+        ]
+       }
+      },
+      "cell": 0.7
+     },
+     "overrides": {
+      "w": 220,
+      "d": 160,
+      "h": 44,
+      "wall": 1.5,
+      "vents": 12
+     },
+     "x": 0,
+     "y": 0,
+     "z": 0,
+     "rz": 0,
+     "count": 1,
+     "pattern": "single",
+     "stack": 0,
+     "material": "al-6061",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "npu-sink",
+     "name": "Accelerator pin-fin sink",
+     "template": "pinfin",
+     "model": {
+      "name": "pin-fin heat sink",
+      "params": {
+       "base": 40,
+       "plate": 4,
+       "pin": 2.5,
+       "height": 20,
+       "pitch": 6,
+       "count": 6
+      },
+      "shape": {
+       "op": "union",
+       "parts": [
+        {
+         "op": "box",
+         "center": [
+          0,
+          0,
+          "plate/2"
+         ],
+         "half": [
+          "base/2",
+          "base/2",
+          "plate/2"
+         ]
+        },
+        {
+         "op": "array",
+         "shape": {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           "plate + height/2"
+          ],
+          "radius": "pin/2",
+          "height": "height"
+         },
+         "period": [
+          "pitch",
+          "pitch",
+          0
+         ],
+         "counts": [
+          "count",
+          "count",
+          1
+         ]
+        }
+       ]
+      },
+      "cell": 0.4
+     },
+     "overrides": {
+      "base": 50,
+      "count": 8,
+      "pitch": 6,
+      "height": 22
+     },
+     "x": -40,
+     "y": 20,
+     "z": 8,
+     "rz": 0,
+     "count": 1,
+     "pattern": "single",
+     "stack": 0,
+     "material": "al-6061",
+     "domain": "Mechanical"
+    }
+   ]
+  },
+  "pcb": {
+   "width": 80,
+   "height": 55,
+   "grid": 0.5,
+   "rules": {
+    "clearance": 0.25,
+    "minWidth": 0.3,
+    "edge": 1,
+    "density": 35
+   },
+   "components": [
+    {
+     "id": "J1",
+     "name": "12 V in",
+     "footprint": "connector",
+     "x": 10,
+     "y": 16,
+     "rotation": 90,
+     "nets": [
+      "VCC",
+      "GND"
+     ]
+    },
+    {
+     "id": "U1",
+     "name": "VRM controller",
+     "footprint": "dip8",
+     "x": 32,
+     "y": 26,
+     "rotation": 0,
+     "nets": [
+      "VCC",
+      "PWM",
+      "GND",
+      "GATE",
+      "GND",
+      "GATE",
+      "PWM",
+      "VCC"
+     ]
+    },
+    {
+     "id": "Q1",
+     "name": "VRM power stage",
+     "footprint": "transistor",
+     "x": 59,
+     "y": 26,
+     "rotation": 0,
+     "nets": [
+      "GATE",
+      "OUT",
+      "GND"
+     ]
+    },
+    {
+     "id": "R1",
+     "name": "Gate resistor",
+     "footprint": "resistor",
+     "x": 46,
+     "y": 16,
+     "rotation": 0,
+     "nets": [
+      "GATE",
+      "GATE"
+     ]
+    },
+    {
+     "id": "C1",
+     "name": "Input decoupling",
+     "footprint": "capacitor",
+     "x": 19,
+     "y": 32,
+     "rotation": 0,
+     "nets": [
+      "VCC",
+      "GND"
+     ]
+    },
+    {
+     "id": "J2",
+     "name": "Core rail out",
+     "footprint": "connector",
+     "x": 69,
+     "y": 42,
+     "rotation": 90,
+     "nets": [
+      "OUT",
+      "GND"
+     ]
+    }
+   ],
+   "routes": [],
+   "stackup": {
+    "thickness": 1.6,
+    "copper": 1,
+    "epsr": 4.4
+   },
+   "currents": {
+    "GATE": 0.4,
+    "GND": 30,
+    "OUT": 30,
+    "PWM": 0.05,
+    "VCC": 0.5
+   },
+   "powers": {
+    "R1": 0.05,
+    "U1": 0.35
+   },
+   "loadNets": [
+    "OUT",
+    "GND"
+   ]
+  },
+  "silicon": {
+   "width": 8000,
+   "height": 6000,
+   "grid": 50,
+   "margin": 200,
+   "spacing": 100,
+   "target": 70,
+   "blocks": [
+    {
+     "id": "npu",
+     "name": "Tensor array",
+     "kind": "logic",
+     "x": 200,
+     "y": 200,
+     "width": 4200,
+     "height": 3000,
+     "fixed": false,
+     "power": 18000
+    },
+    {
+     "id": "sram",
+     "name": "SRAM banks",
+     "kind": "memory",
+     "x": 4500,
+     "y": 200,
+     "width": 2600,
+     "height": 3000,
+     "fixed": true,
+     "power": 3500
+    },
+    {
+     "id": "io",
+     "name": "PCIe and DDR PHY",
+     "kind": "io",
+     "x": 200,
+     "y": 3300,
+     "width": 3000,
+     "height": 1400,
+     "fixed": false,
+     "power": 2500
+    },
+    {
+     "id": "cpu",
+     "name": "Control CPU (mini8)",
+     "kind": "logic",
+     "x": 3300,
+     "y": 3300,
+     "width": 1200,
+     "height": 1000,
+     "fixed": false,
+     "power": 420
+    },
+    {
+     "id": "pwm",
+     "name": "Fan PWM (Tiny Tapeout)",
+     "kind": "logic",
+     "x": 4600,
+     "y": 3300,
+     "width": 600,
+     "height": 800,
+     "fixed": false,
+     "power": 5
+    }
+   ],
+   "chip": {
+    "rtl": [
+     {
+      "block": "cpu",
+      "source": "mini8",
+      "verilog": null
+     },
+     {
+      "block": "pwm",
+      "source": "tt-motor",
+      "verilog": null
+     }
+    ],
+    "frequency": 100,
+    "vdd": 1.2,
+    "activity": 20,
+    "instances": 1,
+    "theta": 1.6,
+    "ambient": 30
+   }
+  },
+  "litho": {
+   "n": 64,
+   "pixel": 20,
+   "wavelength": 248,
+   "na": 0.75,
+   "sigmaOuter": 0.7,
+   "sigmaInner": 0,
+   "threshold": 0.3,
+   "steepness": 40,
+   "sourcePoints": 5,
+   "shapes": [
+    {
+     "x": 160,
+     "y": 200,
+     "w": 160,
+     "h": 880
+    },
+    {
+     "x": 480,
+     "y": 200,
+     "w": 640,
+     "h": 160
+    },
+    {
+     "x": 480,
+     "y": 360,
+     "w": 160,
+     "h": 400
+    },
+    {
+     "x": 860,
+     "y": 640,
+     "w": 180,
+     "h": 180
+    }
+   ]
+  },
+  "fluids": {
+   "temperature": 25,
+   "pressure": 101325,
+   "heatLimit": 15,
+   "fan": {
+    "preset": "axial60",
+    "shutoff": 30,
+    "free": 0.0085
+   },
+   "elements": [
+    {
+     "id": "inlet",
+     "name": "Inlet grille",
+     "kind": "fitting",
+     "width": 80,
+     "height": 80,
+     "K": 1.5
+    },
+    {
+     "id": "filter",
+     "name": "Node intake filter",
+     "kind": "filter",
+     "width": 80,
+     "height": 80,
+     "coefficient": 25
+    },
+    {
+     "id": "duct",
+     "name": "Supply duct",
+     "kind": "duct",
+     "width": 60,
+     "height": 30,
+     "length": 180,
+     "roughness": 0.0015
+    },
+    {
+     "id": "bend",
+     "name": "90° bend",
+     "kind": "fitting",
+     "width": 60,
+     "height": 30,
+     "K": 0.9
+    },
+    {
+     "id": "sink",
+     "name": "Heat-sink channels",
+     "kind": "channels",
+     "width": 40,
+     "height": 20,
+     "fins": 9,
+     "gap": 3.65,
+     "length": 50,
+     "Kin": 0.5,
+     "Kout": 1
+    }
+   ]
+  },
+  "architecture": {
+   "site": {
+    "name": "Roadside edge site",
+    "outdoor": 32,
+    "solar": 450
+   },
+   "glazing": {
+    "U": 3,
+    "shgc": 0.787
+   },
+   "units": 24,
+   "limit": 35,
+   "rooms": [
+    {
+     "id": "room",
+     "name": "Equipment shelter (BESTEST 600)",
+     "x": 0,
+     "y": 0,
+     "width": 8,
+     "depth": 6,
+     "height": 2.7,
+     "people": 0,
+     "lighting": 4,
+     "mode": "supplied",
+     "supply": 1400,
+     "supplyTemp": 20,
+     "setpoint": 24,
+     "equipment": true,
+     "roofU": 0.318,
+     "walls": {
+      "north": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 0
+      },
+      "east": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 0
+      },
+      "south": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 12
+      },
+      "west": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 0
+      }
+     }
+    }
+   ]
+  }
+ }
+}

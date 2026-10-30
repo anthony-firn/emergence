@@ -143,11 +143,13 @@ name = "emergence-web"
 version = "0.1.0"
 dependencies = [
  "cad",
+ "chip",
  "emergence",
  "num-complex",
  "photonics",
  "project",
  "rayon",
+ "semiconductor",
  "serde_json",
  "spectral-core",
 ]

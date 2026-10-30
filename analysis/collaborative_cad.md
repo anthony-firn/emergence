@@ -8,6 +8,14 @@ replacement for all CAD/CAM and manufacturing workflows.
 
 ## Browser editors and professional workflow direction
 
+The workspace is now one cross-domain project: an inspection quadcopter whose
+flight, mechanical, parts, PCB, silicon, optics, fluids and architecture
+documents are linked by unit-checked ports, solved together, and saved as
+content-addressed blobs in every revision. See `analysis/cross_domain_cad.md`
+for the architecture, the public reference designs and every check. The
+sections below describe the mechanical workflow and the earlier PCB and silicon
+editors, which are now studios of that project.
+
 The website now exposes three workspaces, with direct links at
 cad/#mechanical, cad/#pcb and cad/#silicon. Their interaction patterns
 take cues from the [SolidWorks feature tree](https://help.solidworks.com/2023/english/Solidworks/sldworks/c_FeatureManager_Design_Tree_Conventions.htm),
@@ -44,10 +52,9 @@ mapping, cell placement/routing, extraction, timing, DRC/LVS or GDSII is provide
 by this browser editor. The separate native chip flow retains its existing
 synthesis, equivalence, timing and power validation in analysis/chip.md.
 
-PCB and silicon are separate local documents (emergence-studio/1) with bounded,
-validated JSON import/export and undo/redo. Their files and storage keys are
-separate from the mechanical revision graph. They do not sync through the
-mechanical peer connection. Failed imports and edits leave the document intact.
+PCB and silicon keep their emergence-studio/1 JSON import/export, and are now
+domains of the shared project: their documents are revisioned, merged by object
+id and synchronised with peers along with every other domain. Failed imports and edits leave the document intact.
 Unavailable browser storage is reported, with file export still available.
 
 The studio model tests check exact segment-distance cases (crossing, parallel,

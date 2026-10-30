@@ -1,0 +1,1358 @@
+{
+ "format": "emergence-project/1",
+ "documents": {
+  "project": {
+   "name": "Inspection quadcopter",
+   "summary": "An 8 kg-class inspection quadcopter across eight domains. Mass sets thrust, thrust sets the ESC current, the current heats the power MOSFET and sizes its heat sink, and the sink is mass again: the weight spiral closes through the solver. Rotor wake cools the ESC, mission altitude sets the camera's ground sample distance, and battery chargers heat the hangar.",
+   "domains": [
+    "flight",
+    "mech",
+    "parts",
+    "pcb",
+    "silicon",
+    "optics",
+    "fluids",
+    "architecture"
+   ],
+   "headline": [
+    {
+     "port": "flight.total_mass",
+     "label": "Take-off mass"
+    },
+    {
+     "port": "flight.flight_time",
+     "label": "Hover endurance"
+    },
+    {
+     "port": "mech.q1_tj",
+     "label": "ESC MOSFET junction"
+    },
+    {
+     "port": "flight.esc_current",
+     "label": "Design ESC current"
+    },
+    {
+     "port": "optics.gsd",
+     "label": "Ground sample distance"
+    },
+    {
+     "port": "silicon.power",
+     "label": "Flight-controller die"
+    },
+    {
+     "port": "architecture.room_temperature",
+     "label": "Charging room"
+    },
+    {
+     "port": "fluids.duct_velocity",
+     "label": "ESC cooling air"
+    }
+   ],
+   "studies": [
+    {
+     "id": "gimbal",
+     "label": "Gimbal mass",
+     "domain": "flight",
+     "path": "masses.gimbal.mass"
+    },
+    {
+     "id": "battery",
+     "label": "Battery capacity",
+     "domain": "flight",
+     "path": "battery.capacity"
+    },
+    {
+     "id": "prop",
+     "label": "Propeller diameter",
+     "domain": "flight",
+     "path": "prop"
+    },
+    {
+     "id": "capture",
+     "label": "Wake capture",
+     "domain": "flight",
+     "path": "capture"
+    },
+    {
+     "id": "fin-height",
+     "label": "Heat-sink fin height",
+     "domain": "mech",
+     "path": "params.finHeight",
+     "max": 35
+    },
+    {
+     "id": "sink-length",
+     "label": "Heat-sink length",
+     "domain": "mech",
+     "path": "params.length",
+     "max": 90
+    },
+    {
+     "id": "outdoor",
+     "label": "Outdoor temperature",
+     "domain": "architecture",
+     "path": "site.outdoor"
+    },
+    {
+     "id": "clock",
+     "label": "Controller clock",
+     "domain": "silicon",
+     "path": "chip.frequency"
+    }
+   ],
+   "optimize": {
+    "title": "Close the weight spiral",
+    "summary": "Lightest take-off mass with the ESC MOSFET junction at or below 100 °C and every linked model inside its validated range. Each trial is a full coupled solve.",
+    "objective": {
+     "port": "flight.total_mass",
+     "sense": "min"
+    },
+    "constraints": [
+     {
+      "port": "mech.q1_tj",
+      "max": 100,
+      "label": "ESC MOSFET junction ≤ 100 °C"
+     }
+    ],
+    "variables": [
+     {
+      "domain": "mech",
+      "path": "params.fins",
+      "label": "Fin count",
+      "min": 5,
+      "max": 14,
+      "step": 1,
+      "integer": true
+     },
+     {
+      "domain": "mech",
+      "path": "params.finHeight",
+      "label": "Fin height",
+      "min": 10,
+      "max": 35,
+      "step": 0.5
+     },
+     {
+      "domain": "mech",
+      "path": "params.length",
+      "label": "Sink length",
+      "min": 30,
+      "max": 90,
+      "step": 0.5
+     }
+    ],
+    "trials": 40
+   },
+   "tour": [
+    {
+     "studio": "system",
+     "title": "One drone, eight domains, one solve",
+     "text": "This project is one file: eight design documents, the links between them and this tour. Mass sets thrust, thrust sets the ESC current, the current heats Q1 and sizes the sink, and the sink is mass again. The solver iterates that loop until it settles and says so."
+    },
+    {
+     "studio": "flight",
+     "title": "Carry a heavier camera",
+     "text": "A bigger gimbal raises take-off mass. Watch the design-point ESC current, the MOSFET junction temperature and the hover endurance move together.",
+     "command": "flight.mass gimbal 1.6",
+     "watch": [
+      "flight.total_mass",
+      "flight.esc_current",
+      "mech.q1_tj",
+      "flight.flight_time"
+     ]
+    },
+    {
+     "studio": "mechanical",
+     "title": "Trim the ESC heat sink",
+     "text": "Fewer fins weigh less, which helps every motor. The Rust electrothermal graph re-solves the sink, and the fluids studio re-solves the duct with the wider channels.",
+     "command": "mech.set fins 6",
+     "watch": [
+      "mech.sink_mass",
+      "fluids.duct_velocity",
+      "mech.q1_tj"
+     ],
+     "checks": [
+      "mech/REQ-TJ"
+     ]
+    },
+    {
+     "studio": "pcb",
+     "title": "Route the ESC board",
+     "text": "The router finds clear paths on the snap grid, around other nets' copper. The kernel then computes each trace's resistance from its drawn length, and the load current from Flight sets the I²R loss.",
+     "command": "pcb.route_all width=0.6",
+     "watch": [
+      "pcb.unrouted",
+      "pcb.copper_loss"
+     ],
+     "checks": [
+      "pcb/density"
+     ]
+    },
+    {
+     "studio": "silicon",
+     "title": "Clock the flight controller faster",
+     "text": "The RTL is synthesized onto transistor-characterised cells and timed across nine corners at the die's own junction temperature. Faster clocks cost power and slack.",
+     "command": "silicon.chip frequency=400",
+     "watch": [
+      "silicon.power",
+      "silicon.junction"
+     ],
+     "checks": [
+      "silicon/setup-cpu"
+     ]
+    },
+    {
+     "studio": "optics",
+     "title": "Fly higher for coverage",
+     "text": "Mission altitude is a Flight output linked into the camera. The Cooke triplet's focal length and the sensor pixel set the ground sample distance.",
+     "command": "flight.set altitude=150",
+     "watch": [
+      "optics.gsd"
+     ],
+     "checks": [
+      "optics/gsd"
+     ]
+    },
+    {
+     "studio": "fluids",
+     "title": "Scoop more rotor wake",
+     "text": "More of the downwash's dynamic pressure drives the ESC duct. Past Re 2300 the fin channels leave the laminar correlation, and the mechanical model refuses to extrapolate instead of guessing.",
+     "command": "flight.set capture=0.3",
+     "watch": [
+      "flight.wake_pressure",
+      "fluids.duct_velocity"
+     ],
+     "checks": [
+      "mech/REQ-TJ"
+     ]
+    },
+    {
+     "studio": "architecture",
+     "title": "Charge more packs in the hangar",
+     "text": "Each charger dissipates the pack energy's 8% loss over a one-hour charge. The charging room uses the BESTEST 600 envelope; its supply air sets its temperature.",
+     "command": "architecture.site units=14",
+     "watch": [
+      "architecture.equipment_load",
+      "architecture.room_temperature"
+     ],
+     "checks": [
+      "architecture/room"
+     ]
+    },
+    {
+     "studio": "system",
+     "title": "Everything above was a command",
+     "text": "Each step ran through the same registry the command line, scripts, the CLI and the MCP server use. End the tour to restore your design exactly as it was."
+    }
+   ],
+   "scene": {
+    "placements": {
+     "mech": {
+      "at": [
+       265,
+       0,
+       25
+      ],
+      "rz": 90,
+      "phase": 45,
+      "count": "flight:rotors"
+     },
+     "pcb": {
+      "at": [
+       0,
+       0,
+       8
+      ]
+     },
+     "optics": {
+      "at": [
+       0,
+       70,
+       -8
+      ],
+      "rx": 180
+     },
+     "flight": {
+      "at": [
+       0,
+       0,
+       0
+      ]
+     },
+     "parts": {
+      "at": [
+       0,
+       0,
+       0
+      ]
+     },
+     "silicon": {
+      "at": [
+       -20,
+       10,
+       9.6
+      ]
+     }
+    },
+    "site": {
+     "room": "bay",
+     "z": 1200
+    }
+   },
+   "credits": [
+    {
+     "title": "Tiny Tapeout dual-channel PWM motor controller (tt_um_hadjal001_motor_controller)",
+     "url": "https://github.com/HADJAL001/tt-motor-controller",
+     "domain": "silicon",
+     "licence": "Apache-2.0",
+     "note": "At 0f078f5, adapted to the native Verilog subset; every change is listed in the file header."
+    },
+    {
+     "title": "mini8 CPU",
+     "url": "https://github.com/anthony-firn/emergence/tree/main/fluid/projects/mini-cpu",
+     "domain": "silicon",
+     "licence": "Apache-2.0"
+    },
+    {
+     "title": "Cooke triplet, Optiland gallery (after Kingslake)",
+     "url": "https://optiland.readthedocs.io/en/latest/gallery/basic_lenses/Cooke_Triplet.html",
+     "domain": "optics",
+     "licence": "MIT",
+     "note": "The stop is a plane just past surface 4; clear diameters chosen here."
+    },
+    {
+     "title": "ANSI/ASHRAE Standard 140 BESTEST case 600 (charging room geometry and envelope)",
+     "url": "https://simulationresearch.lbl.gov/modelica/releases/v9.0.0/help/Buildings_ThermalZones_Detailed_Validation_BESTEST_Cases6xx.html",
+     "domain": "architecture",
+     "note": "Solved as a ventilated steady-state room, not the standard's annual test."
+    }
+   ]
+  },
+  "system": {
+   "links": [
+    {
+     "id": "flight-esc",
+     "from": "flight.esc_current",
+     "to": "mech.current",
+     "enabled": true,
+     "note": "Design-point ESC current is the MOSFET RMS current"
+    },
+    {
+     "id": "sink-mass",
+     "from": "mech.sink_mass",
+     "to": "flight.esc_mass",
+     "enabled": true,
+     "note": "Each ESC carries one heat sink"
+    },
+    {
+     "id": "board-mass",
+     "from": "pcb.board_mass",
+     "to": "flight.esc_mass",
+     "enabled": true,
+     "note": "Each ESC carries one power board"
+    },
+    {
+     "id": "camera-mass",
+     "from": "optics.mass",
+     "to": "flight.camera_mass",
+     "enabled": true,
+     "note": "Lens glass"
+    },
+    {
+     "id": "frame-mass",
+     "from": "parts.mass",
+     "to": "flight.parts_mass",
+     "enabled": true,
+     "note": "Airframe parts"
+    },
+    {
+     "id": "altitude",
+     "from": "flight.altitude",
+     "to": "optics.altitude",
+     "enabled": true,
+     "note": "Mission altitude sets the ground sample distance"
+    },
+    {
+     "id": "wake",
+     "from": "flight.wake_pressure",
+     "to": "fluids.drive_pressure",
+     "enabled": true,
+     "note": "Rotor downwash drives the ESC cooling duct"
+    },
+    {
+     "id": "fluids-mech",
+     "from": "fluids.duct_velocity",
+     "to": "mech.velocity",
+     "enabled": true,
+     "note": "Duct flow sets the heat-sink approach velocity"
+    },
+    {
+     "id": "mech-fluids-gap",
+     "from": "mech.gap",
+     "to": "fluids.sink_gap",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-height",
+     "from": "mech.finHeight_out",
+     "to": "fluids.sink_height",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-length",
+     "from": "mech.length_out",
+     "to": "fluids.sink_length",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-width",
+     "from": "mech.width_out",
+     "to": "fluids.sink_width",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-fins",
+     "from": "mech.fins_out",
+     "to": "fluids.fin_count",
+     "enabled": true
+    },
+    {
+     "id": "air-mech",
+     "from": "architecture.outdoor_temperature",
+     "to": "mech.ambient",
+     "enabled": true,
+     "note": "Outside air is the ESC inlet air in flight"
+    },
+    {
+     "id": "air-flight",
+     "from": "architecture.outdoor_temperature",
+     "to": "flight.air_temperature",
+     "enabled": true,
+     "note": "Air density for thrust"
+    },
+    {
+     "id": "air-fluids",
+     "from": "architecture.outdoor_temperature",
+     "to": "fluids.air_temperature",
+     "enabled": true
+    },
+    {
+     "id": "air-silicon",
+     "from": "architecture.outdoor_temperature",
+     "to": "silicon.ambient",
+     "enabled": true
+    },
+    {
+     "id": "silicon-pcb",
+     "from": "silicon.power",
+     "to": "pcb.u1_power",
+     "enabled": true,
+     "note": "Flight-controller die power is U1's dissipation"
+    },
+    {
+     "id": "mech-pcb",
+     "from": "mech.current_out",
+     "to": "pcb.load_current",
+     "enabled": true,
+     "note": "MOSFET current flows in the OUT and GND copper"
+    },
+    {
+     "id": "mech-fluids-heat",
+     "from": "mech.q1_power",
+     "to": "fluids.heat_load",
+     "enabled": true,
+     "note": "Q1 heat warms the duct air"
+    },
+    {
+     "id": "copper-heat",
+     "from": "pcb.copper_loss",
+     "to": "mech.heat",
+     "enabled": true,
+     "note": "Board copper loss conducted into the ESC heat sink (conservative)"
+    },
+    {
+     "id": "chargers",
+     "from": "flight.charger_heat",
+     "to": "architecture.equipment_power",
+     "enabled": true,
+     "note": "Battery chargers in the hangar charging room"
+    }
+   ],
+   "confirmed": {}
+  },
+  "flight": {
+   "name": "Inspection quadcopter",
+   "rotors": 4,
+   "prop": 381,
+   "fm": 0.65,
+   "motorEfficiency": 0.82,
+   "escEfficiency": 0.97,
+   "designTW": 2,
+   "battery": {
+    "cells": 12,
+    "capacity": 16,
+    "usable": 0.8,
+    "mass": 3.9,
+    "resistance": 0.02
+   },
+   "masses": [
+    {
+     "id": "frame",
+     "name": "Carbon frame and arms",
+     "mass": 1.45
+    },
+    {
+     "id": "motors",
+     "name": "Motors",
+     "mass": 0.92
+    },
+    {
+     "id": "props",
+     "name": "Propellers",
+     "mass": 0.2
+    },
+    {
+     "id": "gimbal",
+     "name": "Gimbal and camera body",
+     "mass": 0.55
+    },
+    {
+     "id": "avionics",
+     "name": "Flight controller, GNSS, radio",
+     "mass": 0.18
+    },
+    {
+     "id": "wiring",
+     "name": "Wiring and connectors",
+     "mass": 0.3
+    }
+   ],
+   "avionicsPower": 14,
+   "temperature": 15,
+   "pressure": 101325,
+   "altitude": 60,
+   "requiredTime": 18,
+   "minTW": 1.8,
+   "capture": 0.15
+  },
+  "mech": {
+   "params": {
+    "fins": 9,
+    "velocity": 2.5,
+    "current": 30,
+    "ambient": 45,
+    "heat": 0,
+    "opticalSize": 0.1,
+    "width": 40,
+    "length": 50,
+    "finHeight": 20,
+    "base": 3,
+    "finThickness": 1.2,
+    "traceWidth": 10,
+    "opticalPower": 0,
+    "absorption": 50
+   },
+   "features": [],
+   "drawings": {}
+  },
+  "parts": {
+   "parts": [
+    {
+     "id": "arms",
+     "name": "Arm tubes",
+     "template": "arm",
+     "model": {
+      "name": "arm tube",
+      "params": {
+       "od": 25,
+       "wall": 1.5,
+       "start": 70,
+       "length": 310
+      },
+      "shape": {
+       "op": "kit",
+       "kit": "pipe_run",
+       "args": {
+        "pipe": {
+         "outer": "od",
+         "wall": "wall"
+        },
+        "part": "wall",
+        "sides": 32,
+        "run": {
+         "start": [
+          "start",
+          0,
+          0
+         ],
+         "direction": [
+          1,
+          0,
+          0
+         ],
+         "legs": [
+          {
+           "leg": "straight",
+           "length": "length"
+          }
+         ]
+        }
+       }
+      },
+      "cell": 0.9
+     },
+     "overrides": {},
+     "x": 0,
+     "y": 0,
+     "z": 12.5,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "cfrp",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "plates",
+     "name": "Centre plates (top and bottom)",
+     "template": "plate",
+     "model": {
+      "name": "centre plate",
+      "params": {
+       "size": 190,
+       "t": 2.5,
+       "hole": 22,
+       "pitch": 48,
+       "holes": 3
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "box",
+        "center": [
+         0,
+         0,
+         "t/2"
+        ],
+        "half": [
+         "size/2",
+         "size/2",
+         "t/2"
+        ],
+        "round": 12
+       },
+       "b": {
+        "op": "array",
+        "shape": {
+         "op": "cylinder_z",
+         "center": [
+          0,
+          0,
+          "t/2"
+         ],
+         "radius": "hole/2",
+         "height": "4*t"
+        },
+        "period": [
+         "pitch",
+         "pitch",
+         0
+        ],
+        "counts": [
+         "holes",
+         "holes",
+         1
+        ]
+       }
+      },
+      "cell": 0.9
+     },
+     "overrides": {},
+     "x": 0,
+     "y": 0,
+     "z": -2.5,
+     "rz": 0,
+     "count": 2,
+     "pattern": "stack",
+     "stack": 27.5,
+     "material": "cfrp",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "mounts",
+     "name": "Motor mounts",
+     "template": "mount",
+     "model": {
+      "name": "motor mount",
+      "params": {
+       "bolts": 4,
+       "bolt_circle": 25,
+       "bolt": 1.6,
+       "thickness": 3,
+       "bore": 8,
+       "od": "bolt_circle + 6*bolt",
+       "hub": 5
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           "thickness/2"
+          ],
+          "radius": "od/2",
+          "height": "thickness"
+         },
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           "thickness + hub/2"
+          ],
+          "radius": "bore/2 + 3",
+          "height": "hub"
+         }
+        ]
+       },
+       "b": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           0
+          ],
+          "radius": "bore/2",
+          "height": "4*(thickness + hub)"
+         },
+         {
+          "op": "polar_array",
+          "axis": [
+           0,
+           0,
+           1
+          ],
+          "count": "bolts",
+          "shape": {
+           "op": "cylinder_z",
+           "center": [
+            "bolt_circle/2",
+            0,
+            "thickness/2"
+           ],
+           "radius": "bolt",
+           "height": "4*thickness"
+          }
+         }
+        ]
+       }
+      },
+      "cell": 0.35
+     },
+     "overrides": {},
+     "x": 368,
+     "y": 0,
+     "z": 25,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "al-6061",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "escbox",
+     "name": "ESC enclosures",
+     "template": "enclosure",
+     "model": {
+      "name": "enclosure",
+      "params": {
+       "w": 90,
+       "d": 70,
+       "h": 40,
+       "wall": 2,
+       "round": 4,
+       "vent": 3,
+       "vents": 6
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "shell",
+        "thickness": "wall",
+        "shape": {
+         "op": "box",
+         "center": [
+          0,
+          0,
+          "h/2"
+         ],
+         "half": [
+          "w/2",
+          "d/2",
+          "h/2"
+         ],
+         "round": "round"
+        }
+       },
+       "b": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "box",
+          "center": [
+           0,
+           0,
+           "h"
+          ],
+          "half": [
+           "w/2 - wall",
+           "d/2 - wall",
+           "wall"
+          ]
+         },
+         {
+          "op": "array",
+          "shape": {
+           "op": "box",
+           "center": [
+            0,
+            "-d/2",
+            "h/2"
+           ],
+           "half": [
+            "vent/2",
+            "wall*2",
+            "h/4"
+           ]
+          },
+          "period": [
+           "vent*2.5",
+           0,
+           0
+          ],
+          "counts": [
+           "vents",
+           1,
+           1
+          ]
+         }
+        ]
+       }
+      },
+      "cell": 0.7
+     },
+     "overrides": {
+      "w": 70,
+      "d": 34,
+      "h": 22,
+      "vents": 5
+     },
+     "x": 190,
+     "y": 0,
+     "z": 26,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "abs",
+     "domain": "Mechanical"
+    }
+   ]
+  },
+  "pcb": {
+   "width": 80,
+   "height": 55,
+   "grid": 0.5,
+   "rules": {
+    "clearance": 0.25,
+    "minWidth": 0.3,
+    "edge": 1,
+    "density": 35
+   },
+   "components": [
+    {
+     "id": "J1",
+     "name": "Power in",
+     "footprint": "connector",
+     "x": 10,
+     "y": 16,
+     "rotation": 90,
+     "nets": [
+      "VCC",
+      "GND"
+     ]
+    },
+    {
+     "id": "U1",
+     "name": "Gate driver",
+     "footprint": "dip8",
+     "x": 32,
+     "y": 26,
+     "rotation": 0,
+     "nets": [
+      "VCC",
+      "PWM",
+      "GND",
+      "GATE",
+      "GND",
+      "GATE",
+      "PWM",
+      "VCC"
+     ]
+    },
+    {
+     "id": "Q1",
+     "name": "Power switch",
+     "footprint": "transistor",
+     "x": 59,
+     "y": 26,
+     "rotation": 0,
+     "nets": [
+      "GATE",
+      "OUT",
+      "GND"
+     ]
+    },
+    {
+     "id": "R1",
+     "name": "Gate resistor",
+     "footprint": "resistor",
+     "x": 46,
+     "y": 16,
+     "rotation": 0,
+     "nets": [
+      "GATE",
+      "GATE"
+     ]
+    },
+    {
+     "id": "C1",
+     "name": "Decoupling",
+     "footprint": "capacitor",
+     "x": 19,
+     "y": 32,
+     "rotation": 0,
+     "nets": [
+      "VCC",
+      "GND"
+     ]
+    },
+    {
+     "id": "J2",
+     "name": "Load",
+     "footprint": "connector",
+     "x": 69,
+     "y": 42,
+     "rotation": 90,
+     "nets": [
+      "OUT",
+      "GND"
+     ]
+    }
+   ],
+   "routes": [],
+   "stackup": {
+    "thickness": 1.6,
+    "copper": 1,
+    "epsr": 4.4
+   },
+   "currents": {
+    "GATE": 0.4,
+    "GND": 30,
+    "OUT": 30,
+    "PWM": 0.05,
+    "VCC": 0.5
+   },
+   "powers": {
+    "R1": 0.05,
+    "U1": 0.35
+   },
+   "loadNets": [
+    "OUT",
+    "GND"
+   ]
+  },
+  "silicon": {
+   "width": 1000,
+   "height": 800,
+   "grid": 10,
+   "margin": 40,
+   "spacing": 20,
+   "target": 70,
+   "blocks": [
+    {
+     "id": "cpu",
+     "name": "CPU core",
+     "kind": "logic",
+     "x": 100,
+     "y": 100,
+     "width": 300,
+     "height": 250,
+     "fixed": false,
+     "power": 420
+    },
+    {
+     "id": "sram",
+     "name": "SRAM macro",
+     "kind": "memory",
+     "x": 500,
+     "y": 100,
+     "width": 350,
+     "height": 280,
+     "fixed": true,
+     "power": 160
+    },
+    {
+     "id": "io",
+     "name": "I/O controller",
+     "kind": "io",
+     "x": 100,
+     "y": 480,
+     "width": 250,
+     "height": 180,
+     "fixed": false,
+     "power": 90
+    },
+    {
+     "id": "dsp",
+     "name": "Signal processing",
+     "kind": "logic",
+     "x": 460,
+     "y": 470,
+     "width": 300,
+     "height": 200,
+     "fixed": false,
+     "power": 310
+    },
+    {
+     "id": "pwm",
+     "name": "Motor PWM (Tiny Tapeout)",
+     "kind": "logic",
+     "x": 790,
+     "y": 470,
+     "width": 150,
+     "height": 200,
+     "fixed": false,
+     "power": 5
+    }
+   ],
+   "chip": {
+    "rtl": [
+     {
+      "block": "cpu",
+      "source": "mini8",
+      "verilog": null
+     },
+     {
+      "block": "pwm",
+      "source": "tt-motor",
+      "verilog": null
+     }
+    ],
+    "frequency": 100,
+    "vdd": 1.2,
+    "activity": 20,
+    "instances": 1,
+    "theta": 45,
+    "ambient": 25
+   }
+  },
+  "litho": {
+   "n": 64,
+   "pixel": 20,
+   "wavelength": 248,
+   "na": 0.75,
+   "sigmaOuter": 0.7,
+   "sigmaInner": 0,
+   "threshold": 0.3,
+   "steepness": 40,
+   "sourcePoints": 5,
+   "shapes": [
+    {
+     "x": 160,
+     "y": 200,
+     "w": 160,
+     "h": 880
+    },
+    {
+     "x": 480,
+     "y": 200,
+     "w": 640,
+     "h": 160
+    },
+    {
+     "x": 480,
+     "y": 360,
+     "w": 160,
+     "h": 400
+    },
+    {
+     "x": 860,
+     "y": 640,
+     "w": 180,
+     "h": 180
+    }
+   ]
+  },
+  "optics": {
+   "wavelength": 550,
+   "source": {
+    "power": 0,
+    "diameter": 10
+   },
+   "rays": 400,
+   "fields": [
+    0,
+    14,
+    20
+   ],
+   "pixel": 3.45,
+   "requiredGsd": 1,
+   "target": {
+    "name": "Image sensor",
+    "z": 70.17675,
+    "diameter": 36.4
+   },
+   "elements": [
+    {
+     "id": "L1",
+     "name": "Front crown",
+     "kind": "lens",
+     "z": 10,
+     "thickness": 3.25896,
+     "diameter": 17,
+     "glass": "N-SK16",
+     "r1": 22.01359,
+     "r2": -435.76044
+    },
+    {
+     "id": "L2",
+     "name": "Flint negative",
+     "kind": "lens",
+     "z": 19.26651,
+     "thickness": 0.99997,
+     "diameter": 12,
+     "glass": "F2",
+     "r1": -22.21328,
+     "r2": 20.29192
+    },
+    {
+     "id": "S1",
+     "name": "Aperture stop",
+     "kind": "stop",
+     "z": 21.18382,
+     "diameter": 7.8
+    },
+    {
+     "id": "L3",
+     "name": "Rear crown",
+     "kind": "lens",
+     "z": 25.01689,
+     "thickness": 2.95208,
+     "diameter": 16,
+     "glass": "N-SK16",
+     "r1": 79.6836,
+     "r2": -18.39533
+    }
+   ]
+  },
+  "fluids": {
+   "temperature": 25,
+   "pressure": 101325,
+   "heatLimit": 15,
+   "fan": {
+    "preset": "wake",
+    "shutoff": 30,
+    "free": 10
+   },
+   "elements": [
+    {
+     "id": "inlet",
+     "name": "Inlet grille",
+     "kind": "fitting",
+     "width": 80,
+     "height": 80,
+     "K": 1.5
+    },
+    {
+     "id": "filter",
+     "name": "Dust filter",
+     "kind": "filter",
+     "width": 80,
+     "height": 80,
+     "coefficient": 25
+    },
+    {
+     "id": "duct",
+     "name": "Supply duct",
+     "kind": "duct",
+     "width": 60,
+     "height": 30,
+     "length": 180,
+     "roughness": 0.0015
+    },
+    {
+     "id": "bend",
+     "name": "90° bend",
+     "kind": "fitting",
+     "width": 60,
+     "height": 30,
+     "K": 0.9
+    },
+    {
+     "id": "sink",
+     "name": "Heat-sink channels",
+     "kind": "channels",
+     "width": 40,
+     "height": 20,
+     "fins": 9,
+     "gap": 3.65,
+     "length": 50,
+     "Kin": 0.5,
+     "Kout": 1
+    }
+   ]
+  },
+  "architecture": {
+   "site": {
+    "name": "Drone hangar",
+    "outdoor": 32,
+    "solar": 450
+   },
+   "glazing": {
+    "U": 3,
+    "shgc": 0.787
+   },
+   "units": 6,
+   "limit": 35,
+   "rooms": [
+    {
+     "id": "charge",
+     "name": "Charging room (BESTEST 600)",
+     "x": 0,
+     "y": 0,
+     "width": 8,
+     "depth": 6,
+     "height": 2.7,
+     "people": 1,
+     "lighting": 8,
+     "mode": "supplied",
+     "supply": 1400,
+     "supplyTemp": 20,
+     "setpoint": 24,
+     "equipment": true,
+     "roofU": 0.318,
+     "walls": {
+      "north": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 0
+      },
+      "east": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 0
+      },
+      "south": {
+       "exterior": true,
+       "U": 0.514,
+       "window": 12
+      },
+      "west": {
+       "exterior": false,
+       "U": 0.35,
+       "window": 0
+      }
+     }
+    },
+    {
+     "id": "bay",
+     "name": "Flight bay",
+     "x": -14,
+     "y": 0,
+     "width": 14,
+     "depth": 10,
+     "height": 6,
+     "people": 2,
+     "lighting": 6,
+     "mode": "conditioned",
+     "supply": 1200,
+     "supplyTemp": 16,
+     "setpoint": 26,
+     "equipment": false,
+     "roofU": 0.25,
+     "walls": {
+      "north": {
+       "exterior": true,
+       "U": 0.35,
+       "window": 0
+      },
+      "east": {
+       "exterior": false,
+       "U": 0.35,
+       "window": 0
+      },
+      "south": {
+       "exterior": true,
+       "U": 0.35,
+       "window": 8
+      },
+      "west": {
+       "exterior": true,
+       "U": 0.35,
+       "window": 0
+      }
+     }
+    },
+    {
+     "id": "ops",
+     "name": "Operations",
+     "x": 0,
+     "y": 6,
+     "width": 8,
+     "depth": 4,
+     "height": 2.7,
+     "people": 3,
+     "lighting": 9,
+     "mode": "conditioned",
+     "supply": 300,
+     "supplyTemp": 16,
+     "setpoint": 24,
+     "equipment": false,
+     "roofU": 0.25,
+     "walls": {
+      "north": {
+       "exterior": true,
+       "U": 0.35,
+       "window": 3
+      },
+      "east": {
+       "exterior": true,
+       "U": 0.35,
+       "window": 2
+      },
+      "south": {
+       "exterior": false,
+       "U": 0.35,
+       "window": 0
+      },
+      "west": {
+       "exterior": false,
+       "U": 0.35,
+       "window": 0
+      }
+     }
+    }
+   ]
+  }
+ }
+}

@@ -20,8 +20,8 @@ def check(url):
             response=route.fetch()
             route.fulfill(response=response,headers={**response.headers,"content-security-policy":POLICY})
         page.route("**/play/emergence/cad/",policy)
-        page.goto(url,wait_until="networkidle")
-        page.wait_for_selector(".requirement[data-status=met]")
+        page.goto(url+"#mechanical",wait_until="networkidle")
+        page.wait_for_selector("#requirements .requirement[data-status=met]")
         page.locator("#param-width").fill("50")
         page.wait_for_function("() => document.querySelector('#handoff-values').textContent.includes('4.90 mm')")
         assert "50 × 50" in page.locator("#geometry-label").inner_text()
@@ -97,6 +97,7 @@ def check(url):
         for width in [320,390,768]:
             page.set_viewport_size({"width":width,"height":844})
             for tab in ["workspace","drawings","review","history"]:
+                page.locator("#studio-tab-"+("history" if tab in ("review","history") else "mechanical")).click()
                 page.locator(f"#tab-{tab}").click()
                 assert page.evaluate("document.documentElement.scrollWidth<=innerWidth+1"),(width,tab)
         browser.close()

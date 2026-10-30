@@ -1,11 +1,19 @@
-import { Repository, FIELDS, values, validParams, validFeatures, featureValues, drawingValues, validDrawings, canonical } from "./repository.js";
+import { Repository, FIELDS, values, validParams, validFeatures, featureValues, drawingValues, validDrawings, canonical, studiosOf } from "./repository.js";
+import { project, mechanical, scheduleSolve, onSolved, onSolving } from "./app.js";
+import { request, onModelStatus } from "./models.js";
+import { seal, unseal } from "./core/integrity.js";
+import { merge3 } from "./core/merge.js";
+import { DOMAIN_INFO } from "./domains/index.js";
+import { format } from "./core/units.js";
 import { Peers } from "./peers.js";
 import { Scene, assemblyParts } from "./scene.js";
 import { drawingDefaults, drawingSVG, profileDXF, bomCSV, releaseProblems } from "./drawings.js";
+import { current as here, rename as renameProject } from "./projects.js";
+import { slug } from "./core/project.js";
 
 const $ = id => document.getElementById(id);
 const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
-const STORE = "emergence-cad-project-v1", VIEW = "emergence-cad-view-v1";
+const STORE = here.key("emergence-cad-project-v1"), VIEW = here.key("emergence-cad-view-v1");
 const domains = {
   Mechanical: { icon: "⬡", color: "var(--cyan)", subtitle: "Geometry & airflow", description: "Dimensions drive the geometry, CAD export, drawing and thermal channel model together." },
   Electrical: { icon: "ϟ", color: "var(--ember)", subtitle: "Power & losses", description: "Current changes conduction losses and the MOSFET temperature feedback loop." },
@@ -18,11 +26,31 @@ function toast(message) { $("toast").textContent = message; $("toast").hidden = 
 const fail = e => toast(e.message || String(e));
 const action = fn => async event => { try { await fn(event); } catch (e) { fail(e); } };
 const repo = await new Repository().init();
+// Every studio's document is part of each revision, as a content-addressed blob.
+repo.blobKinds = Object.fromEntries(project.store.ids().map(id => [id, d => project.store.domains[id].validate(d)]));
+// Revisions from before a document kind existed open with its starter; work
+// from before projects existed used every domain.
+const DEFAULT_STUDIOS = { ...project.store.all(), project: here.legacyManifest() };
+repo.studioDefaults = DEFAULT_STUDIOS;
+const baseStudios = c => ({ ...structuredClone(DEFAULT_STUDIOS), ...repo.studioDocs(c) });
+const STUDIO_DRAFT = here.key("emergence-cad-studios-v1"), AUTOSAVE = here.key("emergence-cad-autosave-v1");
 let storageOK = true;
 try { const stored = localStorage.getItem(STORE); if (stored) await repo.ingest(JSON.parse(stored)); }
 catch (e) { storageOK = false; toast(`Saved project could not be read: ${e.message}. Export any recoverable data before clearing browser storage.`); }
-let active = repo.heads("main")[0], params, features, drawings, domain = "Mechanical", view = "workspace", selected = "sink", drawingPart = "sink";
-const hiddenParts = new Set(), undoStack = [], redoStack = [];
+// A new project's first revision is its file. Author and time are fixed, so
+// an example makes the same revision on every device and peers share it.
+if (repo.commits.size === 1) try {
+  const file = await here.seed();
+  if (file) {
+    const docs = Object.fromEntries(project.store.ids().map(id => [id, project.store.domains[id].validate(structuredClone(file.documents?.[id] ?? project.store.domains[id].example()))]));
+    const m = file.documents?.mech || {}, p0 = values(m.params || {}), f0 = m.features || [], d0 = m.drawings || {};
+    if (!validParams(p0) || !validFeatures(f0) || !validDrawings(d0)) throw new Error("its mechanical design is outside the supported ranges");
+    await repo.commit("main", [repo.root], p0, { author: "EvolveTech", domain: "Systems" }, `Start ${docs.project.name} from its project file`, f0, d0, await repo.putStudios(docs), "2026-10-30T00:00:00.000Z");
+    if (storageOK) try { localStorage.setItem(STORE, JSON.stringify({ ...repo.bundle(), id: here.id, name: docs.project.name })); here.clearSeed(); } catch { storageOK = false; }
+  }
+} catch (e) { toast(`The project file could not be opened (${e.message}). Starting from an empty history.`); }
+let active = repo.heads("main")[0], params, features, drawings, domain = "Mechanical", view = "workspace", historyView = "review", selected = "sink", drawingPart = "sink";
+const hiddenParts = new Set();
 try {
   const saved = JSON.parse(sessionStorage.getItem(VIEW) || "null");
   if (repo.commits.has(saved?.head)) { active = saved.head; if (validParams(saved.params)) params = values(saved.params); if (validFeatures(saved.features)) features = saved.features;
@@ -30,52 +58,65 @@ try {
   $("author").value = localStorage.getItem("emergence-cad-author") || "Guest engineer";
 } catch { /* Browser storage may be unavailable; export remains usable. */ }
 params ||= values(repo.commits.get(active).params); features ||= structuredClone(featureValues(repo.commits.get(active))); drawings ||= structuredClone(drawingValues(repo.commits.get(active)));
-let peers, mergePlan, comparisonGeneration = 0, generation = 0, evaluateTimer;
+{
+  let docs = baseStudios(repo.commits.get(active));
+  const read = (store, key) => { try { return JSON.parse(store.getItem(key) || "null"); } catch { return null; } };
+  // A draft belongs to the revision it was made on; drafts from the separate
+  // PCB and silicon editors predate projects and belong to the migrated one.
+  const saved = [read(sessionStorage, STUDIO_DRAFT), read(localStorage, AUTOSAVE)].find(s => s?.head === active && s.docs && typeof s.docs === "object");
+  if (saved) docs = { ...docs, ...saved.docs };
+  else if (here.id === "local") for (const kind of ["pcb", "silicon"]) { const legacy = read(localStorage, `emergence-${kind}-v1`); if (legacy?.design) docs[kind] = legacy.design; }
+  try { project.store.load(docs, "restore"); } catch (e) { project.store.load(baseStudios(repo.commits.get(active)), "restore"); toast(`A saved studio draft could not be read (${e.message}). The revision's documents were loaded instead.`); }
+}
+let peers, mergePlan, comparisonGeneration = 0;
 const identity = () => ({ author: $("author").value.trim() || "Guest engineer", domain });
 const current = () => repo.commits.get(active);
-const dirty = () => repo.diff(current().params, params).length > 0 || repo.featureDiff(featureValues(current()), features).length > 0 || canonical(drawingValues(current())) !== canonical(drawings);
+let studioMemo = { version: -1, base: null, dirty: false };
+let storeVersion = 0; project.store.on(() => storeVersion++);
+const studioChanges = () => { const base = baseStudios(current()), docs = project.store.docs; return project.store.ids().filter(id => canonical(base[id]) !== canonical(docs[id])); };
+const studiosDirty = () => {
+  if (studioMemo.version !== storeVersion || studioMemo.base !== active) studioMemo = { version: storeVersion, base: active, dirty: studioChanges().length > 0 };
+  return studioMemo.dirty;
+};
+const dirty = () => repo.diff(current().params, params).length > 0 || repo.featureDiff(featureValues(current()), features).length > 0 || canonical(drawingValues(current())) !== canonical(drawings) || studiosDirty();
 function saveDraft() {
-  try { sessionStorage.setItem(VIEW, JSON.stringify({ head: active, params, features, drawings })); }
+  try { sessionStorage.setItem(VIEW, JSON.stringify({ head: active, params, features, drawings })); sessionStorage.setItem(STUDIO_DRAFT, JSON.stringify({ head: active, docs: project.store.docs })); localStorage.setItem(AUTOSAVE, JSON.stringify({ head: active, docs: project.store.docs })); }
   catch { storageOK = false; }
   renderStorage();
 }
+project.store.on(({ reason, ids }) => { if (reason !== "restore-session") { saveDraft(); renderDraft(); } if (ids.includes("project")) renameProject(project.store.docs.project.name); });
+renameProject(project.store.docs.project.name);
+// Every bundle names its project, so a history never joins another project's.
+const bundle = () => ({ ...repo.bundle(), id: here.id, name: project.store.docs.project.name });
 function renderStorage() { $("storage-status").textContent = storageOK ? "Saved on this device" : "Storage unavailable · export to keep changes"; }
 function persist(publish = true) {
-  if (storageOK) try { localStorage.setItem(STORE, JSON.stringify(repo.bundle())); } catch { storageOK = false; }
+  if (storageOK) try { localStorage.setItem(STORE, JSON.stringify(bundle())); } catch { storageOK = false; }
   saveDraft(); if (publish) peers?.publish();
 }
 function requireClean() { if (dirty()) throw new Error("Save or discard your draft before switching, branching or merging."); }
+function loadRevision(c) { params = values(c.params); features = structuredClone(featureValues(c)); drawings = structuredClone(drawingValues(c)); project.store.load(baseStudios(c), "checkout"); }
 function checkout(id) {
-  requireClean(); active = id; params = values(current().params); features=structuredClone(featureValues(current()));drawings=structuredClone(drawingValues(current())); undoStack.length=0;redoStack.length=0; $("message").value = ""; saveDraft(); renderRepository(); renderParameters(); renderTree(); queueEvaluation();
+  requireClean(); active = id; loadRevision(current()); project.bus.clearHistory(); $("message").value = ""; saveDraft(); renderRepository(); renderParameters(); renderTree(); queueEvaluation();
 }
-const snapshot=()=>structuredClone({params,features,drawings});
-function remember(){undoStack.push(snapshot());if(undoStack.length>50)undoStack.shift();redoStack.length=0;}
-function reviewDrawings(id){for(const [key,d] of Object.entries(drawings))if((!id||key===id)&&d.status==="Released")drawings[key]={...d,status:"For review"};}
 function restore(s){({params,features,drawings}=structuredClone(s));saveDraft();renderTree();renderParameters();renderDraft();queueEvaluation();if(view==="drawings")renderDrawing();}
-$("undo").addEventListener("click",()=>{if(undoStack.length){redoStack.push(snapshot());restore(undoStack.pop());}});
-$("redo").addEventListener("click",()=>{if(redoStack.length){undoStack.push(snapshot());restore(redoStack.pop());}});
+// The mechanical design is one domain of the shared project; commands from
+// any surface (UI, command line, demo, scripts, agents) edit it through here.
+Object.assign(mechanical, {
+  state: () => ({ params, features, drawings }),
+  snapshot: () => structuredClone({ params, features, drawings }),
+  restore,
+  set(next) {
+    if (!validParams(next.params) || !validFeatures(next.features) || !validDrawings(next.drawings)) throw new Error("That change leaves the mechanical design outside its supported ranges.");
+    restore(next); renderDraft();
+  },
+});
+const mech = (op, args) => project.bus.run(op, args).catch(fail);
+$("undo").addEventListener("click",()=>project.bus.undo());
+$("redo").addEventListener("click",()=>project.bus.redo());
+project.bus.on(() => renderDraft());
 
-// Real Rust models run in the existing lab Worker, under the same site CSP.
-let requestId = 0, worker;
-const pending = new Map();
-function workerFailure(error) {
-  worker?.terminate(); worker = null;
-  for (const p of pending.values()) { clearTimeout(p.timer); p.reject(error); } pending.clear();
-  $("model-status").textContent = `Models unavailable: ${error.message}. Reload to retry.`;
-}
-try {
-  worker = new Worker(new URL("../worker.js", import.meta.url), { type: "module" });
-  worker.onmessage = ({ data }) => { const p = pending.get(data.id); if (!p) return; clearTimeout(p.timer); pending.delete(data.id);
-    data.error || data.result?.error ? p.reject(new Error(data.error || data.result.error)) : p.resolve(data); };
-  worker.onerror = e => workerFailure(new Error(e.message || "The model Worker failed"));
-} catch (e) { workerFailure(e); }
-function request(type, args = {}) {
-  if (!worker) return Promise.reject(new Error("The model Worker is unavailable"));
-  return new Promise((resolve, reject) => {
-    const id = ++requestId, timer = setTimeout(() => workerFailure(new Error("Model exceeded the 45-second time limit")), 45000);
-    pending.set(id, { resolve, reject, timer }); worker.postMessage({ id, type, ...args });
-  });
-}
+// Real Rust models run in the shared lab Worker, under the same site CSP.
+onModelStatus(({ error }) => { $("model-status").textContent = `Models unavailable: ${error.message}. Reload to retry.`; });
 const scene = new Scene($("assembly"));
 function draw() { scene.update(params, domain, $("exploded").checked,features,selected,hiddenParts); $("geometry-label").textContent = `${params.width} × ${params.length} mm · ${params.fins} fins · ${params.finHeight} mm height`; $("stl").disabled=["board","q1","optic"].includes(selected); }
 scene.onselect=id=>selectPart(id);
@@ -106,8 +147,12 @@ function renderDomains() {
 }
 function renderDraft() {
   const changed = repo.diff(current().params, params);
-  $("commit").disabled = !dirty(); $("discard").disabled = !dirty();$("undo").disabled=!undoStack.length;$("redo").disabled=!redoStack.length;
-  $("draft-status").textContent = dirty() ? `${changed.length} parameters, ${repo.featureDiff(featureValues(current()),features).length} parts changed · local draft` : "No uncommitted changes";
+  const u = project.bus.undoStack.at(-1), r = project.bus.redoStack.at(-1);
+  $("commit").disabled = !dirty(); $("discard").disabled = !dirty();$("undo").disabled=!u;$("redo").disabled=!r;
+  $("undo").title = u ? `Undo: ${u.label}` : "Nothing to undo"; $("redo").title = r ? `Redo: ${r.label}` : "Nothing to redo";
+  const studios = studiosDirty() ? studioChanges().map(id => DOMAIN_INFO[id]?.title || id) : [];
+  $("draft-status").textContent = dirty() ? `${changed.length} parameters, ${repo.featureDiff(featureValues(current()),features).length} parts${studios.length ? `, ${studios.join(", ")}` : ""} changed · local draft` : "No uncommitted changes";
+  document.dispatchEvent(new CustomEvent("emergence:draft", { detail: { dirty: dirty(), studios, head: active } }));
 }
 function renderParameters() {
   $("domain-title").textContent = domain; $("domain-description").textContent = domains[domain].description;
@@ -119,8 +164,13 @@ function renderParameters() {
     input.type = "range"; input.id = `param-${key}`; input.min = f.min; input.max = f.max; input.step = f.step; input.value = params[key]; label.htmlFor = input.id; out.htmlFor = input.id;
     label.append(out); wrap.append(label, input, el("p", `${f.min}–${f.max} ${f.unit} · ${f.domain} owns this input`, "unit-note"));
     const number=el("input");number.type="number";number.min=f.min;number.max=f.max;number.step=f.step;number.value=params[key];number.setAttribute("aria-label",`${f.label} exact value`);number.className="parameter-number";
-    const change=value=>{remember();params[key]=Number(value);reviewDrawings();input.value=params[key];number.value=params[key];out.value=`${params[key]} ${f.unit}`;saveDraft();renderDraft();draw();queueEvaluation();};
+    const change=value=>mech("mech.set",{name:key,value:Number(value)});
     input.addEventListener("input",()=>change(input.value));number.addEventListener("change",()=>{if(number.value!==""&&number.checkValidity())change(number.value);else{number.value=params[key];toast(`Enter ${f.min}–${f.max} ${f.unit}.`);}});wrap.append(number);
+    const linked=linkedInput(key);
+    if(linked){input.disabled=number.disabled=true;wrap.classList.add("linked");out.value=`${format(linked.value,"")} ${f.unit}`;
+      const note=el("p",undefined,"link-note"),unlink=el("button","Unlink");unlink.type="button";
+      note.append(el("span",`⛓ Driven by ${linked.from.map(port=>DOMAIN_INFO[port.split(".")[0]]?.title||port).join(" + ")} · ${linked.from.join(", ")}`));
+      unlink.addEventListener("click",()=>Promise.all(linked.links.map(id=>project.bus.run("system.toggle",{id,enabled:false}))).catch(fail));note.append(unlink);wrap.append(note);}
     $("parameters").append(wrap);
   }
   $("optical-result").hidden = domain !== "Photonics"; renderDraft(); draw();
@@ -128,19 +178,16 @@ function renderParameters() {
 function renderPartProperties(part){
   const root=$("part-properties");root.replaceChildren();
   const name=el("input");name.value=part.name;name.maxLength=60;name.setAttribute("aria-label","Part name");
-  name.addEventListener("change",()=>{if(!name.value.trim()){name.value=part.name;return;}remember();part.name=name.value.trim();reviewDrawings(part.id);$("domain-title").textContent=part.name;saveDraft();renderTree();renderDraft();});root.append(name);
+  name.addEventListener("change",()=>{if(!name.value.trim()){name.value=part.name;return;}mech("mech.update_part",{id:part.id,name:name.value.trim()});});root.append(name);
   for(const [key,label,min,max] of [["x","X position",-100,100],["y","Y position",-100,100],["z","Z base",-100,100],
     ["width",part.shape==="cylinder"?"Diameter":"Width",1,50],["depth","Depth",1,50],["height","Height",1,50]]){
     if(key==="depth"&&part.shape==="cylinder")continue;
     const row=el("label",`${label} / mm`),input=el("input");input.type="number";input.min=min;input.max=max;input.step=.1;input.value=part[key];input.id=`part-${key}`;row.htmlFor=input.id;
-    input.addEventListener("change",()=>{if(input.value===""||!input.checkValidity()){input.value=part[key];return;}remember();part[key]=Number(input.value);reviewDrawings(part.id);if(part.shape==="cylinder"&&key==="width")part.depth=part.width;saveDraft();renderDraft();draw();});row.append(input);root.append(row);
+    input.addEventListener("change",()=>{if(input.value===""||!input.checkValidity()){input.value=part[key];return;}mech("mech.update_part",{id:part.id,[key]:Number(input.value)});});row.append(input);root.append(row);
   }
   const drawing=el("button","Prepare shop drawing");drawing.type="button";drawing.addEventListener("click",()=>{drawingPart=part.id;showView("drawings");});
-  const duplicate=el("button","Duplicate extrusion");duplicate.type="button";duplicate.addEventListener("click",()=>{
-    if(features.length>=16){toast("The prototype supports sixteen custom solids.");return;}
-    remember();const copy={...part,id:"part-"+crypto.randomUUID().slice(0,12),name:(part.name+" copy").slice(0,60),x:Math.min(100,part.x+5)};features.push(copy);saveDraft();selectPart(copy.id);
-  });
-  const remove=el("button","Delete part");remove.type="button";remove.addEventListener("click",()=>{remember();features=features.filter(f=>f.id!==part.id);delete drawings[part.id];selected="sink";saveDraft();renderTree();renderParameters();});root.append(drawing,duplicate,remove);
+  const duplicate=el("button","Duplicate extrusion");duplicate.type="button";duplicate.addEventListener("click",()=>project.bus.run("mech.duplicate_part",{id:part.id}).then(r=>selectPart(r.id)).catch(fail));
+  const remove=el("button","Delete part");remove.type="button";remove.addEventListener("click",()=>{selected="sink";mech("mech.remove_part",{id:part.id});});root.append(drawing,duplicate,remove);
 }
 $("add-part").addEventListener("click",()=>$("part-dialog").showModal());
 $("sketch-part").addEventListener("click",()=>{$("part-dialog").showModal();renderSketch();});
@@ -165,16 +212,14 @@ function renderSketch(){
 }
 for(const id of ["part-shape","sketch-width","sketch-depth","sketch-height"])$(id).addEventListener("input",renderSketch);
 renderSketch();
-$("part-form").addEventListener("submit",action(e=>{e.preventDefault();if(features.length>=16)throw new Error("The prototype supports sixteen custom solids.");remember();
-  const part={id:`part-${crypto.randomUUID().slice(0,12)}`,name:$("part-name").value.trim(),shape:$("part-shape").value,domain:$("part-domain").value,x:params.width/2+20,y:0,z:0,width:Number($("sketch-width").value),depth:$("part-shape").value==="cylinder"?Number($("sketch-width").value):Number($("sketch-depth").value),height:Number($("sketch-height").value)};
-  features.push(part);saveDraft();$("part-dialog").close();selectPart(part.id);toast("Part added to your draft. Edit dimensions, then save a revision.");
+$("part-form").addEventListener("submit",action(async e=>{e.preventDefault();
+  const circle=$("part-shape").value==="cylinder",r=await project.bus.run("mech.add_part",{name:$("part-name").value.trim(),shape:$("part-shape").value,domain:$("part-domain").value,width:Number($("sketch-width").value),depth:circle?Number($("sketch-width").value):Number($("sketch-depth").value),height:Number($("sketch-height").value)});
+  $("part-dialog").close();selectPart(r.id);toast("Part added to your draft. Edit dimensions, then save a revision.");
 }));
-$("apply-preset").addEventListener("click",()=>{remember();const preset=$("preset").value;
-  params=values({});features=[];drawings={};
-  if(preset==="compact")Object.assign(params,{width:32,length:35,finHeight:16,fins:10,velocity:2,current:20});
-  if(preset==="optical")Object.assign(params,{width:55,length:65,fins:12,opticalPower:4,absorption:65,current:20});
-  selected="sink";domain="Mechanical";saveDraft();renderDomains();renderTree();renderParameters();queueEvaluation();toast("Preset applied as an editable draft. Undo restores your previous work.");
-});
+$("apply-preset").addEventListener("click",action(async()=>{selected="sink";domain="Mechanical";
+  await project.bus.run("mech.preset",{name:{reference:"reference",compact:"compact",optical:"optical"}[$("preset").value]});
+  renderDomains();toast("Preset applied as an editable draft. Undo restores your previous work.");
+}));
 
 function renderDrawing(){
   const parts=assemblyParts(params,features).filter(p=>p.shape!=="context");
@@ -187,7 +232,7 @@ function renderDrawing(){
     else if(key==="notes"){input=el("textarea");input.rows=4;input.maxLength=600;}
     else{input=el("input");input.maxLength=key==="tolerance"?8:80;if(key==="tolerance")input.inputMode="decimal";}
     input.id=`drawing-${key}`;input.value=meta[key];labelNode.htmlFor=input.id;labelNode.append(input);$("drawing-fields").append(labelNode);
-    input.addEventListener("change",()=>{remember();const next={...meta,...(drawings[drawingPart]||{}),[key]:input.value};if(key!=="status"&&next.status==="Released"){next.status="For review";$("drawing-status").value=next.status;}drawings[drawingPart]=next;saveDraft();renderDraft();updateSheet();});
+    input.addEventListener("change",()=>project.bus.run("mech.drawing",{part:drawingPart,field:key,value:input.value}).then(()=>{if($("drawing-status"))$("drawing-status").value=(drawings[drawingPart]||meta).status;updateSheet();}).catch(e=>{input.value=(drawings[drawingPart]||meta)[key];fail(e);}));
   }
   updateSheet();
 }
@@ -223,26 +268,36 @@ function renderChecks(result) {
   }
 }
 function queueEvaluation() {
-  const gen = ++generation; clearTimeout(evaluateTimer);
-  $("model-status").textContent = "Inputs changed · recalculating Rust design checks…";
-  $("requirements").replaceChildren(el("p", "Recalculating checks for the current parameters…", "small muted"));
-  $("handoff-values").replaceChildren(el("p","Recalculating handoffs…","small muted"));
-  if (domain === "Photonics") $("optical-result").textContent = "Evaluating independent optical model…";
-  evaluateTimer = setTimeout(() => evaluate(gen).catch(e => { if (gen === generation) { $("model-status").textContent = `Models unavailable: ${e.message}`; $("requirements").replaceChildren(el("p", "Checks unavailable. Reload to retry.", "small muted")); fail(e); } }), 160);
+  $("model-status").textContent = "Inputs changed · solving the linked system…";
+  scheduleSolve(["mech"]);
 }
-async function evaluate(gen) {
-  const state = { ...params }, result = await request("workspace", state);
-  if (gen !== generation) return;
-  renderChecks(result.result); $("model-status").textContent = `Rust + WASM · ${result.ms.toFixed(0)} ms · ${result.result.computed} model runs · assumptions apply`;
+let lastSolution = null;
+const linkedInput = key => lastSolution?.applied[`mech.${key}`];
+onSolving.add((busy, error) => { if (error) { $("model-status").textContent = `Models unavailable: ${error.message}`; fail(error); } });
+onSolved(s => {
+  const r = s.results.mech, before = lastSolution; lastSolution = s;
+  if (!r || r.error || !r.details) { $("model-status").textContent = `Mechanical model unavailable: ${r?.error || "no result"}`; $("requirements").replaceChildren(el("p", r?.error || "Checks unavailable.", "small muted")); return; }
+  renderChecks(r.details);
+  $("model-status").textContent = `Rust + WASM · linked system: ${s.iterations} pass${s.iterations > 1 ? "es" : ""}${s.cyclic ? (s.converged ? ", coupled loop settled" : ", not settled") : ""} · ${s.ms.toFixed(0)} ms · assumptions apply`;
   $("handoff-values").replaceChildren();
-  const h=result.result.handoffs,nodes=result.result.nodes;
-  for(const [name,value,detail] of [["Photonics → heat",`${h.optical_heat_w.toFixed(2)} W`,"Prescribed incident power × absorbed fraction"],["External → heat",`${h.external_heat_w.toFixed(2)} W`,"Deposited heat boundary at Q1"],["Electrical → thermal",nodes["q1.power"]?`${nodes["q1.power"].nominal.toFixed(2)} W`:"Unavailable","Temperature-dependent Q1 losses"],["Mechanical → flow",`${h.gap_mm.toFixed(2)} mm`,"Channel gap from shared geometry"]]){const card=el("article");card.append(el("strong",name),el("b",value),el("span",detail));$("handoff-values").append(card);}
-  if (domain === "Photonics") {
-    const optical = await request("optics", { material: 0, x: state.opticalSize, tolerance: 1e-5 });
-    if (gen !== generation || domain !== "Photonics") return;
-    const p = optical.result.point;
+  const h = r.details.handoffs, nodes = r.details.nodes, o = s.outputs;
+  const cards = [["Photonics → heat", `${h.optical_heat_w.toFixed(2)} W`, s.applied["mech.opticalPower"] ? `Optics studio traces ${format(o["optics.power_on_target"]?.value, "W")} onto Q1 × absorbed fraction` : "Prescribed incident power × absorbed fraction"],
+    ["External → heat", `${h.external_heat_w.toFixed(2)} W`, "Deposited heat boundary at Q1"],
+    ["Electrical → thermal", nodes["q1.power"] ? `${nodes["q1.power"].nominal.toFixed(2)} W` : "Unavailable", "Temperature-dependent Q1 losses"],
+    ["Mechanical → flow", `${h.gap_mm.toFixed(2)} mm`, s.applied["fluids.sink_gap"] ? "Channel gap drives the Fluids air path" : "Channel gap from shared geometry"]];
+  if (s.applied["mech.velocity"]) cards.push(["Fluids → airflow", format(s.applied["mech.velocity"].value, "m/s"), `Fan operating point · ${format(o["fluids.flow"]?.value, "L/s")}`]);
+  if (s.applied["mech.ambient"]) cards.push(["Architecture → inlet", format(s.applied["mech.ambient"].value, "degC"), "Equipment room air from the building heat balance"]);
+  for (const [name, value, detail] of cards) { const card = el("article"); card.append(el("strong", name), el("b", value), el("span", detail)); $("handoff-values").append(card); }
+  // Linked sliders show the driving value; re-render when that set changes.
+  if (!before || canonical(Object.keys(before.applied).filter(k => k.startsWith("mech.")).map(k => [k, before.applied[k].value.toPrecision(4)])) !== canonical(Object.keys(s.applied).filter(k => k.startsWith("mech.")).map(k => [k, s.applied[k].value.toPrecision(4)]))) renderParameters();
+  if (domain === "Photonics") evaluateOptics();
+});
+async function evaluateOptics() {
+  $("optical-result").textContent = "Evaluating independent optical model…";
+  try { const optical = await request("optics", { material: 0, x: params.opticalSize, tolerance: 1e-5 });
+    if (domain !== "Photonics") return; const p = optical.result.point;
     $("optical-result").textContent = `${["Rayleigh expansion", "Folded table", "Mie series"][p.rung]} · Qext ${p.q.toFixed(5)} · reference discrepancy ${p.error.toExponential(1)} · ${p.rigor}. Mineral-dust index estimate.`;
-  }
+  } catch (e) { $("optical-result").textContent = `Optical model unavailable: ${e.message}`; }
 }
 
 function renderPeers() {
@@ -260,7 +315,7 @@ function renderRepository() {
   }
   if (![...$("branch").options].some(o => o.value === active)) { const option = el("option", `${current().branch} · ${active.slice(0,7)} (working base)`); option.value = active; $("branch").append(option); }
   $("branch").value = active; $("revision-count").textContent = repo.commits.size; $("head-label").textContent = active.slice(0,7);
-  renderPeers(); renderDraft(); if (view === "review") renderReview(); if (view === "history") renderHistory();
+  renderPeers(); renderDraft(); if (!$("history-studio").hidden) { if (historyView === "review") renderReview(); else renderHistory(); }
   if(view==="drawings")renderDrawing();
 }
 $("branch").addEventListener("change", action(() => { const id = $("branch").value; try { checkout(id); } finally { $("branch").value = active; } }));
@@ -268,7 +323,7 @@ $("new-branch").addEventListener("click", action(() => { requireClean(); $("bran
 $("branch-form").addEventListener("submit", action(async e => {
   e.preventDefault(); requireClean(); const name = $("branch-name").value.trim();
   if (repo.branches().includes(name)) throw new Error("That branch already exists. Choose another name.");
-  const c = await repo.commit(name, [active], params, identity(), `Create branch ${name}`,features,drawings);
+  const c = await repo.commit(name, [active], params, identity(), `Create branch ${name}`,features,drawings,await repo.putStudios(project.store.all()));
   active = c.id; persist(); $("branch-dialog").close(); $("branch-name").value = ""; renderRepository(); toast(`Created ${name}.`);
 }));
 $("commit").addEventListener("click", action(async () => {
@@ -276,25 +331,31 @@ $("commit").addEventListener("click", action(async () => {
   const message = $("message").value.trim(); if (!message) { $("message").focus(); throw new Error("Describe the design change before saving a revision."); }
   const branch = current().branch, parent = active, values = { ...params };
   $("commit").disabled = true;
-  try { const c = await repo.commit(branch, [parent], values, identity(), message,features,drawings); active = c.id;
+  try { const c = await repo.commit(branch, [parent], values, identity(), message,features,drawings,await repo.putStudios(project.store.all())); active = c.id;
     $("message").value = ""; persist(); renderRepository();if(view==="drawings")renderDrawing(); toast(`Saved ${c.id.slice(0,7)} to ${branch}.`);
   } finally { renderDraft(); }
 }));
-$("discard").addEventListener("click", () => {remember(); params=values(current().params);features=structuredClone(featureValues(current()));drawings=structuredClone(drawingValues(current())); saveDraft(); renderParameters();renderTree(); queueEvaluation(); });
+$("discard").addEventListener("click", action(() => project.bus.transaction("Discard draft", ["mech", ...project.store.ids()], () => { loadRevision(current()); saveDraft(); renderParameters(); renderTree(); queueEvaluation(); })));
 $("author").addEventListener("change", () => { try { localStorage.setItem("emergence-cad-author", identity().author); } catch { /* Optional preference. */ } peers.hello(); });
 
+// Two view groups: the mechanical studio's workspace and drawings, and the
+// History studio's reviews and revision list.
 function showView(name, focus = false) {
-  view = name;
-  for (const tab of document.querySelectorAll("[data-view]")) { const on = tab.dataset.view === name; tab.setAttribute("aria-selected", String(on)); tab.tabIndex = on ? 0 : -1; $(`${tab.dataset.view}-view`).hidden = !on; if (on && focus) tab.focus(); }
+  const group = [...document.querySelector(`[data-view="${name}"]`).parentElement.querySelectorAll("[data-view]")];
+  if (["review", "history"].includes(name)) historyView = name; else view = name;
+  for (const tab of group) { const on = tab.dataset.view === name; tab.setAttribute("aria-selected", String(on)); tab.tabIndex = on ? 0 : -1; $(`${tab.dataset.view}-view`).hidden = !on; if (on && focus) tab.focus(); }
   if (name === "review") renderReview(); if (name === "history") renderHistory(); if (name === "workspace") draw();
   if(name==="drawings"){if(["sink",...features.map(f=>f.id)].includes(selected))drawingPart=selected;renderDrawing();}
 }
-const tabs = [...document.querySelectorAll("[data-view]")];
-tabs.forEach((b, i) => {
-  b.addEventListener("click", () => showView(b.dataset.view));
-  b.addEventListener("keydown", e => { const n = e.key === "ArrowRight" ? (i+1)%tabs.length : e.key === "ArrowLeft" ? (i+tabs.length-1)%tabs.length : e.key === "Home" ? 0 : e.key === "End" ? tabs.length-1 : -1;
-    if (n >= 0) { e.preventDefault(); showView(tabs[n].dataset.view, true); } });
-});
+for (const list of document.querySelectorAll(".view-tabs")) {
+  const tabs = [...list.querySelectorAll("[data-view]")];
+  tabs.forEach((b, i) => {
+    b.addEventListener("click", () => showView(b.dataset.view));
+    b.addEventListener("keydown", e => { const n = e.key === "ArrowRight" ? (i+1)%tabs.length : e.key === "ArrowLeft" ? (i+tabs.length-1)%tabs.length : e.key === "Home" ? 0 : e.key === "End" ? tabs.length-1 : -1;
+      if (n >= 0) { e.preventDefault(); showView(tabs[n].dataset.view, true); } });
+  });
+}
+document.addEventListener("emergence:studio", e => { if (e.detail === "history") showView(historyView); if (e.detail === "mechanical" && view === "workspace") draw(); });
 function renderReview() {
   const previous = $("compare").value; $("compare").replaceChildren();
   for (const branch of repo.branches()) for (const id of repo.heads(branch)) if (id !== active) { const c = repo.commits.get(id), option = el("option", `${branch} · ${id.slice(0,7)} · ${c.message}`); option.value = id; $("compare").append(option); }
@@ -348,6 +409,25 @@ function compare() {
       select.addEventListener("change",()=>{if(!select.value)p.choices.delete(key);else{p.choices.add(key);const d=(select.value==="source"?sd:td)[id];if(d)p.drawings[id]=structuredClone(d);else delete p.drawings[id];}evaluateMerge();});row.append(select);
     }$("diff").append(row);
   }
+  p.studioChoices = {};
+  for (const kind of repo.studioDiff(p.target, p.source)) {
+    const row = el("div", undefined, "diff-row"), info = DOMAIN_INFO[kind] || { title: kind }, conflicts = p.studioConflicts.filter(c => c.kind === kind);
+    row.append(el("strong", `${info.icon || "◇"} ${info.title} design`), el("p", conflicts.length ? `${conflicts.length} field${conflicts.length > 1 ? "s" : ""} changed on both branches.` : "Changed on one branch or in different objects: merged automatically by object id.", "small muted"));
+    for (const c of conflicts) {
+      const key = `studio:${kind}:${c.path}`; p.conflicts.push(key);
+      row.append(el("p", `Conflict · ${c.path || "whole document"}: ${JSON.stringify(c.target)?.slice(0, 60)} vs ${JSON.stringify(c.source)?.slice(0, 60)}`, "conflict"));
+      const select = el("select"); select.setAttribute("aria-label", `Resolve ${info.title} ${c.path}`);
+      for (const [value, label] of [["", "Select a resolution…"], ["target", "Keep active"], ["source", "Use incoming"]]) { const o = el("option", label); o.value = value; select.append(o); }
+      select.addEventListener("change", () => {
+        if (!select.value) { p.choices.delete(key); delete (p.studioChoices[kind] ||= {})[c.path]; }
+        else { p.choices.add(key); (p.studioChoices[kind] ||= {})[c.path] = select.value; }
+        const docs = [p.base, p.target, p.source].map(x => baseStudios(x)[kind]);
+        p.studios[kind] = merge3(docs[0], docs[1], docs[2], p.studioChoices[kind] || {}).value; evaluateMerge();
+      });
+      row.append(select);
+    }
+    $("diff").append(row);
+  }
   p.checks = el("p", "", "review-checks"); $("diff").append(p.checks); evaluateMerge();
 }
 async function evaluateMerge() {
@@ -355,6 +435,7 @@ async function evaluateMerge() {
   if (!p) return;
   if (p.conflicts.some(k => !p.choices.has(k))) { p.checks.textContent = "Resolve every conflict before evaluating the merge."; return; }
   if(!validFeatures(p.features)||!validDrawings(p.drawings)){p.checks.textContent="The combined parts or drawings exceed the supported limits. Reconcile them on a branch first.";return;}
+  try { for (const [k, d] of Object.entries(p.studios)) repo.blobKinds[k](structuredClone(d)); } catch (e) { p.checks.textContent = `The merged design documents are not valid together (${e.message}). Reconcile them on a branch first.`; return; }
   if (repo.ancestor(p.source.id, active)) { p.checks.textContent = "The incoming revision is already included in your active history."; return; }
   if (dirty()) { p.checks.textContent = "Save or discard your draft before merging."; return; }
   p.checks.textContent = "Recalculating the proposed merge in Rust…";
@@ -367,8 +448,9 @@ $("compare").addEventListener("change", compare);
 $("merge").addEventListener("click", action(async () => {
   requireClean(); const p = mergePlan; if (!p || $("merge").disabled || p.target.id !== active) throw new Error("Reopen the comparison before merging.");
   $("merge").disabled = true;
-  const c = await repo.commit(current().branch, [active, p.source.id], p.params, identity(), `Merge ${p.source.branch} (${p.source.id.slice(0,7)})`,p.features,p.drawings);
-  active = c.id; params = values(c.params);features=structuredClone(featureValues(c));drawings=structuredClone(drawingValues(c)); persist(); renderRepository(); renderParameters();renderTree(); queueEvaluation(); toast(`Merged into ${c.branch}. All source revisions are retained.`);
+  const studios = Object.keys(p.studios).length ? await repo.putStudios({ ...baseStudios(current()), ...p.studios }) : undefined;
+  const c = await repo.commit(current().branch, [active, p.source.id], p.params, identity(), `Merge ${p.source.branch} (${p.source.id.slice(0,7)})`,p.features,p.drawings,studios);
+  active = c.id; loadRevision(c); project.bus.clearHistory(); persist(); renderRepository(); renderParameters();renderTree(); queueEvaluation(); toast(`Merged into ${c.branch}. All source revisions are retained.`);
 }));
 $("post-review").addEventListener("click", action(async () => {
   await repo.note($("compare").value || active, identity(), $("review-text").value, $("review-kind").value);
@@ -382,9 +464,11 @@ function renderHistory() {
     const parent = repo.commits.get(c.parents[0]);
     if (parent) { const list = el("ul"); for (const key of repo.diff(parent.params, c.params)) list.append(el("li", `${FIELDS[key].label}: ${values(parent.params)[key]} → ${values(c.params)[key]} ${FIELDS[key].unit}`));
       for(const id of repo.featureDiff(featureValues(parent),featureValues(c)))list.append(el("li",`Part ${featureValues(c).find(f=>f.id===id)?.name||featureValues(parent).find(f=>f.id===id)?.name}: geometry or placement changed`));
-      if(canonical(drawingValues(parent))!==canonical(drawingValues(c)))list.append(el("li","Manufacturing drawing fields changed"));if (list.childNodes.length) card.append(list); }
+      if(canonical(drawingValues(parent))!==canonical(drawingValues(c)))list.append(el("li","Manufacturing drawing fields changed"));
+      for(const kind of repo.studioDiff(parent,c))list.append(el("li",`${DOMAIN_INFO[kind]?.title||kind} design changed · ${studiosOf(c)[kind]?.slice(0,7)||"default"}`));
+      if (list.childNodes.length) card.append(list); }
     if (c.parents.length) card.append(el("p", `Parents: ${c.parents.map(id=>id.slice(0,7)).join(" + ")}`));
-    if (c.id !== active) { const button = el("button", "Open revision"); button.type = "button"; button.addEventListener("click", action(() => { checkout(c.id); showView("workspace"); })); card.append(button); } $("history").append(card);
+    if (c.id !== active) { const button = el("button", "Open revision"); button.type = "button"; button.addEventListener("click", action(() => { checkout(c.id); renderHistory(); toast(`Opened ${c.id.slice(0,7)}: every studio now shows this revision.`); })); card.append(button); } $("history").append(card);
   }
 }
 
@@ -394,14 +478,17 @@ function renderHistory() {
 let incoming = Promise.resolve();
 function receive(bundle) {
   incoming = incoming.then(async () => {
+    if (bundle?.id && bundle.id !== here.id) throw new Error(`That history belongs to the project “${bundle.name || bundle.id}”. Open it from Projects as its own project.`);
     const changed = await repo.ingest(bundle); if (!changed) return true;
     const tips = repo.heads(current().branch), wasDirty = dirty();
-    if (!wasDirty && tips.length === 1 && repo.ancestor(active, tips[0])) { active = tips[0]; params=values(current().params);features=structuredClone(featureValues(current()));drawings=structuredClone(drawingValues(current())); renderParameters();renderTree(); queueEvaluation(); }
+    if (!wasDirty && tips.length === 1 && repo.ancestor(active, tips[0])) { active = tips[0]; loadRevision(current()); project.bus.clearHistory(); renderParameters();renderTree(); queueEvaluation(); }
     persist(); renderRepository(); return true;
   }).catch(e => { fail(e); return false; });
   return incoming;
 }
-peers = new Peers(identity, receive, renderPeers, fail); peers.snapshot = () => repo.bundle();
+peers = new Peers(identity, receive, renderPeers, fail, here.channel); peers.snapshot = bundle;
+// A history opened from Projects for a project already on this device merges here.
+{ const incoming = here.takeIncoming(); if (incoming) receive(incoming).then(ok => ok && toast(`Merged the opened history: ${repo.commits.size} revisions. Your draft and branches are kept.`)); }
 // Ask existing tabs for a snapshot only after the callback has been assigned.
 peers.hello();
 $("connect").addEventListener("click", () => { renderPeers(); $("peer-dialog").showModal(); });
@@ -425,11 +512,20 @@ $("disconnect").addEventListener("click", () => { peers.disconnect(); $("connect
 function download(data, filename, type) {
   const url = URL.createObjectURL(new Blob([data], { type })), link = el("a"); link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-$("export").addEventListener("click", () => { download(JSON.stringify(repo.bundle()), "emergence-motor-driver.json", "application/json"); toast(dirty() ? "Project exported. Your draft is not committed; save it to include it in an export." : "Full project history and reviews exported."); });
+$("export").addEventListener("click", action(async () => {
+  const sealed = await seal(bundle()), text = JSON.stringify(sealed);
+  // Read the file back through the import path before offering it.
+  const check = await unseal(JSON.parse(text)), copy = await new Repository().init(); copy.blobKinds = repo.blobKinds; await copy.ingest(check.body);
+  if (!check.ok || copy.commits.size !== repo.commits.size || copy.blobs.size !== repo.blobs.size || copy.notes.size !== repo.notes.size) throw new Error("The export did not read back identically. Nothing was downloaded.");
+  download(text, `${slug(project.store.docs.project.name)}.history.json`, "application/json");
+  toast(`Export verified by read-back · ${repo.commits.size} revisions, ${repo.blobs.size} design documents · sha256 ${check.sha256.slice(0, 12)}…${dirty() ? " Your draft is not committed; save it to include it." : ""}`);
+}));
 $("import").addEventListener("change", action(async () => {
   const file = $("import").files[0]; $("import").value = ""; if (!file) return;
   if (file.size > 3_000_000) throw new Error("Project file exceeds this demo’s 3 MB import limit.");
-  const bundle = JSON.parse(await file.text()); if (await receive(bundle)) toast("Project imported. Existing revisions and drafts are preserved.");
+  const check = await unseal(JSON.parse(await file.text()));
+  if (!check.ok) throw new Error(`Integrity verification failed: the file's SHA-256 (${check.claimed.slice(0, 12)}…) does not match its content (${check.sha256.slice(0, 12)}…). Nothing was imported.`);
+  if (await receive(check.body)) toast(`Project imported${check.present ? ` · integrity verified (sha256 ${check.sha256.slice(0, 12)}…)` : ""}. Existing revisions and drafts are preserved.`);
 }));
 $("stl").addEventListener("click", action(async () => {
   const b = $("stl"), target=selected,part=assemblyParts(params,features).find(f=>f.id===target); b.disabled = true; b.textContent = "Meshing in Rust…";

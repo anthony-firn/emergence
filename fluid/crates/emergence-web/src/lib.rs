@@ -15,6 +15,10 @@ thread_local! {
     static FLOW: RefCell<Option<Flow>> = const { RefCell::new(None) };
     static OPTICS: RefCell<Option<(u32, Ladder<MieInput, MieQ>)>> = const { RefCell::new(None) };
     static INPUT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    static MESH: RefCell<(Vec<f32>, Vec<u32>)> = const { RefCell::new((Vec::new(), Vec::new())) };
+    // Synthesis and the equivalence check depend only on the source; the
+    // electrothermal loop re-times the same netlist at new temperatures.
+    static CHIP: RefCell<Vec<ChipCache>> = const { RefCell::new(Vec::new()) };
 }
 
 fn output(v: Value) {
@@ -304,7 +308,7 @@ fn mesh_config(input: &Value) -> Result<Value, String> {
 
 #[no_mangle]
 pub extern "C" fn workspace_input(len: u32) -> *mut u8 {
-    if len == 0 || len > 65536 { return std::ptr::null_mut(); }
+    if len == 0 || len > 1_048_576 { return std::ptr::null_mut(); }
     INPUT.with(|b| { let mut b = b.borrow_mut(); b.resize(len as usize,0); b.as_mut_ptr() })
 }
 
@@ -312,7 +316,8 @@ pub extern "C" fn workspace_input(len: u32) -> *mut u8 {
 pub extern "C" fn workspace_run(mesh: u32) {
     let result = INPUT.with(|b| {
         let input: Value = serde_json::from_slice(&b.borrow()).map_err(|e|e.to_string())?;
-        if mesh == 0 { workspace_config(&input) } else { mesh_config(&input) }
+        match mesh { 0 => workspace_config(&input), 1 => mesh_config(&input), 2 => model_config(&input),
+            3 => pcb_config(&input), 4 => line_config(&input), 5 => chip_config(&input), _ => Err("Unknown model request".into()) }
     });
     output(result.unwrap_or_else(|e: String| json!({"error":e})));
 }
@@ -320,6 +325,233 @@ pub extern "C" fn workspace_run(mesh: u32) {
 #[no_mangle]
 pub extern "C" fn cad_mesh(fins: u32) {
     output(sink_mesh(fins).unwrap_or_else(|e| json!({"error":e})));
+}
+
+// Feature-tree models: the same JSON format and kits as `fluid cad`, built by
+// cad::model. File-backed mesh features are refused: the browser has no disk.
+fn refuse_files(v: &Value) -> Result<(), String> {
+    match v {
+        Value::Object(o) => {
+            if o.get("op").and_then(Value::as_str) == Some("mesh") { return Err("File-backed mesh features are not available in the browser".into()); }
+            o.values().try_for_each(refuse_files)
+        }
+        Value::Array(a) => a.iter().try_for_each(refuse_files),
+        _ => Ok(()),
+    }
+}
+
+fn model_config(input: &Value) -> Result<Value, String> {
+    let m = input.get("model").ok_or("No model")?;
+    refuse_files(m)?;
+    let model: cad::model::Model = serde_json::from_value(m.clone()).map_err(|e| format!("model JSON: {e}"))?;
+    let mut overrides = cad::Params::default();
+    if let Some(o) = input.get("overrides").and_then(Value::as_object) {
+        for (k, v) in o {
+            let x = v.as_f64().filter(|x| x.is_finite()).ok_or_else(|| format!("override {k}: not a finite number"))?;
+            overrides.set(k, x);
+        }
+    }
+    let params = model.resolve(&overrides)?;
+    let solid = model.build(&overrides, ".")?;
+    let (lo, hi) = solid.bbox();
+    let extent: Vec<f64> = (0..3).map(|k| hi[k] - lo[k]).collect();
+    if !extent.iter().all(|e| e.is_finite() && *e > 0.) { return Err("The model is unbounded or empty; clip or intersect it with a box".into()); }
+    let budget = input.get("budget").and_then(Value::as_f64).unwrap_or(1.2e6).clamp(1e4, 2.5e6);
+    let requested = input.get("cell").and_then(Value::as_f64).or(model.cell)
+        .unwrap_or_else(|| extent.iter().cloned().fold(f64::INFINITY, f64::min) / 24.);
+    if !(requested.is_finite() && requested > 0.) { return Err("Mesh cell must be positive".into()); }
+    let nodes = |c: f64| extent.iter().map(|e| (e / c).ceil() + 5.).product::<f64>();
+    // The browser has a fixed budget: coarsen rather than run out of memory,
+    // and say so. The analytic queries and the native CLI keep full detail.
+    let mut cell = requested;
+    while nodes(cell) > budget { cell *= 1.1; }
+    let mesh = cad::mesh_solid(&solid, cell)?;
+    let r = mesh.report();
+    let binary = input.get("binary").and_then(Value::as_bool).unwrap_or(false);
+    let mut out = json!({"name":model.name,"cell":cell,"requested_cell":requested,"coarsened":cell > requested * 1.000001,
+        "watertight":r.watertight,"volume":r.volume,"exact":solid.exact(),"bbox":[lo,hi],
+        "params":params.values,"triangle_count":mesh.triangles.len(),"vertex_count":mesh.vertices.len()});
+    if binary {
+        MESH.with(|b| {
+            let mut b = b.borrow_mut();
+            b.0 = mesh.vertices.iter().flat_map(|v| v.iter().map(|&x| x as f32)).collect();
+            b.1 = mesh.triangles.iter().flat_map(|t| t.iter().map(|&i| i as u32)).collect();
+        });
+    } else {
+        out["vertices"] = json!(mesh.vertices);
+        out["triangles"] = json!(mesh.triangles);
+    }
+    Ok(out)
+}
+
+#[no_mangle]
+pub extern "C" fn mesh_vertices_ptr() -> *const f32 { MESH.with(|b| b.borrow().0.as_ptr()) }
+#[no_mangle]
+pub extern "C" fn mesh_vertices_len() -> usize { MESH.with(|b| b.borrow().0.len()) }
+#[no_mangle]
+pub extern "C" fn mesh_indices_ptr() -> *const u32 { MESH.with(|b| b.borrow().1.as_ptr()) }
+#[no_mangle]
+pub extern "C" fn mesh_indices_len() -> usize { MESH.with(|b| b.borrow().1.len()) }
+
+// A drawn board in SI units, as cad::kits::pcb::Board. Resistances come from
+// the drawn length and copper section; fabrication files are written to the
+// Gerber and Excellon specifications but are not verified against a CAM tool.
+fn pcb_config(input: &Value) -> Result<Value, String> {
+    use cad::kits::pcb::{excellon, gerber_layer, Board, Feature};
+    let board: Board = serde_json::from_value(input.get("board").ok_or("No board")?.clone()).map_err(|e| format!("board JSON: {e}"))?;
+    if board.features.len() > 512 || board.vias.len() > 512 || board.holes.len() > 512 { return Err("Board exceeds the browser feature budget".into()); }
+    let temperature = setting(input, "temperature", 20., -55., 200.)?;
+    let currents: Vec<f64> = input.get("currents").and_then(Value::as_array).map(|a| a.iter().map(|v| v.as_f64().unwrap_or(0.)).collect()).unwrap_or_default();
+    let mut traces = Vec::new();
+    let mut loss = 0.;
+    for (i, f) in board.features.iter().enumerate() {
+        if let Feature::Trace { layer, width, .. } = f {
+            let r = board.trace_resistance(i, temperature)?;
+            let current = currents.get(i).copied().unwrap_or(0.);
+            if !current.is_finite() || current.abs() > 1000. { return Err("Trace current outside the supported range".into()); }
+            loss += current * current * r;
+            traces.push(json!({"feature":i,"layer":layer,"width":width,"length":f.length(),"resistance":r,"current":current,"loss":current*current*r}));
+        }
+    }
+    let coppers = board.copper_layers();
+    let sheet: Vec<f64> = (0..coppers.len()).map(|l| board.sheet_resistance(l)).collect::<Result<_, _>>()?;
+    let mut out = json!({"traces":traces,"copper_loss":loss,"sheet_resistance":sheet,"thickness":board.thickness(),
+        "thermal_resistance":board.thermal_resistance()?,"temperature":temperature});
+    if input.get("fabrication").and_then(Value::as_bool).unwrap_or(false) {
+        let cell = setting(input, "cell", 5e-5, 1e-5, 1e-3)?;
+        let names = ["bottom", "inner", "top"];
+        let layers: Vec<Value> = (0..coppers.len()).map(|l| {
+            let name = if l == 0 { names[0] } else if l + 1 == coppers.len() { names[2] } else { names[1] };
+            json!({"layer":l,"name":name,"gerber":gerber_layer(&board.copper(l), cell, &format!("{name} copper"))})
+        }).collect();
+        out["gerber"] = json!(layers);
+        out["profile"] = json!(gerber_layer(&board.outline, cell, "board profile"));
+        out["excellon"] = json!(excellon(&board));
+    }
+    Ok(out)
+}
+
+// Microstrip: Hammerstad-Jensen closed form, and optionally the quasi-TEM
+// field solve of the same drawn section including copper thickness.
+fn line_config(input: &Value) -> Result<Value, String> {
+    use cad::laplace::{quasi_tem, Edge, Section};
+    use cad::kits::pcb::{microstrip_width_for, microstrip_z0};
+    let w = setting(input, "width", 3e-4, 1e-5, 2e-2)?;
+    let h = setting(input, "height", 1.6e-3, 5e-5, 1e-2)?;
+    let t = setting(input, "thickness", 3.5e-5, 0., 5e-4)?;
+    let eps_r = setting(input, "eps_r", 4.4, 1., 20.)?;
+    let (z0, eps_eff) = microstrip_z0(w, h, eps_r);
+    let mut out = json!({"width":w,"height":h,"thickness":t,"eps_r":eps_r,"formula":{"z0":z0,"eps_eff":eps_eff,"source":"Hammerstad 1975; Hammerstad & Jensen 1980","valid":(0.05..=20.).contains(&(w/h))}});
+    if let Some(target) = input.get("target").and_then(Value::as_f64) {
+        if !(5. ..=200.).contains(&target) { return Err("Target impedance outside 5-200 ohm".into()); }
+        out["width_for_target"] = json!(microstrip_width_for(target, h, eps_r));
+    }
+    if input.get("field").and_then(Value::as_bool).unwrap_or(false) {
+        let span = 6. * (w + 2. * h);
+        let height = 9. * h;
+        let cell = (h / 16.).min(w / 6.).max(h / 48.);
+        let section = Section::new(([0., 0.], [0.5 * span, height]), cell)
+            .with_dielectric(cad::Region2::rect([0.25 * span, 0.5 * h], [0.5 * span, 0.5 * h]), eps_r)
+            .with_conductor(cad::Region2::rect([0.25 * span, 0.], [0.5 * span, 1e-15]), 0.)
+            .with_conductor(cad::Region2::rect([0., h + 0.5 * t.max(1e-9)], [0.5 * w, 0.5 * t.max(1e-9)]), 1.)
+            .with_edges([Edge::Mirror, Edge::Grounded, Edge::Grounded, Edge::Grounded])
+            .with_multiplicity(2.);
+        let (zf, ef, sol) = quasi_tem(&section, 1., 1e-9, 40000);
+        out["field"] = json!({"z0":zf,"eps_eff":ef,"cell":cell,"residual":sol.residual,"source":"cad::laplace quasi-TEM, two solves"});
+    }
+    Ok(out)
+}
+
+// JSON has no NaN: a table entry whose characterisation failed natively is
+// written as null. Carry it through as NaN, exactly as the native flow holds
+// it, rather than inventing a value. The sentinel is not a physical slew.
+const NAN_SENTINEL: f64 = -1.0e300;
+fn nan_in(v: Value) -> Value {
+    match v {
+        Value::Null => json!(NAN_SENTINEL),
+        Value::Array(a) => Value::Array(a.into_iter().map(nan_in).collect()),
+        Value::Object(o) => Value::Object(o.into_iter().map(|(k, x)| (k, nan_in(x))).collect()),
+        x => x,
+    }
+}
+fn restore_nan(lib: &mut semiconductor::timing::Library) {
+    let fix = |x: &mut f64| if *x == NAN_SENTINEL { *x = f64::NAN };
+    for c in &mut lib.cells { for o in &mut c.outs { for p in o {
+        for t in [&mut p.rise, &mut p.fall, &mut p.e_rise, &mut p.e_fall] {
+            t.slew.iter_mut().chain(t.load.iter_mut()).for_each(fix);
+            t.delay.iter_mut().chain(t.out_slew.iter_mut()).flatten().for_each(fix);
+            fix(&mut t.cert_error); fix(&mut t.cert_slew);
+        }
+    } } }
+}
+
+struct ChipCache { key: u64, netlist: chip::synth::Netlist, equivalence: Value, toggles: Vec<(u64, Vec<f64>)> }
+fn fnv(bytes: &[u8]) -> u64 { bytes.iter().fold(0xcbf29ce484222325u64, |h, b| (h ^ *b as u64).wrapping_mul(0x100000001b3)) }
+
+// Verilog through the native chip flow on cells characterised from the
+// transistor law: synthesis, an equivalence check against the RTL, then
+// timing and power interpolated across the nine (supply, temperature)
+// corners. Corner libraries are supplied by the caller (see export test).
+fn chip_config(input: &Value) -> Result<Value, String> {
+    use chip::{corners, equiv, library, power, rtl, sta, synth};
+    if let Some(libs) = input.get("libs").and_then(Value::as_array) {
+        for l in libs {
+            let corner = library::Corner { vdd: l["vdd"].as_f64().ok_or("corner supply")?, temp: l["temp"].as_f64().ok_or("corner temperature")? };
+            let mut comb: semiconductor::timing::Library = serde_json::from_value(nan_in(l["comb"].clone())).map_err(|e| format!("cell library: {e}"))?;
+            restore_nan(&mut comb);
+            let dff = serde_json::from_value(l["dff"].clone()).map_err(|e| format!("flip-flop library: {e}"))?;
+            library::preload(library::CellLib { corner, comb, dff });
+        }
+    }
+    let source = input.get("verilog").and_then(Value::as_str).ok_or("No Verilog source")?;
+    if source.len() > 65536 { return Err("Verilog source exceeds 64 KB".into()); }
+    let samples = setting(input, "samples", 4000., 100., 50000.)? as u64;
+    let key = fnv(source.as_bytes()) ^ samples.wrapping_mul(0x9e3779b97f4a7c15);
+    // A few designs (CPU, PWM, a custom block) share the cache, most recent last.
+    let fresh = CHIP.with(|c| { let mut c = c.borrow_mut(); match c.iter().position(|x| x.key == key) { Some(i) => { let hit = c.remove(i); c.push(hit); false } None => true } });
+    if fresh {
+        let module = rtl::parse(source)?;
+        let netlist = synth::synthesize(&module)?;
+        let eq = equiv::check(&module, &netlist, samples)?;
+        let equivalence = json!({"points":eq.points,"exhaustive":eq.exhaustive,"mismatch":eq.mismatch});
+        CHIP.with(|c| { let mut c = c.borrow_mut(); if c.len() >= 4 { c.remove(0); } c.push(ChipCache { key, netlist, equivalence, toggles: Vec::new() }); });
+    }
+    let vdd = setting(input, "vdd", 1.2, 1.08, 1.32)?;
+    let temp = setting(input, "temperature", 300., 250., 425.)?;
+    let freq = setting(input, "frequency", 100e6, 1e3, 1e10)?;
+    let activity = setting(input, "activity", 0.2, 0., 1.)?;
+    let copies = setting(input, "instances", 1., 1., 1e6)?;
+    let wire = setting(input, "wire_cap", 0.5e-15, 0., 1e-12)?;
+    CHIP.with(|cache| -> Result<Value, String> {
+    let mut cache = cache.borrow_mut();
+    let cache = cache.last_mut().unwrap();
+    if !cache.toggles.iter().any(|(a, _)| *a == activity.to_bits()) {
+        let t = power::activity(&cache.netlist, activity, 2000, 1);
+        cache.toggles.push((activity.to_bits(), t));
+    }
+    let toggles = &cache.toggles.iter().find(|(a, _)| *a == activity.to_bits()).unwrap().1;
+    let netlist = &cache.netlist;
+    let c = sta::Constraints { period: 1. / freq, wire_cap: wire, ..Default::default() };
+    let mut out = json!({"module":netlist.name,"cells":netlist.cells(),"transistors":netlist.transistors(),"flops":netlist.flops.len(),
+        "inputs":netlist.inputs.iter().map(|(n,b)|json!([n,b.len()])).collect::<Vec<_>>(),"outputs":netlist.outputs.iter().map(|(n,b)|json!([n,b.len()])).collect::<Vec<_>>(),
+        "equivalence":cache.equivalence.clone(),"vdd":vdd,"temperature":temp,"frequency":freq,"instances":copies,"cached":!fresh});
+    if !cache.equivalence["mismatch"].is_null() { return Ok(out); }
+    let (m, ind) = corners::at(netlist, &c, toggles, vdd, temp)?;
+    // As in project::chip_design: the interpolation indicator is doubled.
+    let period_err = m.min_period_error + 2. * ind.min_period;
+    let switching = m.energy_per_cycle * freq * copies;
+    let leakage = m.leakage * copies;
+    out["timing"] = json!({"min_period":m.min_period,"min_period_error":period_err,"fmax":1./m.min_period,"setup_slack":c.period - m.min_period,"hold_slack":m.hold_slack});
+    out["power"] = json!({"switching":switching,"leakage":leakage,"total":switching+leakage,"energy_per_cycle":m.energy_per_cycle,
+        "switching_error":switching*0.15 + ind.energy_per_cycle*freq*copies,"leakage_error":leakage*(0.12+ind.leakage)});
+    let near = |grid: &[f64; 3], x: f64| *grid.iter().min_by(|a, b| (*a - x).abs().total_cmp(&(*b - x).abs())).unwrap();
+    let corner = library::Corner { vdd: near(&corners::VDDS, vdd), temp: near(&corners::TEMPS, temp) };
+    if let Ok((_, t)) = corners::exact(netlist, &c, toggles, corner) {
+        out["critical"] = json!({"vdd":corner.vdd,"temp":corner.temp,"endpoint":t.endpoint,
+            "stages":t.critical.iter().map(|s|json!({"cell":s.cell,"edge":s.edge,"arrival":s.arrival})).collect::<Vec<_>>()});
+    }
+    Ok(out)
+    })
 }
 
 #[cfg(test)]
@@ -397,6 +629,74 @@ mod tests {
             let exact=std::f64::consts::PI*36.*10.;
             assert!((mesh["volume_mm3"].as_f64().unwrap()/exact-1.).abs()<0.03);
         });
+    }
+    // Characterises the nine STA corners natively and writes them for the
+    // browser: cargo test --release -p emergence-web export_chip_corners -- --ignored
+    #[test]
+    #[ignore]
+    fn export_chip_corners() {
+        let mut libs = Vec::new();
+        for vdd in chip::corners::VDDS { for temp in chip::corners::TEMPS {
+            let l = chip::library::at(chip::library::Corner { vdd, temp }).unwrap();
+            let comb = json!(l.comb);
+            let failed = comb.to_string().matches("null").count();
+            if failed > 0 { eprintln!("{vdd} V, {temp} K: {failed} table entries failed characterisation (NaN)"); }
+            libs.push(json!({"vdd":vdd,"temp":temp,"comb":comb,"dff":l.dff,"failed_entries":failed}));
+        } }
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../web/cad/data/chip-corners.json");
+        std::fs::create_dir_all(std::path::Path::new(path).parent().unwrap()).unwrap();
+        std::fs::write(path, serde_json::to_string(&json!({"format":"emergence-chip-corners/1","technology":"150 nm EKV cells (analysis/gates.md)","corners":libs})).unwrap()).unwrap();
+    }
+    #[test]
+    fn browser_chip_flow_matches_the_native_corner_flow() {
+        small_pool(|| {
+            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../web/cad/data/chip-corners.json");
+            let corners: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+            let verilog = include_str!("../../../projects/mini-cpu/mini8.v");
+            let r = chip_config(&json!({"libs":corners["corners"],"verilog":verilog,"frequency":100e6,"temperature":337.5,"samples":2000})).unwrap();
+            assert!(r["equivalence"]["mismatch"].is_null());
+            assert!(r["transistors"].as_u64().unwrap() > 100);
+            let module = chip::rtl::parse(verilog).unwrap();
+            let netlist = chip::synth::synthesize(&module).unwrap();
+            let toggles = chip::power::activity(&netlist, 0.2, 2000, 1);
+            let c = chip::sta::Constraints { period: 1e-8, ..Default::default() };
+            let (m, _) = chip::corners::at(&netlist, &c, &toggles, 1.2, 337.5).unwrap();
+            assert!((r["timing"]["min_period"].as_f64().unwrap() / m.min_period - 1.).abs() < 1e-12);
+            assert!(r["critical"]["stages"].as_array().unwrap().len() > 1);
+        });
+    }
+    #[test]
+    fn feature_tree_models_mesh_and_refuse_files() {
+        small_pool(|| {
+            let gear: Value = serde_json::from_str(include_str!("../../../models/gear.json")).unwrap();
+            let r = model_config(&json!({"model":gear,"budget":3e5,"binary":true})).unwrap();
+            assert_eq!(r["watertight"], true);
+            assert!(MESH.with(|b| b.borrow().1.len()) == 3 * r["triangle_count"].as_u64().unwrap() as usize);
+            let bad = json!({"model":{"shape":{"op":"mesh","file":"/etc/passwd"}}});
+            assert!(model_config(&bad).unwrap_err().contains("browser"));
+            let cube = json!({"model":{"params":{"a":2},"shape":{"op":"box","center":[0,0,0],"half":["a/2","a/2","a/2"]}},"overrides":{"a":4},"cell":0.25});
+            let c = model_config(&cube).unwrap();
+            assert!((c["volume"].as_f64().unwrap() / 64. - 1.).abs() < 0.02);
+            assert_eq!(c["params"]["a"], json!(4.));
+        });
+    }
+    #[test]
+    fn board_resistance_and_line_impedance_use_the_kit() {
+        let board = json!({"outline":{"op":"rect","center":[0.06,0.01],"half":[0.06,0.01]},
+            "stackup":[{"kind":"copper","ounces":1.0},{"kind":"dielectric","thickness":0.0016},{"kind":"copper","ounces":1.0}],
+            "features":[{"kind":"trace","layer":1,"points":[[0.005,0.01],[0.105,0.01]],"width":0.001}]});
+        let r = pcb_config(&json!({"board":board,"currents":[2.0]})).unwrap();
+        // rho L / (w t) for 100 mm of 1 mm, 1 oz copper at 20 C.
+        let exact = 1.678e-8 * 0.1 / (0.001 * 34.8e-6);
+        assert!((r["traces"][0]["resistance"].as_f64().unwrap() / exact - 1.).abs() < 1e-12);
+        assert!((r["copper_loss"].as_f64().unwrap() - 4. * exact).abs() < 1e-12);
+        let fab = pcb_config(&json!({"board":board,"fabrication":true})).unwrap();
+        assert!(fab["gerber"][1]["gerber"].as_str().unwrap().contains("G36"));
+        assert!(fab["excellon"].as_str().unwrap().starts_with("M48"));
+        let line = line_config(&json!({"width":0.0029,"height":0.0016,"thickness":35e-6,"eps_r":4.4,"field":true,"target":50.})).unwrap();
+        let (zf, z) = (line["field"]["z0"].as_f64().unwrap(), line["formula"]["z0"].as_f64().unwrap());
+        assert!((zf / z - 1.).abs() < 0.05, "field {zf} formula {z}");
+        assert!((line["width_for_target"].as_f64().unwrap() - 0.00306).abs() < 2e-4);
     }
     #[test]
     fn optical_selector_unfolds_and_reports_unreachable_tolerance() {

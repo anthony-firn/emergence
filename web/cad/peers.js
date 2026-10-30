@@ -1,11 +1,11 @@
 // No application server: copy/paste signaling, ordered WebRTC data channels,
 // and same-origin BroadcastChannel for trying the workflow in two tabs.
 export class Peers {
-  constructor(identity, receive, changed, error) {
+  constructor(identity, receive, changed, error, channel = "emergence-cad-motor-driver-v1") {
     this.id = crypto.randomUUID(); this.identity = identity; this.receive = receive; this.changed = changed; this.error = error;
     this.connections = new Set(); this.tabs = new Map();
     if (typeof BroadcastChannel !== "undefined") {
-      this.local = new BroadcastChannel("emergence-cad-motor-driver-v1");
+      this.local = new BroadcastChannel(channel);
       this.local.onmessage = ({ data }) => {
         if (!data || data.id === this.id) return;
         if (data.type === "hello" && typeof data.author === "string" && data.author.length <= 48) {

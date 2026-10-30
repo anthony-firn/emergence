@@ -24,8 +24,9 @@ def check(url, screenshots=None):
             page.evaluate("scrollTo({top:0,behavior:'instant'}); document.querySelector('#toast').hidden=true")
             page.screenshot(path=str(screenshots / ("emergence-cad-" + kind + ".png")))
 
-        page.goto(url, wait_until="networkidle")
-        page.wait_for_selector(".requirement[data-status=undecided]")
+        page.goto(url + "#mechanical", wait_until="networkidle")
+        page.wait_for_selector("#requirements .requirement")
+        pcb_doc = "() => window.emergence.documents().pcb"
         page.locator("#sketch-part").click()
         page.locator("#part-name").fill("Sketch plate")
         page.locator("#sketch-width").fill("20")
@@ -46,7 +47,7 @@ def check(url, screenshots=None):
         page.locator("#discard").click()
         if screenshots:
             screenshots.mkdir(parents=True, exist_ok=True)
-            page.wait_for_selector(".requirement[data-status=undecided]")
+            page.wait_for_selector("#requirements .requirement")
             capture("mechanical")
         print("Dimensioned profile, native extrusion parameters, duplication and standard views passed.")
 
@@ -58,7 +59,7 @@ def check(url, screenshots=None):
         page.locator('[data-pad="J1:2"]').click()
         assert "same assigned net" in page.locator("#pcb-status").inner_text()
         page.locator('[data-pad="U1:1"]').click()
-        assert len(json.loads(page.evaluate("localStorage.getItem('emergence-pcb-v1')"))["design"]["routes"]) == 1
+        assert len(page.evaluate(pcb_doc)["routes"]) == 1
         page.locator("#pcb-minWidth").fill("1")
         page.locator("#pcb-minWidth").blur()
         assert page.locator('#pcb-checks [data-code="width"]').count() == 1
@@ -71,7 +72,7 @@ def check(url, screenshots=None):
         page.locator("#pcb-studio .studio-tree-item").filter(has_text="J1 ·").click()
         page.locator("#pcb-x").fill("12")
         page.locator("#pcb-x").blur()
-        assert len(json.loads(page.evaluate("localStorage.getItem('emergence-pcb-v1')"))["design"]["routes"]) == 0
+        assert len(page.evaluate(pcb_doc)["routes"]) == 0
         page.locator("#pcb-undo").click()
         with page.expect_download() as exported:
             page.locator("#pcb-export").click()
@@ -81,7 +82,7 @@ def check(url, screenshots=None):
         corrupt["design"]["routes"][0]["to"] = "missing:1"
         page.locator("#pcb-import").set_input_files({"name": "bad.json", "mimeType": "application/json", "buffer": json.dumps(corrupt).encode()})
         page.wait_for_function("() => document.querySelector('#pcb-status').textContent.includes('Import rejected')")
-        assert json.loads(page.evaluate("localStorage.getItem('emergence-pcb-v1')")) == board
+        assert page.evaluate(pcb_doc) == board["design"]
         with page.expect_download() as bom:
             page.locator("#pcb-output").click()
         assert "Gate driver" in Path(bom.value.path()).read_text()
@@ -139,7 +140,7 @@ def check(url, screenshots=None):
         svg = Path(floorplan.value.path()).read_text()
         assert "no PDK / no sign-off" in svg and "CPU core" in svg
         page.locator("#silicon-add").click()
-        assert page.locator("#silicon-canvas [data-object]").count() == 5
+        assert page.locator("#silicon-canvas [data-object]").count() == 6
         page.locator("#silicon-undo").click()
         if screenshots:
             capture("silicon")
@@ -147,14 +148,16 @@ def check(url, screenshots=None):
 
         page.locator("#studio-tab-silicon").focus()
         page.keyboard.press("Home")
-        assert page.locator("#studio-tab-mechanical").get_attribute("aria-selected") == "true"
+        assert page.locator("#studio-tab-system").get_attribute("aria-selected") == "true"
         page.keyboard.press("ArrowRight")
-        assert page.locator("#studio-tab-pcb").get_attribute("aria-selected") == "true"
+        assert page.locator("#studio-tab-flight").get_attribute("aria-selected") == "true"
+        page.keyboard.press("End")
+        assert page.locator("#studio-tab-history").get_attribute("aria-selected") == "true"
         for theme in ("light", "dark"):
             page.evaluate("(theme) => document.documentElement.dataset.theme=theme", theme)
             for width in (320, 390, 768, 1360):
                 page.set_viewport_size({"width": width, "height": 844})
-                for kind in ("mechanical", "pcb", "silicon"):
+                for kind in ("system", "flight", "mechanical", "parts", "pcb", "silicon", "optics", "fluids", "architecture", "render"):
                     page.locator("#studio-tab-" + kind).click()
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), (theme, width, kind)
         browser.close()

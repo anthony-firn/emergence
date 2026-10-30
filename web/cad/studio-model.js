@@ -30,17 +30,27 @@ export function pcbExample() {
       { id:"J2", name:"Load", footprint:"connector", x:69, y:42, rotation:90, nets:["OUT","GND"] },
     ],
     routes: [],
+    stackup: { thickness: 1.6, copper: 1, epsr: 4.4 },
+    currents: { VCC: .5, PWM: .05, GATE: .4, OUT: 30, GND: 30 },
+    powers: { U1: .35, R1: .05 },
+    loadNets: ["OUT", "GND"],
   };
 }
+// Typical block dissipation by kind, mW: illustrative starting values.
+export const BLOCK_POWER = { logic: 300, memory: 150, io: 90, analog: 40 };
 export function siliconExample() {
   return {
     width:1000, height:800, grid:10, margin:40, spacing:20, target:70,
     blocks:[
-      { id:"cpu", name:"CPU core", kind:"logic", x:100, y:100, width:300, height:250, fixed:false },
-      { id:"sram", name:"SRAM macro", kind:"memory", x:500, y:100, width:350, height:280, fixed:true },
-      { id:"io", name:"I/O controller", kind:"io", x:100, y:480, width:250, height:180, fixed:false },
-      { id:"dsp", name:"Signal processing", kind:"logic", x:460, y:470, width:300, height:200, fixed:false },
+      { id:"cpu", name:"CPU core", kind:"logic", x:100, y:100, width:300, height:250, fixed:false, power:420 },
+      { id:"sram", name:"SRAM macro", kind:"memory", x:500, y:100, width:350, height:280, fixed:true, power:160 },
+      { id:"io", name:"I/O controller", kind:"io", x:100, y:480, width:250, height:180, fixed:false, power:90 },
+      { id:"dsp", name:"Signal processing", kind:"logic", x:460, y:470, width:300, height:200, fixed:false, power:310 },
+      { id:"pwm", name:"Motor PWM (Tiny Tapeout)", kind:"logic", x:790, y:470, width:150, height:200, fixed:false, power:5 },
     ],
+    // RTL implementing blocks: emergence's mini8 CPU and a public Tiny Tapeout
+    // motor controller (Apache-2.0), adapted to the native Verilog subset.
+    chip: { rtl:[{ block:"cpu", source:"mini8", verilog:null }, { block:"pwm", source:"tt-motor", verilog:null }], frequency:100, vdd:1.2, activity:20, instances:1, theta:45, ambient:25 },
   };
 }
 export function pads(board) {
@@ -165,18 +175,45 @@ export function validateDocument(doc) {
     if(!Array.isArray(d.routes)||d.routes.length>128||!unique(d.routes.map(r=>r?.id))||!d.routes.every(r=>r&&id(r.id)&&ps.has(r.from)&&ps.has(r.to)&&r.from!==r.to&&ps.get(r.from).net&&ps.get(r.from).net===ps.get(r.to).net&&["top","bottom"].includes(r.layer)&&finite(r.width,.1,5)&&Array.isArray(r.points)&&r.points.length>=2&&r.points.length<=32&&r.points.every(point))) throw new Error("Invalid copper connections.");
   } else {
     if(!finite(d.margin,0,1000)||2*d.margin>=Math.min(d.width,d.height)||!finite(d.spacing,0,1000)||!finite(d.target,1,100)) throw new Error("Invalid core constraints.");
-    if(!Array.isArray(d.blocks)||d.blocks.length>64||!unique(d.blocks.map(b=>b?.id))||!d.blocks.every(b=>b&&id(b.id)&&text(b.name)&&["logic","memory","io","analog"].includes(b.kind)&&finite(b.x,-10000,20000)&&finite(b.y,-10000,20000)&&finite(b.width,1,10000)&&finite(b.height,1,10000)&&typeof b.fixed==="boolean")) throw new Error("Invalid floorplan blocks.");
+    if(!Array.isArray(d.blocks)||d.blocks.length>64||!unique(d.blocks.map(b=>b?.id))||!d.blocks.every(b=>b&&id(b.id)&&text(b.name)&&["logic","memory","io","analog"].includes(b.kind)&&finite(b.x,-10000,20000)&&finite(b.y,-10000,20000)&&finite(b.width,1,10000)&&finite(b.height,1,10000)&&typeof b.fixed==="boolean"&&(b.power===undefined||finite(b.power,0,1e6)))) throw new Error("Invalid floorplan blocks.");
   }
   // Project known fields only; imported JSON is never merged into UI objects.
   const design=doc.kind==="pcb" ? {
-    width:d.width,height:d.height,grid:d.grid,rules:{clearance:d.rules.clearance,minWidth:d.rules.minWidth,edge:d.rules.edge},
+    width:d.width,height:d.height,grid:d.grid,rules:{clearance:d.rules.clearance,minWidth:d.rules.minWidth,edge:d.rules.edge,density:pcbExtras(d).density},
     components:d.components.map(c=>({id:c.id,name:c.name,footprint:c.footprint,x:c.x,y:c.y,rotation:c.rotation,nets:[...c.nets]})),
     routes:d.routes.map(r=>({id:r.id,from:r.from,to:r.to,layer:r.layer,width:r.width,points:r.points.map(p=>[...p])})),
+    ...pcbExtras(d,true),
   } : {
     width:d.width,height:d.height,grid:d.grid,margin:d.margin,spacing:d.spacing,target:d.target,
-    blocks:d.blocks.map(b=>({id:b.id,name:b.name,kind:b.kind,x:b.x,y:b.y,width:b.width,height:b.height,fixed:b.fixed})),
+    blocks:d.blocks.map(b=>({id:b.id,name:b.name,kind:b.kind,x:b.x,y:b.y,width:b.width,height:b.height,fixed:b.fixed,power:b.power??BLOCK_POWER[b.kind]})),
+    chip:chipSettings(d),
   };
   return {format:STUDIO_FORMAT,kind:doc.kind,design};
+}
+// Stackup, RMS net currents, component dissipation and linked load nets.
+function pcbExtras(d, full) {
+  const s=d.stackup??{thickness:1.6,copper:1,epsr:4.4}, nets=new Set(d.components.flatMap(c=>c.nets).filter(Boolean));
+  const density=d.rules.density??35;
+  if(!finite(density,1,1000)) throw new Error("Invalid board rules.");
+  if(!full) return {density};
+  if(!s||!finite(s.thickness,.2,6)||!finite(s.copper,.25,6)||!finite(s.epsr,1,20)) throw new Error("Invalid board stackup.");
+  const currents=d.currents??{}, powers=d.powers??{}, loadNets=d.loadNets??[];
+  if(typeof currents!=="object"||Array.isArray(currents)||!Object.entries(currents).every(([n,a])=>/^[a-zA-Z0-9_+./-]{1,32}$/.test(n)&&finite(a,0,500))) throw new Error("Invalid net currents.");
+  if(typeof powers!=="object"||Array.isArray(powers)||!Object.entries(powers).every(([c,w])=>d.components.some(x=>x.id===c)&&finite(w,0,500))) throw new Error("Invalid component dissipation.");
+  if(!Array.isArray(loadNets)||loadNets.length>8||!loadNets.every(n=>typeof n==="string"&&n.length<=32)) throw new Error("Invalid load nets.");
+  return {stackup:{thickness:s.thickness,copper:s.copper,epsr:s.epsr},
+    currents:Object.fromEntries(Object.entries(currents).filter(([n])=>nets.has(n)).sort()),
+    powers:Object.fromEntries(Object.entries(powers).sort()),loadNets:[...new Set(loadNets)]};
+}
+export const RTL_SOURCES = { mini8:"mini8: 8-bit accumulator CPU (emergence, Apache-2.0)", "tt-motor":"tt_um_hadjal001_motor_controller: dual PWM (Tiny Tapeout, Apache-2.0)", custom:"Custom Verilog" };
+function chipSettings(d) {
+  const c=d.chip??{rtl:[],frequency:100,vdd:1.2,activity:20,instances:1,theta:45,ambient:25};
+  // Earlier documents named one block and an optional Verilog override.
+  const rtl=Array.isArray(c.rtl)?c.rtl:c.block?[{block:c.block,source:c.verilog?"custom":"mini8",verilog:c.verilog??null}]:[];
+  if(!c||!finite(c.frequency,.001,5000)||!finite(c.vdd,1.08,1.32)||!finite(c.activity,0,100)||!Number.isInteger(c.instances)||c.instances<1||c.instances>100000||!finite(c.theta,.1,500)||!finite(c.ambient,-40,125)
+    ||rtl.length>4||!unique(rtl.map(r=>r?.block))||!rtl.every(r=>r&&d.blocks.some(b=>b.id===r.block)&&Object.hasOwn(RTL_SOURCES,r.source)&&(r.source==="custom"?typeof r.verilog==="string"&&r.verilog.length>0&&r.verilog.length<=65536:r.verilog===null)))
+    throw new Error("Invalid chip flow settings.");
+  return {rtl:rtl.map(r=>({block:r.block,source:r.source,verilog:r.verilog})),frequency:c.frequency,vdd:c.vdd,activity:c.activity,instances:c.instances,theta:c.theta,ambient:c.ambient};
 }
 export function documentFor(kind, design) { return validateDocument({format:STUDIO_FORMAT,kind,design}); }
 const csv=value=>'"'+String(value).replaceAll('"','""')+'"';

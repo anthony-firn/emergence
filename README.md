@@ -69,24 +69,26 @@ negative result: on Taylor–Green it did not beat the best fixed grid.
 
 ## Browser lab
 
-The **[browser CAD workspaces](https://www.evolvetech.dev/play/emergence/cad/)**
-now cover three early editing workflows:
-
-- **[Mechanical](https://www.evolvetech.dev/play/emergence/cad/#mechanical):**
-  dimension a rectangular/circular profile, extrude it, duplicate parts, inspect
-  standard views and prepare revisioned shop drawings. Assemblies retain branch,
-  review and peer-sync tools.
-- **[PCB](https://www.evolvetech.dev/play/emergence/cad/#pcb):** place illustrative
-  footprints, assign pad nets, connect pads on two copper layers and inspect
-  clearance, width, edge and explicit-connectivity checks. Export JSON and BOM CSV.
-- **[Silicon](https://www.evolvetech.dev/play/emergence/cad/#silicon):** edit a
-  rectangular block floorplan, lock macros and check overlap, core keepout,
-  placement halos and requested block area. Export JSON and a concept SVG.
-
-PCB and silicon save as separate local documents with undo/redo. They are not
-yet part of the mechanical revision graph or peer sync. PCB fabrication packages,
-PDK-backed IC layout, timing sign-off and GDSII are unfinished. The native chip
-synthesis and analysis flow remains separate from this browser floorplanner.
+The **[cross-domain CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**
+designs anything that spans domains. A project is a file: the domains it uses
+(any of flight sizing, a power stage's mechanical and electrothermal design,
+feature-tree parts on the Rust kernel, PCB, silicon, optics, fluids and
+architecture), one design document per domain, the typed, unit-checked links
+between their ports, and what to watch (headline outputs, sensitivity inputs,
+an optimisation, a tour and the 3D layout). One solver runs the project's
+domains in dependency order, iterates the coupled loops and reports whether they
+settle. Two example project files ship in `web/cad/projects/`: an inspection
+quadcopter, whose weight spiral (mass → thrust → ESC current → MOSFET heat →
+heat-sink size → mass) closes through eight domains, and an edge-compute shelter,
+whose accelerator nodes heat the building that supplies their inlet air. Blank
+projects grow by adding domains. Every edit is a command shared by the UI, a
+command line, the tours, scripts, a Node CLI and an MCP server, which open the
+same project files (`node web/cad/agent/cli.mjs new my.emergence.json --example
+drone`, `node web/cad/agent/mcp.mjs --project my.emergence.json`), and every
+document is part of each revision. Public reference designs: a Tiny Tapeout PWM
+motor controller (Apache-2.0), the Optiland Cooke triplet (MIT) and the ASHRAE
+140 BESTEST 600 envelope.
+See [architecture, references and checks](analysis/cross_domain_cad.md).
 
 **[Collaborative CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**:
 edit cooling geometry, add and place box/cylinder parts, branch and review changes,
@@ -144,8 +146,10 @@ local evolvetech.dev server: `python3 web/test_browser.py http://localhost:8080/
 It checks model selection, an unmet tolerance, exact fluid decay, design range
 failure, keyboard tabs, the production content policy and mobile layouts.
 
-For the CAD workspace: `node --test web/test_cad_repository.mjs` and
-`python3 web/test_cad_browser.py http://localhost:8080/play/emergence/cad/`.
+For the CAD workspace: `node --test web/test_cad_repository.mjs web/test_cad_studio.mjs web/test_cad_domains.mjs`
+(the last needs the WebAssembly build) and, in a browser,
+`python3 web/test_cad_browser.py`, `web/test_cad_studios_browser.py` and
+`web/test_cad_system_browser.py` with `http://localhost:8080/play/emergence/cad/`.
 Manufacturing QA: `python3 web/test_cad_manufacturing.py http://localhost:8080/play/emergence/cad/`
 (with `pdfinfo`; optional `ezdxf` independently audits exported DXF).
 

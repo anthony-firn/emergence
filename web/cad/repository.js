@@ -1,3 +1,4 @@
+import { merge3 } from "./core/merge.js";
 // Immutable, content-addressed revisions. Branch tips are derived from ancestry,
 // so replicas never resolve concurrent revisions by silently overwriting one.
 export const FORMAT = "emergence-cad/1";
@@ -60,28 +61,44 @@ export function validParams(p) {
   return p && !Array.isArray(p) && LEGACY_KEYS.every(k => Object.hasOwn(p, k)) && Object.keys(p).every(k => Object.hasOwn(FIELDS, k))
     && Object.entries(FIELDS).every(([k, f]) => p[k] === undefined || Number.isFinite(p[k]) && p[k] >= f.min && p[k] <= f.max && (k !== "fins" || Number.isInteger(p[k])));
 }
-const revisionBody = c => ({ parents: c.parents, branch: c.branch, params: c.params, author: c.author, domain: c.domain, message: c.message, time: c.time, ...(c.features === undefined ? {} : { features: c.features }), ...(c.drawings === undefined ? {} : { drawings: c.drawings }) });
+const revisionBody = c => ({ parents: c.parents, branch: c.branch, params: c.params, author: c.author, domain: c.domain, message: c.message, time: c.time, ...(c.features === undefined ? {} : { features: c.features }), ...(c.drawings === undefined ? {} : { drawings: c.drawings }), ...(c.studios === undefined ? {} : { studios: c.studios }) });
+// Every other domain's document is a content-addressed blob a revision
+// refers to by hash, so an unchanged board or building costs nothing to keep.
+export const studiosOf = c => c.studios || {};
+const blobBody = b => ({ kind: b.kind, doc: b.doc });
 const noteBody = n => ({ commit: n.commit, author: n.author, domain: n.domain, text: n.text, kind: n.kind, time: n.time, nonce: n.nonce });
-function withinSize(commits, notes) {
-  const bytes = new TextEncoder().encode(JSON.stringify({ format: FORMAT, project: PROJECT, commits: [...commits.values()], notes: [...notes.values()] })).length;
+function withinSize(commits, notes, blobs = new Map()) {
+  const bytes = new TextEncoder().encode(JSON.stringify({ format: FORMAT, project: PROJECT, commits: [...commits.values()], notes: [...notes.values()], blobs: [...blobs.values()] })).length;
   if (bytes > 3_000_000) throw new Error("The combined project exceeds this demo’s 3 MB limit.");
 }
 export class Repository {
-  commits = new Map(); notes = new Map(); root;
+  commits = new Map(); notes = new Map(); blobs = new Map(); root;
+  // Set by the workspace: kind → validator returning the projected document,
+  // and kind → the document a revision without that kind stands for.
+  blobKinds = {}; studioDefaults = {};
+  async putBlob(kind, doc) {
+    if (!this.blobKinds[kind]) throw new Error(`Unknown design document kind ${kind}.`);
+    const body = { kind, doc: this.blobKinds[kind](structuredClone(doc)) }, id = await hash(body);
+    if (!this.blobs.has(id)) { withinSize(this.commits, this.notes, new Map([...this.blobs, [id, { ...body, id }]])); this.blobs.set(id, { ...body, id }); }
+    return id;
+  }
+  async putStudios(docs) { const out = {}; for (const [kind, doc] of Object.entries(docs).sort()) out[kind] = await this.putBlob(kind, doc); return out; }
+  studioDocs(commit) { return Object.fromEntries(Object.entries(studiosOf(commit)).map(([kind, id]) => [kind, structuredClone(this.blobs.get(id).doc)])); }
   async init() {
     const root = await this.make({ parents: [], branch: "main", params: LEGACY_DEFAULTS, author: "EvolveTech", domain: "Systems", message: "Motor-driver reference design", time: "2026-10-25T00:00:00.000Z" });
     this.root = root.id; this.commits.set(root.id, root); return this;
   }
   async make(body) { return { ...body, id: await hash(body) }; }
-  async commit(branch, parents, params, identity, message, features, drawings) {
+  async commit(branch, parents, params, identity, message, features, drawings, studios, time = new Date().toISOString()) {
     if (!validName(branch) || !validParams(params) || !validText(message, 240) || !validText(identity.author, 48)
       || !validText(identity.domain, 48)) throw new Error("Check the branch, author, message and parameter ranges.");
     if (!parents.length || parents.length > 2 || !parents.every(p => this.commits.has(p))) throw new Error("Revision parents are missing.");
     if (features !== undefined && !validFeatures(features)) throw new Error("Part definitions exceed the supported shape, dimension or count limits.");
     if (drawings !== undefined && !validDrawings(drawings)) throw new Error("Check drawing fields. A released sheet requires material, finish, tolerance, drawing number, revision, preparer and checker.");
+    if (studios !== undefined && !Object.values(studios).every(id => this.blobs.has(id))) throw new Error("A design document is missing from this project.");
     if (this.commits.size >= 512) throw new Error("This demo supports 512 revisions. Export your project to keep a backup.");
-    const c = await this.make({ parents: [...new Set(parents)], branch, params: { ...params }, author: identity.author, domain: identity.domain, message: message.trim(), time: new Date().toISOString(), ...(features === undefined ? {} : { features: structuredClone(features) }), ...(drawings === undefined ? {} : { drawings: structuredClone(drawings) }) });
-    withinSize(new Map([...this.commits, [c.id, c]]), this.notes);
+    const c = await this.make({ parents: [...new Set(parents)], branch, params: { ...params }, author: identity.author, domain: identity.domain, message: message.trim(), time, ...(features === undefined ? {} : { features: structuredClone(features) }), ...(drawings === undefined ? {} : { drawings: structuredClone(drawings) }), ...(studios === undefined ? {} : { studios: { ...studios } }) });
+    withinSize(new Map([...this.commits, [c.id, c]]), this.notes, this.blobs);
     this.commits.set(c.id, c); return c;
   }
   async note(commit, identity, text, kind = "comment") {
@@ -89,7 +106,7 @@ export class Repository {
       || !validText(identity.author, 48) || !validText(identity.domain, 48)) throw new Error("Enter a name and a review of up to 2,000 characters.");
     if (this.notes.size >= 1000) throw new Error("This demo supports 1,000 review notes.");
     const body = { commit, ...identity, text: text.trim(), kind, time: new Date().toISOString(), nonce: crypto.randomUUID() };
-    const n = { ...body, id: await hash(body) }; withinSize(this.commits, new Map([...this.notes, [n.id, n]])); this.notes.set(n.id, n); return n;
+    const n = { ...body, id: await hash(body) }; withinSize(this.commits, new Map([...this.notes, [n.id, n]]), this.blobs); this.notes.set(n.id, n); return n;
   }
   ancestor(a, b, map = this.commits) {
     const queue = [b], seen = new Set();
@@ -109,6 +126,7 @@ export class Repository {
     if (bases.length > 1) throw new Error("This history has multiple merge bases. This prototype requires manual reconciliation for criss-cross merges.");
     return this.commits.get(bases[0]);
   }
+  studioDiff(a, b) { const sa = studiosOf(a), sb = studiosOf(b); return [...new Set([...Object.keys(sa), ...Object.keys(sb)])].filter(k => sa[k] !== sb[k]).sort(); }
   diff(a, b) { const av = values(a), bv = values(b); return Object.keys(FIELDS).filter(k => av[k] !== bv[k]); }
   featureDiff(a = [], b = []) { const am = new Map(a.map(f => [f.id, f])), bm = new Map(b.map(f => [f.id, f])); return [...new Set([...am.keys(), ...bm.keys()])].filter(id => canonical(am.get(id)) !== canonical(bm.get(id))); }
   merge(targetId, sourceId) {
@@ -133,17 +151,33 @@ export class Repository {
       if (canonical(td[id]) !== canonical(bd[id])) drawingConflicts.push(id);
       else if (sd[id]) drawings[id] = sd[id]; else delete drawings[id];
     }
-    return { target, source, base, params, conflicts, features: [...fm.values()], featureConflicts, drawings, drawingConflicts };
+    // Domain documents merge by object id; both-sides edits become conflicts.
+    const kinds = new Set([...Object.keys(studiosOf(target)), ...Object.keys(studiosOf(source))]), studios = {}, studioConflicts = [];
+    const doc = (c, k) => studiosOf(c)[k] ? this.blobs.get(studiosOf(c)[k]).doc : this.studioDefaults[k];
+    for (const k of kinds) {
+      const t = doc(target, k), s = doc(source, k), b = doc(base, k);
+      const r = merge3(b, t ?? s, s ?? t);
+      studios[k] = r.value; for (const c of r.conflicts) studioConflicts.push({ kind: k, ...c });
+    }
+    return { target, source, base, params, conflicts, features: [...fm.values()], featureConflicts, drawings, drawingConflicts, studios, studioConflicts };
   }
-  bundle() { return { format: FORMAT, project: PROJECT, commits: [...this.commits.values()], notes: [...this.notes.values()] }; }
+  bundle() { return { format: FORMAT, project: PROJECT, commits: [...this.commits.values()], notes: [...this.notes.values()], blobs: [...this.blobs.values()] }; }
   async ingest(bundle) {
     if (bundle?.format !== FORMAT || bundle?.project !== PROJECT || !Array.isArray(bundle.commits) || !Array.isArray(bundle.notes)
-      || bundle.commits.length > 512 || bundle.notes.length > 1000) throw new Error("This is not a supported Emergence motor-driver project.");
-    const staged = new Map(this.commits), notes = new Map(this.notes);
+      || bundle.commits.length > 512 || bundle.notes.length > 1000) throw new Error("This is not an Emergence project history.");
+    const staged = new Map(this.commits), notes = new Map(this.notes), blobs = new Map(this.blobs);
+    if (bundle.blobs !== undefined && (!Array.isArray(bundle.blobs) || bundle.blobs.length > 4096)) throw new Error("This project's design documents are malformed.");
+    for (const b of bundle.blobs || []) {
+      if (!b || !isHash(b.id) || !this.blobKinds[b.kind]) throw new Error("A design document has an unknown kind. Nothing was imported.");
+      let doc; try { doc = this.blobKinds[b.kind](structuredClone(b.doc)); } catch (e) { throw new Error(`A ${b.kind} document is invalid (${e.message}). Nothing was imported.`); }
+      if (canonical(doc) !== canonical(b.doc) || await hash(blobBody(b)) !== b.id) throw new Error("A design document failed content verification. Nothing was imported.");
+      blobs.set(b.id, { kind: b.kind, doc, id: b.id });
+    }
     for (const c of bundle.commits) {
       if (!c || !isHash(c.id) || !Array.isArray(c.parents) || c.parents.length > 2 || !c.parents.every(isHash)
         || !validName(c.branch) || !validParams(c.params) || c.features !== undefined && !validFeatures(c.features) || c.drawings !== undefined && !validDrawings(c.drawings) || !validText(c.author, 48) || !validText(c.domain, 48)
         || !validText(c.message, 240) || !validText(c.time, 40) || !Number.isFinite(Date.parse(c.time))
+        || c.studios !== undefined && (typeof c.studios !== "object" || Array.isArray(c.studios) || !Object.entries(c.studios).every(([k, id]) => blobs.get(id)?.kind === k))
         || await hash(revisionBody(c)) !== c.id) throw new Error("A revision failed content verification. Nothing was imported.");
       staged.set(c.id, { ...revisionBody(c), id: c.id });
     }
@@ -166,8 +200,8 @@ export class Repository {
       notes.set(n.id, { ...noteBody(n), id: n.id });
     }
     if (notes.size > 1000) throw new Error("The combined project exceeds 1,000 review notes.");
-    withinSize(staged, notes);
-    const changed = staged.size !== this.commits.size || notes.size !== this.notes.size;
-    this.commits = staged; this.notes = notes; return changed;
+    withinSize(staged, notes, blobs);
+    const changed = staged.size !== this.commits.size || notes.size !== this.notes.size || blobs.size !== this.blobs.size;
+    this.commits = staged; this.notes = notes; this.blobs = blobs; return changed;
   }
 }

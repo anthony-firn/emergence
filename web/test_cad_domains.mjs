@@ -208,3 +208,31 @@ test("a saved project file reopens identically; headless files from before proje
   await writeFile(legacy, JSON.stringify({ format: "emergence-headless/1", docs, mech: p.file().documents.mech }));
   const old = await project(); old.load(await readFileAt(legacy)); assert.deepEqual(old.active(), DOMAINS);
 });
+test("review fixes: rolled-back scripts stay out of the log; one equipment room; merges see the starter document", async () => {
+  const p = await project(); p.load(await exampleFile("blank"));
+  await p.bus.run("project.add_domain", { domain: "architecture" });
+  const before = p.bus.script().length;
+  await assert.rejects(p.bus.batch([{ op: "architecture.site", args: { outdoor: 30 } }, { op: "architecture.site", args: { outdoor: 99 } }]));
+  assert.equal(p.store.docs.architecture.site.outdoor, 32); assert.equal(p.bus.script().length, before, "a rolled-back step is not an exported edit");
+  await p.bus.run("architecture.add_room", { label: "Lab", equipment: true });
+  assert.deepEqual(p.store.docs.architecture.rooms.filter(r => r.equipment).map(r => r.name), ["Lab"]);
+  await p.bus.run("architecture.add_room", { label: "Store", equipment: false });
+  assert.deepEqual(p.store.docs.architecture.rooms.filter(r => r.equipment).map(r => r.name), ["Lab"], "a non-equipment room leaves the flag where it was");
+  // Two branches from a revision without documents: a one-sided PCB edit is not a conflict.
+  const repo = await new Repository().init(); repo.blobKinds = Object.fromEntries(p.store.ids().map(id => [id, d => p.store.domains[id].validate(d)])); repo.studioDefaults = p.store.all();
+  const params = { fins: 9, velocity: 2.5, current: 30, ambient: 45, heat: 0, opticalSize: .1 }, who = { author: "T", domain: "Systems" };
+  const edited = { ...p.store.all(), pcb: { ...p.store.all().pcb, width: 90 } };
+  const a = await repo.commit("main", [repo.root], params, who, "Edit the board", [], {}, await repo.putStudios(edited));
+  const b = await repo.commit("other", [repo.root], params, who, "Save defaults", [], {}, await repo.putStudios(p.store.all()));
+  const m = repo.merge(a.id, b.id); assert.deepEqual(m.studioConflicts, []); assert.equal(m.studios.pcb.width, 90);
+});
+test("review fixes: chip corner libraries are preloaded again after the model Worker restarts", async () => {
+  let preloads = 0;
+  const request = (type, args) => { if (type === "chip" && args.input?.libs) preloads++; return models.request(type, args); };
+  request.generation = 1;
+  const p = createProject({ request, mech: new MechanicalState(), loadCorners, verilog: await loadVerilog() }); p.load(await exampleFile("blank"));
+  await p.bus.run("project.add_domain", { domain: "silicon" }); await p.solve(); assert.equal(preloads, 1);
+  await p.bus.run("silicon.chip", { frequency: 110 }); await p.solve(); assert.equal(preloads, 1, "the same Worker keeps its libraries");
+  request.generation = 2; await p.bus.run("silicon.chip", { frequency: 120 }); const s = await p.solve();
+  assert.equal(preloads, 2, "a restarted Worker gets them again"); assert(!s.checks.some(c => c.status === "unavailable"));
+});

@@ -141,7 +141,7 @@ export class CommandBus {
   batch(list, options = {}) { const p = this.queue.then(() => this.#batch(list, options)); this.queue = p.catch(() => {}); return p; }
   async #batch(list, { source = "script", label = "Script" } = {}) {
     if (!Array.isArray(list) || list.length > 500) throw new Error("A script is a list of up to 500 commands.");
-    const snaps = new Map(), results = [];
+    const snaps = new Map(), results = [], entries = [];
     const take = domain => { const d = this.domains.get(domain); if (d?.snapshot && !snaps.has(domain)) snaps.set(domain, d.snapshot()); };
     try {
       for (const [i, step] of list.entries()) {
@@ -149,12 +149,15 @@ export class CommandBus {
         this.touched(spec, args).forEach(take);
         try { results.push({ op: spec.op, result: await spec.run(args, { bus: this, source }) }); }
         catch (e) { throw new Error(`Step ${i + 1} (${spec.op}): ${e.message}`); }
-        this.#record({ time: new Date().toISOString(), op: spec.op, args, source, domain: spec.domain, ok: true, summary: summarize(results.at(-1).result), mutates: spec.undoable });
+        entries.push({ time: new Date().toISOString(), op: spec.op, args, source, domain: spec.domain, ok: true, summary: summarize(results.at(-1).result), mutates: spec.undoable });
       }
     } catch (e) {
+      // Rolled back: nothing from this batch enters the log as a kept edit.
       for (const [domain, s] of snaps) this.domains.get(domain).restore(s);
+      this.#record({ time: new Date().toISOString(), op: label, args: {}, source, ok: false, error: e.message });
       this.emit({ type: "error", op: "batch", error: e, source }); throw e;
     }
+    entries.forEach(entry => this.#record(entry));
     if (snaps.size) { this.undoStack.push({ label, snaps: [...snaps] }); this.redoStack = []; }
     this.emit({ type: "batch", domains: [...snaps.keys()], results, source });
     return results;

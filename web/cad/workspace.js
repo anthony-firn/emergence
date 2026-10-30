@@ -31,6 +31,7 @@ repo.blobKinds = Object.fromEntries(project.store.ids().map(id => [id, d => proj
 // Revisions from before a document kind existed open with its starter; work
 // from before projects existed used every domain.
 const DEFAULT_STUDIOS = { ...project.store.all(), project: here.legacyManifest() };
+repo.studioDefaults = DEFAULT_STUDIOS;
 const baseStudios = c => ({ ...structuredClone(DEFAULT_STUDIOS), ...repo.studioDocs(c) });
 const STUDIO_DRAFT = here.key("emergence-cad-studios-v1"), AUTOSAVE = here.key("emergence-cad-autosave-v1");
 let storageOK = true;
@@ -60,9 +61,11 @@ params ||= values(repo.commits.get(active).params); features ||= structuredClone
 {
   let docs = baseStudios(repo.commits.get(active));
   const read = (store, key) => { try { return JSON.parse(store.getItem(key) || "null"); } catch { return null; } };
-  const saved = read(sessionStorage, STUDIO_DRAFT) || read(localStorage, AUTOSAVE);
-  if (saved?.docs && typeof saved.docs === "object") docs = { ...docs, ...saved.docs };
-  else for (const kind of ["pcb", "silicon"]) { const legacy = read(localStorage, `emergence-${kind}-v1`); if (legacy?.design) docs[kind] = legacy.design; }
+  // A draft belongs to the revision it was made on; drafts from the separate
+  // PCB and silicon editors predate projects and belong to the migrated one.
+  const saved = [read(sessionStorage, STUDIO_DRAFT), read(localStorage, AUTOSAVE)].find(s => s?.head === active && s.docs && typeof s.docs === "object");
+  if (saved) docs = { ...docs, ...saved.docs };
+  else if (here.id === "local") for (const kind of ["pcb", "silicon"]) { const legacy = read(localStorage, `emergence-${kind}-v1`); if (legacy?.design) docs[kind] = legacy.design; }
   try { project.store.load(docs, "restore"); } catch (e) { project.store.load(baseStudios(repo.commits.get(active)), "restore"); toast(`A saved studio draft could not be read (${e.message}). The revision's documents were loaded instead.`); }
 }
 let peers, mergePlan, comparisonGeneration = 0;
@@ -418,8 +421,8 @@ function compare() {
       select.addEventListener("change", () => {
         if (!select.value) { p.choices.delete(key); delete (p.studioChoices[kind] ||= {})[c.path]; }
         else { p.choices.add(key); (p.studioChoices[kind] ||= {})[c.path] = select.value; }
-        const docs = [p.base, p.target, p.source].map(x => repo.studioDocs(x)[kind]);
-        p.studios[kind] = merge3(docs[0], docs[1] ?? docs[2], docs[2] ?? docs[1], p.studioChoices[kind] || {}).value; evaluateMerge();
+        const docs = [p.base, p.target, p.source].map(x => baseStudios(x)[kind]);
+        p.studios[kind] = merge3(docs[0], docs[1], docs[2], p.studioChoices[kind] || {}).value; evaluateMerge();
       });
       row.append(select);
     }
@@ -484,6 +487,8 @@ function receive(bundle) {
   return incoming;
 }
 peers = new Peers(identity, receive, renderPeers, fail, here.channel); peers.snapshot = bundle;
+// A history opened from Projects for a project already on this device merges here.
+{ const incoming = here.takeIncoming(); if (incoming) receive(incoming).then(ok => ok && toast(`Merged the opened history: ${repo.commits.size} revisions. Your draft and branches are kept.`)); }
 // Ask existing tabs for a snapshot only after the callback has been assigned.
 peers.hello();
 $("connect").addEventListener("click", () => { renderPeers(); $("peer-dialog").showModal(); });

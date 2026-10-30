@@ -223,7 +223,13 @@ $("tour-next").addEventListener("click", async () => {
     try {
       const before = solution;
       const { op, args } = project.bus.parse(step.command); await project.bus.run(op, args, { source: "tour" });
-      const after = await new Promise(resolve => { const off = onSolved(s => { if (s !== before) { off(); resolve(s); } }); });
+      // The next solve, or its failure; a step never waits forever.
+      const after = await new Promise((resolve, reject) => {
+        const done = () => { off(); onSolving.delete(failed); clearTimeout(timer); };
+        const off = onSolved(s => { if (s !== before) { done(); resolve(s); } });
+        const failed = (busy, e) => { if (busy === false && e) { done(); reject(e); } }; onSolving.add(failed);
+        const timer = setTimeout(() => { done(); reject(new Error("The linked system did not re-solve within two minutes.")); }, 120000);
+      });
       $("tour-result").textContent = observe(step, after, before);
       tourRan = true; $("tour-next").textContent = tourIndex === TOUR.length - 1 ? "Finish" : "Next";
     } catch (e) { $("tour-result").textContent = e.message; }

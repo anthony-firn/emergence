@@ -73,8 +73,9 @@ function withinSize(commits, notes, blobs = new Map()) {
 }
 export class Repository {
   commits = new Map(); notes = new Map(); blobs = new Map(); root;
-  // Set by the workspace: kind → validator returning the projected document.
-  blobKinds = {};
+  // Set by the workspace: kind → validator returning the projected document,
+  // and kind → the document a revision without that kind stands for.
+  blobKinds = {}; studioDefaults = {};
   async putBlob(kind, doc) {
     if (!this.blobKinds[kind]) throw new Error(`Unknown design document kind ${kind}.`);
     const body = { kind, doc: this.blobKinds[kind](structuredClone(doc)) }, id = await hash(body);
@@ -152,7 +153,7 @@ export class Repository {
     }
     // Domain documents merge by object id; both-sides edits become conflicts.
     const kinds = new Set([...Object.keys(studiosOf(target)), ...Object.keys(studiosOf(source))]), studios = {}, studioConflicts = [];
-    const doc = (c, k) => studiosOf(c)[k] ? this.blobs.get(studiosOf(c)[k]).doc : undefined;
+    const doc = (c, k) => studiosOf(c)[k] ? this.blobs.get(studiosOf(c)[k]).doc : this.studioDefaults[k];
     for (const k of kinds) {
       const t = doc(target, k), s = doc(source, k), b = doc(base, k);
       const r = merge3(b, t ?? s, s ?? t);

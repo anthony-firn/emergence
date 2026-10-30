@@ -10,6 +10,8 @@ function fail(error) {
 }
 function start() {
   worker = new Worker(new URL("../worker.js", import.meta.url), { type: "module" });
+  // State preloaded into a Worker (chip corner libraries) dies with it.
+  request.generation = (request.generation ?? 0) + 1;
   worker.onmessage = ({ data }) => { const p = pending.get(data.id); if (!p) return; clearTimeout(p.timer); pending.delete(data.id);
     data.error || data.result?.error ? p.reject(new Error(data.error || data.result.error)) : p.resolve(data); };
   worker.onerror = e => fail(new Error(e.message || "The model Worker failed"));

@@ -58,10 +58,12 @@ export function createProject({ request, mech, loadCorners, verilog = "", mesh }
   bus.domain("mech", { snapshot: () => mech.snapshot(), restore: s => mech.restore(s) });
   const m = (id, fn) => store.mutate(id, fn);
 
-  // Chip corner libraries are sent to the model worker once.
+  // Chip corner libraries are sent to the model worker once per Worker: a
+  // restarted Worker has lost them, and a failed load is retried.
   let corners = null;
   const chip = async (d, rtl, temperature) => {
-    if (!corners) corners = loadCorners().then(async data => { await request("chip", { input: { libs: data.corners, verilog: "module t(input a, output y); assign y = a; endmodule" } }); return data; });
+    if (corners && (await corners.catch(() => null))?.generation !== request.generation) corners = null;
+    corners ||= (async () => { const data = await loadCorners(); await request("chip", { input: { libs: data.corners, verilog: "module t(input a, output y); assign y = a; endmodule" } }); return { data, generation: request.generation }; })();
     await corners;
     return (await request("chip", { input: { verilog: rtl.source === "custom" ? rtl.verilog : RTL[rtl.source], frequency: d.chip.frequency * 1e6, vdd: d.chip.vdd, activity: d.chip.activity / 100, instances: d.chip.instances, temperature, samples: 3000 } })).result;
   };
@@ -199,7 +201,10 @@ export function createProject({ request, mech, loadCorners, verilog = "", mesh }
         let mass = 0; const volumes = {};
         for (const p of d.parts) {
           const key = JSON.stringify([p.model, p.overrides]);
-          if (!partVolumes.has(key)) partVolumes.set(key, mesh(p.model, p.overrides).then(r => r.volume));
+          if (!partVolumes.has(key)) {
+            const volume = mesh(p.model, p.overrides).then(r => r.volume); partVolumes.set(key, volume); volume.catch(() => partVolumes.delete(key));
+            if (partVolumes.size > 64) partVolumes.delete(partVolumes.keys().next().value);
+          }
           volumes[p.id] = await partVolumes.get(key);
           mass += volumes[p.id] * MATERIALS[p.material].density * 1e-6 * p.count;
         }
@@ -367,12 +372,13 @@ export function createProject({ request, mech, loadCorners, verilog = "", mesh }
   const roomArgs = [...[["width", .5, 200, "m"], ["depth", .5, 200, "m"], ["height", 2, 20, "m"], ["people", 0, 2000, ""], ["lighting", 0, 50, "W/m²"], ["supply", 0, 1e6, "m³/h"], ["supply_temp", 5, 40, "°C"], ["setpoint", 10, 35, "°C"], ["roof_u", 0, 5, "W/m²K"]]
     .map(([name, min, max, unit]) => ({ name, type: "number", min, max, unit, named: true })), { name: "mode", type: "enum", values: ["supplied", "conditioned"], named: true }, { name: "equipment", type: "boolean", named: true }, { name: "name", type: "string", maxLength: 60, named: true }];
   const applyRoom = (d, r, a) => { for (const [k, key] of [["width", "width"], ["depth", "depth"], ["height", "height"], ["people", "people"], ["lighting", "lighting"], ["supply", "supply"], ["supply_temp", "supplyTemp"], ["setpoint", "setpoint"], ["roof_u", "roofU"], ["mode", "mode"], ["name", "name"]]) if (a[k] !== undefined) r[key] = a[k];
-    if (a.at) [r.x, r.y] = a.at; if (a.equipment !== undefined) { for (const x of d.rooms) x.equipment = false; r.equipment = a.equipment; if (!d.rooms.some(x => x.equipment)) d.rooms[0].equipment = true; } };
+    // One room holds the equipment; r is already in d.rooms.
+    if (a.at) [r.x, r.y] = a.at; if (a.equipment !== undefined) { if (a.equipment) for (const x of d.rooms) x.equipment = x === r; else r.equipment = false; if (!d.rooms.some(x => x.equipment)) d.rooms[0].equipment = true; } };
   register([
     { op: "architecture.add_room", title: "Add a room", example: "architecture.add_room Workshop @13,0 width=6 depth=9", args: [{ name: "label", type: "string", maxLength: 60, required: true }, { name: "at", type: "point", help: "Plan position in m" }, ...roomArgs.filter(a => a.name !== "name")],
       run: a => m("architecture", d => { if (d.rooms.length >= 32) throw new Error("This plan supports 32 rooms."); const id = nextId(d.rooms, "room"), right = Math.max(...d.rooms.map(r => r.x + r.width));
         const w = (ext = true) => ({ exterior: ext, U: .35, window: 0 }), r = { id, name: a.label, x: right, y: 0, width: 5, depth: 5, height: 3, people: 2, lighting: 9, mode: "conditioned", supply: 200, supplyTemp: 16, setpoint: 24, equipment: false, roofU: .25, walls: { north: w(), east: w(), south: w(), west: w() } };
-        applyRoom(d, r, a); d.rooms.push(r); return { id, message: `Added ${r.name} (${id}).` }; }) },
+        d.rooms.push(r); applyRoom(d, r, a); return { id, message: `Added ${r.name} (${id}).` }; }) },
     { op: "architecture.update_room", title: "Edit a room", example: "architecture.update_room lab supply=1200 people=5", args: [{ name: "id", type: "string", required: true }, { name: "at", type: "point" }, ...roomArgs],
       run: ({ id, ...a }) => m("architecture", d => { const r = room(d, id); applyRoom(d, r, a); return { message: `Updated ${r.name}.` }; }) },
     { op: "architecture.wall", title: "Set a wall: exterior, U-value and window", example: "architecture.wall lab west window=4", args: [{ name: "id", type: "string", required: true }, { name: "side", type: "enum", values: SIDES, required: true },

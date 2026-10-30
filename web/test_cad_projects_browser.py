@@ -67,6 +67,11 @@ def check(url, screenshots=None):
         page.locator("#import").set_input_files({"name": "other.json", "mimeType": "application/json", "buffer": shelter_history.encode()})
         page.wait_for_function("() => document.querySelector('#toast').textContent.includes('belongs to the project')")
         assert page.locator("#revision-count").inner_text() == "2"
+        # Opened from Projects, a history whose project is already here merges into it.
+        page.locator("#projects-open").click()
+        page.locator("#project-file").set_input_files({"name": "shelter.history.json", "mimeType": "application/json", "buffer": shelter_history.encode()})
+        page.wait_for_function("() => document.querySelector('#project-name')?.textContent === 'Edge compute shelter'", timeout=60000)
+        page.wait_for_function("() => document.querySelector('#toast').textContent.includes('Merged the opened history')", timeout=60000)
         print("Project files round-trip into new projects; histories never cross projects.")
 
         # A blank project grows by the UI; removing a domain leaves its links dormant.

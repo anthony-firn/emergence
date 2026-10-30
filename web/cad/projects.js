@@ -3,7 +3,7 @@
 // its id in every export and on every peer channel, so imports and peers join
 // the right history. Switching project reloads the page on that project.
 import { projectFile, projectDefault, DOMAINS, slug } from "./core/project.js";
-const REGISTRY = "emergence-cad-projects-v1", SEED = "emergence-cad-seed-v1:", STORE = "emergence-cad-project-v1";
+const REGISTRY = "emergence-cad-projects-v1", SEED = "emergence-cad-seed-v1:", INCOMING = "emergence-cad-incoming-v1:", STORE = "emergence-cad-project-v1";
 const read = (store, key) => { try { return JSON.parse(store.getItem(key) || "null"); } catch { return null; } };
 const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
 const fresh = () => `p-${crypto.randomUUID().slice(0, 12)}`;
@@ -48,7 +48,8 @@ async function resolve() {
 const meta = await resolve();
 history.replaceState(null, "", `?project=${encodeURIComponent(meta.id)}${location.hash}`);
 // Storage keys are per project; the migrated project keeps the original keys.
-const key = base => meta.id === "local" ? base : `${base}:${meta.id}`;
+const keyFor = (id, base) => id === "local" ? base : `${base}:${id}`;
+const key = base => keyFor(meta.id, base);
 // The file a new project starts from, used once to make its first revision.
 async function seed() {
   if (meta.source?.example) return exampleFile(meta.source.example);
@@ -59,6 +60,7 @@ async function seed() {
 export const current = {
   id: meta.id, meta, key, channel: `emergence-cad-${meta.id}-v1`,
   seed, clearSeed: () => { try { localStorage.removeItem(SEED + meta.id); } catch { /* best effort */ } },
+  takeIncoming: () => { const b = read(localStorage, INCOMING + meta.id); try { localStorage.removeItem(INCOMING + meta.id); } catch { /* best effort */ } return b; },
   // The documents a revision without a manifest opens with: work from before
   // projects existed used every domain.
   legacyManifest: () => ({ ...projectDefault(), name: meta.name, domains: [...DOMAINS] }),
@@ -75,14 +77,14 @@ export function createFromFile(file) {
 }
 export function createFromBundle(bundle, name) {
   const id = bundle.id && /^[a-zA-Z0-9-]{1,64}$/.test(bundle.id) ? bundle.id : fresh();
-  if (find(id)) return { id, exists: true };
-  if (!write(`${STORE}:${id}`, bundle)) throw new Error("Browser storage is unavailable, so a new project cannot be created here.");
+  // Already here: the project merges the history when it opens.
+  if (find(id)) { if (!write(INCOMING + id, bundle)) throw new Error("Browser storage is unavailable, so the history cannot be handed to the project."); return { id, exists: true }; }
+  if (!write(keyFor(id, STORE), bundle)) throw new Error("Browser storage is unavailable, so a new project cannot be created here.");
   add({ id, name: name || bundle.name || "Imported project", source: { bundle: true } }); return { id, exists: false };
 }
 export function remove(id) {
   if (id === meta.id) throw new Error("Open another project before deleting this one.");
   reg.projects = reg.projects.filter(p => p.id !== id); save();
-  const k = id === "local" ? b => b : b => `${b}:${id}`;
-  try { for (const b of [STORE, "emergence-cad-autosave-v1"]) localStorage.removeItem(k(b)); localStorage.removeItem(SEED + id); } catch { /* best effort */ }
+  try { for (const b of [STORE, "emergence-cad-autosave-v1"]) localStorage.removeItem(keyFor(id, b)); localStorage.removeItem(SEED + id); localStorage.removeItem(INCOMING + id); } catch { /* best effort */ }
 }
 export { slug };

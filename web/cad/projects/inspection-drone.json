@@ -1,945 +1,1860 @@
 {
  "format": "emergence-project/1",
  "documents": {
-  "project": {
-   "name": "Inspection quadcopter",
-   "summary": "An 8 kg-class inspection quadcopter across eight domains. Mass sets thrust, thrust sets the ESC current, the current heats the power MOSFET and sizes its heat sink, and the sink is mass again: the weight spiral closes through the solver. Rotor wake cools the ESC, mission altitude sets the camera's ground sample distance, and battery chargers heat the hangar.",
-   "domains": [
-    "flight",
-    "mech",
-    "parts",
-    "pcb",
-    "silicon",
-    "optics",
-    "fluids",
-    "architecture"
-   ],
-   "headline": [
-    {
-     "port": "flight.total_mass",
-     "label": "Take-off mass"
-    },
-    {
-     "port": "flight.flight_time",
-     "label": "Hover endurance"
-    },
-    {
-     "port": "mech.q1_tj",
-     "label": "ESC MOSFET junction"
-    },
-    {
-     "port": "flight.esc_current",
-     "label": "Design ESC current"
-    },
-    {
-     "port": "optics.gsd",
-     "label": "Ground sample distance"
-    },
-    {
-     "port": "silicon.power",
-     "label": "Flight-controller die"
-    },
-    {
-     "port": "architecture.room_temperature",
-     "label": "Charging room"
-    },
-    {
-     "port": "fluids.duct_velocity",
-     "label": "ESC cooling air"
-    }
-   ],
-   "studies": [
-    {
-     "id": "gimbal",
-     "label": "Gimbal mass",
-     "domain": "flight",
-     "path": "masses.gimbal.mass"
-    },
-    {
-     "id": "battery",
-     "label": "Battery capacity",
-     "domain": "flight",
-     "path": "battery.capacity"
-    },
-    {
-     "id": "prop",
-     "label": "Propeller diameter",
-     "domain": "flight",
-     "path": "prop"
-    },
-    {
-     "id": "capture",
-     "label": "Wake capture",
-     "domain": "flight",
-     "path": "capture"
-    },
-    {
-     "id": "fin-height",
-     "label": "Heat-sink fin height",
-     "domain": "mech",
-     "path": "params.finHeight",
-     "max": 35
-    },
-    {
-     "id": "sink-length",
-     "label": "Heat-sink length",
-     "domain": "mech",
-     "path": "params.length",
-     "max": 90
-    },
-    {
-     "id": "outdoor",
-     "label": "Outdoor temperature",
-     "domain": "architecture",
-     "path": "site.outdoor"
-    },
-    {
-     "id": "clock",
-     "label": "Controller clock",
-     "domain": "silicon",
-     "path": "chip.frequency"
-    }
-   ],
-   "optimize": {
-    "title": "Close the weight spiral",
-    "summary": "Lightest take-off mass with the ESC MOSFET junction at or below 100 °C and every linked model inside its validated range. Each trial is a full coupled solve.",
-    "objective": {
-     "port": "flight.total_mass",
-     "sense": "min"
-    },
-    "constraints": [
-     {
-      "port": "mech.q1_tj",
-      "max": 100,
-      "label": "ESC MOSFET junction ≤ 100 °C"
-     }
-    ],
-    "variables": [
-     {
-      "domain": "mech",
-      "path": "params.fins",
-      "label": "Fin count",
-      "min": 5,
-      "max": 14,
-      "step": 1,
-      "integer": true
-     },
-     {
-      "domain": "mech",
-      "path": "params.finHeight",
-      "label": "Fin height",
-      "min": 10,
-      "max": 35,
-      "step": 0.5
-     },
-     {
-      "domain": "mech",
-      "path": "params.length",
-      "label": "Sink length",
-      "min": 30,
-      "max": 90,
-      "step": 0.5
-     }
-    ],
-    "trials": 40
-   },
-   "tour": [
-    {
-     "studio": "system",
-     "title": "One drone, eight domains, one solve",
-     "text": "This project is one file: eight design documents, the links between them and this tour. Mass sets thrust, thrust sets the ESC current, the current heats Q1 and sizes the sink, and the sink is mass again. The solver iterates that loop until it settles and says so."
-    },
-    {
-     "studio": "flight",
-     "title": "Carry a heavier camera",
-     "text": "A bigger gimbal raises take-off mass. Watch the design-point ESC current, the MOSFET junction temperature and the hover endurance move together.",
-     "command": "flight.mass gimbal 1.6",
-     "watch": [
-      "flight.total_mass",
-      "flight.esc_current",
-      "mech.q1_tj",
-      "flight.flight_time"
-     ]
-    },
-    {
-     "studio": "mechanical",
-     "title": "Trim the ESC heat sink",
-     "text": "Fewer fins weigh less, which helps every motor. The Rust electrothermal graph re-solves the sink, and the fluids studio re-solves the duct with the wider channels.",
-     "command": "mech.set fins 6",
-     "watch": [
-      "mech.sink_mass",
-      "fluids.duct_velocity",
-      "mech.q1_tj"
-     ],
-     "checks": [
-      "mech/REQ-TJ"
-     ]
-    },
-    {
-     "studio": "pcb",
-     "title": "Route the ESC board",
-     "text": "The router finds clear paths on the snap grid, around other nets' copper. The kernel then computes each trace's resistance from its drawn length, and the load current from Flight sets the I²R loss.",
-     "command": "pcb.route_all width=0.6",
-     "watch": [
-      "pcb.unrouted",
-      "pcb.copper_loss"
-     ],
-     "checks": [
-      "pcb/density"
-     ]
-    },
-    {
-     "studio": "silicon",
-     "title": "Clock the flight controller faster",
-     "text": "The RTL is synthesized onto transistor-characterised cells and timed across nine corners at the die's own junction temperature. Faster clocks cost power and slack.",
-     "command": "silicon.chip frequency=400",
-     "watch": [
-      "silicon.power",
-      "silicon.junction"
-     ],
-     "checks": [
-      "silicon/setup-cpu"
-     ]
-    },
-    {
-     "studio": "optics",
-     "title": "Fly higher for coverage",
-     "text": "Mission altitude is a Flight output linked into the camera. The Cooke triplet's focal length and the sensor pixel set the ground sample distance.",
-     "command": "flight.set altitude=150",
-     "watch": [
-      "optics.gsd"
-     ],
-     "checks": [
-      "optics/gsd"
-     ]
-    },
-    {
-     "studio": "fluids",
-     "title": "Scoop more rotor wake",
-     "text": "More of the downwash's dynamic pressure drives the ESC duct. Past Re 2300 the fin channels leave the laminar correlation, and the mechanical model refuses to extrapolate instead of guessing.",
-     "command": "flight.set capture=0.3",
-     "watch": [
-      "flight.wake_pressure",
-      "fluids.duct_velocity"
-     ],
-     "checks": [
-      "mech/REQ-TJ"
-     ]
-    },
-    {
-     "studio": "architecture",
-     "title": "Charge more packs in the hangar",
-     "text": "Each charger dissipates the pack energy's 8% loss over a one-hour charge. The charging room uses the BESTEST 600 envelope; its supply air sets its temperature.",
-     "command": "architecture.site units=14",
-     "watch": [
-      "architecture.equipment_load",
-      "architecture.room_temperature"
-     ],
-     "checks": [
-      "architecture/room"
-     ]
-    },
-    {
-     "studio": "system",
-     "title": "Everything above was a command",
-     "text": "Each step ran through the same registry the command line, scripts, the CLI and the MCP server use. End the tour to restore your design exactly as it was."
-    }
-   ],
-   "scene": {
-    "placements": {
-     "mech": {
-      "at": [
-       265,
-       0,
-       25
-      ],
-      "rz": 90,
-      "phase": 45,
-      "count": "flight:rotors"
-     },
-     "pcb": {
-      "at": [
-       0,
-       0,
-       8
-      ]
-     },
-     "optics": {
-      "at": [
-       0,
-       70,
-       -8
-      ],
-      "rx": 180
-     },
-     "flight": {
-      "at": [
-       0,
-       0,
-       0
-      ]
-     },
-     "parts": {
-      "at": [
-       0,
-       0,
-       0
-      ]
-     },
-     "silicon": {
-      "at": [
-       -20,
-       10,
-       9.6
-      ]
-     }
-    },
-    "site": {
-     "room": "bay",
-     "z": 1200
-    }
-   },
-   "credits": [
-    {
-     "title": "Tiny Tapeout dual-channel PWM motor controller (tt_um_hadjal001_motor_controller)",
-     "url": "https://github.com/HADJAL001/tt-motor-controller",
-     "domain": "silicon",
-     "licence": "Apache-2.0",
-     "note": "At 0f078f5, adapted to the native Verilog subset; every change is listed in the file header."
-    },
-    {
-     "title": "mini8 CPU",
-     "url": "https://github.com/anthony-firn/emergence/tree/main/fluid/projects/mini-cpu",
-     "domain": "silicon",
-     "licence": "Apache-2.0"
-    },
-    {
-     "title": "Cooke triplet, Optiland gallery (after Kingslake)",
-     "url": "https://optiland.readthedocs.io/en/latest/gallery/basic_lenses/Cooke_Triplet.html",
-     "domain": "optics",
-     "licence": "MIT",
-     "note": "The stop is a plane just past surface 4; clear diameters chosen here."
-    },
-    {
-     "title": "ANSI/ASHRAE Standard 140 BESTEST case 600 (charging room geometry and envelope)",
-     "url": "https://simulationresearch.lbl.gov/modelica/releases/v9.0.0/help/Buildings_ThermalZones_Detailed_Validation_BESTEST_Cases6xx.html",
-     "domain": "architecture",
-     "note": "Solved as a ventilated steady-state room, not the standard's annual test."
-    }
-   ]
-  },
-  "system": {
-   "links": [
-    {
-     "id": "flight-esc",
-     "from": "flight.esc_current",
-     "to": "mech.current",
-     "enabled": true,
-     "note": "Design-point ESC current is the MOSFET RMS current"
-    },
-    {
-     "id": "sink-mass",
-     "from": "mech.sink_mass",
-     "to": "flight.esc_mass",
-     "enabled": true,
-     "note": "Each ESC carries one heat sink"
-    },
-    {
-     "id": "board-mass",
-     "from": "pcb.board_mass",
-     "to": "flight.esc_mass",
-     "enabled": true,
-     "note": "Each ESC carries one power board"
-    },
-    {
-     "id": "camera-mass",
-     "from": "optics.mass",
-     "to": "flight.camera_mass",
-     "enabled": true,
-     "note": "Lens glass"
-    },
-    {
-     "id": "frame-mass",
-     "from": "parts.mass",
-     "to": "flight.parts_mass",
-     "enabled": true,
-     "note": "Airframe parts"
-    },
-    {
-     "id": "altitude",
-     "from": "flight.altitude",
-     "to": "optics.altitude",
-     "enabled": true,
-     "note": "Mission altitude sets the ground sample distance"
-    },
-    {
-     "id": "wake",
-     "from": "flight.wake_pressure",
-     "to": "fluids.drive_pressure",
-     "enabled": true,
-     "note": "Rotor downwash drives the ESC cooling duct"
-    },
-    {
-     "id": "fluids-mech",
-     "from": "fluids.duct_velocity",
-     "to": "mech.velocity",
-     "enabled": true,
-     "note": "Duct flow sets the heat-sink approach velocity"
-    },
-    {
-     "id": "mech-fluids-gap",
-     "from": "mech.gap",
-     "to": "fluids.sink_gap",
-     "enabled": true
-    },
-    {
-     "id": "mech-fluids-height",
-     "from": "mech.finHeight_out",
-     "to": "fluids.sink_height",
-     "enabled": true
-    },
-    {
-     "id": "mech-fluids-length",
-     "from": "mech.length_out",
-     "to": "fluids.sink_length",
-     "enabled": true
-    },
-    {
-     "id": "mech-fluids-width",
-     "from": "mech.width_out",
-     "to": "fluids.sink_width",
-     "enabled": true
-    },
-    {
-     "id": "mech-fluids-fins",
-     "from": "mech.fins_out",
-     "to": "fluids.fin_count",
-     "enabled": true
-    },
-    {
-     "id": "air-mech",
-     "from": "architecture.outdoor_temperature",
-     "to": "mech.ambient",
-     "enabled": true,
-     "note": "Outside air is the ESC inlet air in flight"
-    },
-    {
-     "id": "air-flight",
-     "from": "architecture.outdoor_temperature",
-     "to": "flight.air_temperature",
-     "enabled": true,
-     "note": "Air density for thrust"
-    },
-    {
-     "id": "air-fluids",
-     "from": "architecture.outdoor_temperature",
-     "to": "fluids.air_temperature",
-     "enabled": true
-    },
-    {
-     "id": "air-silicon",
-     "from": "architecture.outdoor_temperature",
-     "to": "silicon.ambient",
-     "enabled": true
-    },
-    {
-     "id": "silicon-pcb",
-     "from": "silicon.power",
-     "to": "pcb.u1_power",
-     "enabled": true,
-     "note": "Flight-controller die power is U1's dissipation"
-    },
-    {
-     "id": "mech-pcb",
-     "from": "mech.current_out",
-     "to": "pcb.load_current",
-     "enabled": true,
-     "note": "MOSFET current flows in the OUT and GND copper"
-    },
-    {
-     "id": "mech-fluids-heat",
-     "from": "mech.q1_power",
-     "to": "fluids.heat_load",
-     "enabled": true,
-     "note": "Q1 heat warms the duct air"
-    },
-    {
-     "id": "copper-heat",
-     "from": "pcb.copper_loss",
-     "to": "mech.heat",
-     "enabled": true,
-     "note": "Board copper loss conducted into the ESC heat sink (conservative)"
-    },
-    {
-     "id": "chargers",
-     "from": "flight.charger_heat",
-     "to": "architecture.equipment_power",
-     "enabled": true,
-     "note": "Battery chargers in the hangar charging room"
-    }
-   ],
-   "confirmed": {}
-  },
-  "flight": {
-   "name": "Inspection quadcopter",
-   "rotors": 4,
-   "prop": 381,
-   "fm": 0.65,
-   "motorEfficiency": 0.82,
-   "escEfficiency": 0.97,
-   "designTW": 2,
-   "battery": {
-    "cells": 12,
-    "capacity": 16,
-    "usable": 0.8,
-    "mass": 3.9,
-    "resistance": 0.02
-   },
-   "masses": [
-    {
-     "id": "frame",
-     "name": "Carbon frame and arms",
-     "mass": 1.45
-    },
-    {
-     "id": "motors",
-     "name": "Motors",
-     "mass": 0.92
-    },
-    {
-     "id": "props",
-     "name": "Propellers",
-     "mass": 0.2
-    },
-    {
-     "id": "gimbal",
-     "name": "Gimbal and camera body",
-     "mass": 0.55
-    },
-    {
-     "id": "avionics",
-     "name": "Flight controller, GNSS, radio",
-     "mass": 0.18
-    },
-    {
-     "id": "wiring",
-     "name": "Wiring and connectors",
-     "mass": 0.3
-    }
-   ],
-   "avionicsPower": 14,
-   "temperature": 15,
-   "pressure": 101325,
-   "altitude": 60,
-   "requiredTime": 18,
-   "minTW": 1.8,
-   "capture": 0.15
-  },
-  "mech": {
-   "params": {
-    "fins": 9,
-    "velocity": 2.5,
-    "current": 30,
-    "ambient": 45,
-    "heat": 0,
-    "opticalSize": 0.1,
-    "width": 40,
-    "length": 50,
-    "finHeight": 20,
-    "base": 3,
-    "finThickness": 1.2,
-    "traceWidth": 10,
-    "opticalPower": 0,
-    "absorption": 50
-   },
-   "features": [],
-   "drawings": {}
-  },
-  "parts": {
-   "parts": [
-    {
-     "id": "arms",
-     "name": "Arm tubes",
-     "template": "arm",
-     "model": {
-      "name": "arm tube",
-      "params": {
-       "od": 25,
-       "wall": 1.5,
-       "start": 70,
-       "length": 310
-      },
-      "shape": {
-       "op": "kit",
-       "kit": "pipe_run",
-       "args": {
-        "pipe": {
-         "outer": "od",
-         "wall": "wall"
-        },
-        "part": "wall",
-        "sides": 32,
-        "run": {
-         "start": [
-          "start",
-          0,
-          0
-         ],
-         "direction": [
-          1,
-          0,
-          0
-         ],
-         "legs": [
-          {
-           "leg": "straight",
-           "length": "length"
-          }
-         ]
-        }
-       }
-      },
-      "cell": 0.9
-     },
-     "overrides": {},
-     "x": 0,
-     "y": 0,
-     "z": 12.5,
-     "rz": 45,
-     "count": 4,
-     "pattern": "polar",
-     "stack": 0,
-     "material": "cfrp",
-     "domain": "Mechanical"
-    },
-    {
-     "id": "plates",
-     "name": "Centre plates (top and bottom)",
-     "template": "plate",
-     "model": {
-      "name": "centre plate",
-      "params": {
-       "size": 190,
-       "t": 2.5,
-       "hole": 22,
-       "pitch": 48,
-       "holes": 3
-      },
-      "shape": {
-       "op": "difference",
-       "a": {
-        "op": "box",
-        "center": [
-         0,
-         0,
-         "t/2"
-        ],
-        "half": [
-         "size/2",
-         "size/2",
-         "t/2"
-        ],
-        "round": 12
-       },
-       "b": {
-        "op": "array",
-        "shape": {
-         "op": "cylinder_z",
-         "center": [
-          0,
-          0,
-          "t/2"
-         ],
-         "radius": "hole/2",
-         "height": "4*t"
-        },
-        "period": [
-         "pitch",
-         "pitch",
-         0
-        ],
-        "counts": [
-         "holes",
-         "holes",
-         1
-        ]
-       }
-      },
-      "cell": 0.9
-     },
-     "overrides": {},
-     "x": 0,
-     "y": 0,
-     "z": -2.5,
-     "rz": 0,
-     "count": 2,
-     "pattern": "stack",
-     "stack": 27.5,
-     "material": "cfrp",
-     "domain": "Mechanical"
-    },
-    {
-     "id": "mounts",
-     "name": "Motor mounts",
-     "template": "mount",
-     "model": {
-      "name": "motor mount",
-      "params": {
-       "bolts": 4,
-       "bolt_circle": 25,
-       "bolt": 1.6,
-       "thickness": 3,
-       "bore": 8,
-       "od": "bolt_circle + 6*bolt",
-       "hub": 5
-      },
-      "shape": {
-       "op": "difference",
-       "a": {
-        "op": "union",
-        "parts": [
-         {
-          "op": "cylinder_z",
-          "center": [
-           0,
-           0,
-           "thickness/2"
-          ],
-          "radius": "od/2",
-          "height": "thickness"
-         },
-         {
-          "op": "cylinder_z",
-          "center": [
-           0,
-           0,
-           "thickness + hub/2"
-          ],
-          "radius": "bore/2 + 3",
-          "height": "hub"
-         }
-        ]
-       },
-       "b": {
-        "op": "union",
-        "parts": [
-         {
-          "op": "cylinder_z",
-          "center": [
-           0,
-           0,
-           0
-          ],
-          "radius": "bore/2",
-          "height": "4*(thickness + hub)"
-         },
-         {
-          "op": "polar_array",
-          "axis": [
-           0,
-           0,
-           1
-          ],
-          "count": "bolts",
-          "shape": {
-           "op": "cylinder_z",
-           "center": [
-            "bolt_circle/2",
-            0,
-            "thickness/2"
-           ],
-           "radius": "bolt",
-           "height": "4*thickness"
-          }
-         }
-        ]
-       }
-      },
-      "cell": 0.35
-     },
-     "overrides": {},
-     "x": 368,
-     "y": 0,
-     "z": 25,
-     "rz": 45,
-     "count": 4,
-     "pattern": "polar",
-     "stack": 0,
-     "material": "al-6061",
-     "domain": "Mechanical"
-    },
-    {
-     "id": "escbox",
-     "name": "ESC enclosures",
-     "template": "enclosure",
-     "model": {
-      "name": "enclosure",
-      "params": {
-       "w": 90,
-       "d": 70,
-       "h": 40,
-       "wall": 2,
-       "round": 4,
-       "vent": 3,
-       "vents": 6
-      },
-      "shape": {
-       "op": "difference",
-       "a": {
-        "op": "shell",
-        "thickness": "wall",
-        "shape": {
-         "op": "box",
-         "center": [
-          0,
-          0,
-          "h/2"
-         ],
-         "half": [
-          "w/2",
-          "d/2",
-          "h/2"
-         ],
-         "round": "round"
-        }
-       },
-       "b": {
-        "op": "union",
-        "parts": [
-         {
-          "op": "box",
-          "center": [
-           0,
-           0,
-           "h"
-          ],
-          "half": [
-           "w/2 - wall",
-           "d/2 - wall",
-           "wall"
-          ]
-         },
-         {
-          "op": "array",
-          "shape": {
-           "op": "box",
-           "center": [
-            0,
-            "-d/2",
-            "h/2"
-           ],
-           "half": [
-            "vent/2",
-            "wall*2",
-            "h/4"
-           ]
-          },
-          "period": [
-           "vent*2.5",
-           0,
-           0
-          ],
-          "counts": [
-           "vents",
-           1,
-           1
-          ]
-         }
-        ]
-       }
-      },
-      "cell": 0.7
-     },
-     "overrides": {
-      "w": 70,
-      "d": 34,
-      "h": 22,
-      "vents": 5
-     },
-     "x": 190,
-     "y": 0,
-     "z": 26,
-     "rz": 45,
-     "count": 4,
-     "pattern": "polar",
-     "stack": 0,
-     "material": "abs",
-     "domain": "Mechanical"
-    }
-   ]
-  },
   "pcb": {
-   "width": 80,
-   "height": 55,
-   "grid": 0.5,
+   "width": 78,
+   "height": 42,
+   "grid": 0.25,
    "rules": {
-    "clearance": 0.25,
-    "minWidth": 0.3,
-    "edge": 1,
-    "density": 35
+    "clearance": 0.2,
+    "minWidth": 0.2,
+    "edge": 0.5,
+    "density": 50
    },
+   "footprints": {
+    "tdson8": {
+     "title": "PG-TDSON-8 (Infineon land pattern)",
+     "width": 5.15,
+     "height": 6.15,
+     "mass": 0.12,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -1.905,
+       2.4,
+       0.6,
+       0.925
+      ],
+      [
+       -0.635,
+       2.4,
+       0.6,
+       0.925
+      ],
+      [
+       0.635,
+       2.4,
+       0.6,
+       0.925
+      ],
+      [
+       1.905,
+       2.4,
+       0.6,
+       0.925
+      ],
+      [
+       0,
+       -1.0975,
+       4.41,
+       4.455
+      ]
+     ]
+    },
+    "soic8": {
+     "title": "SOIC-8",
+     "width": 6.9,
+     "height": 5,
+     "mass": 0.08,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "padW": 1.55,
+     "padH": 0.6,
+     "pads": [
+      [
+       -2.7,
+       -1.905
+      ],
+      [
+       -2.7,
+       -0.635
+      ],
+      [
+       -2.7,
+       0.635
+      ],
+      [
+       -2.7,
+       1.905
+      ],
+      [
+       2.7,
+       1.905
+      ],
+      [
+       2.7,
+       0.635
+      ],
+      [
+       2.7,
+       -0.635
+      ],
+      [
+       2.7,
+       -1.905
+      ]
+     ]
+    },
+    "r0603": {
+     "title": "0603",
+     "width": 2.4,
+     "height": 1.1,
+     "mass": 0.004,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -0.8,
+       0,
+       0.8,
+       0.95
+      ],
+      [
+       0.8,
+       0,
+       0.8,
+       0.95
+      ]
+     ]
+    },
+    "c1210": {
+     "title": "1210",
+     "width": 4.6,
+     "height": 2.9,
+     "mass": 0.1,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -1.55,
+       0,
+       1.1,
+       2.7
+      ],
+      [
+       1.55,
+       0,
+       1.1,
+       2.7
+      ]
+     ]
+    },
+    "wirepad": {
+     "title": "Solder pad for a power wire",
+     "width": 4,
+     "height": 4,
+     "mass": 0.1,
+     "pad": 3.5,
+     "drill": 1.6,
+     "pads": [
+      [
+       0,
+       0
+      ]
+     ]
+    },
+    "header8": {
+     "title": "8-way 2.54 mm header",
+     "width": 21,
+     "height": 3,
+     "mass": 0.6,
+     "pad": 1.6,
+     "drill": 1,
+     "pads": [
+      [
+       -8.89,
+       0
+      ],
+      [
+       -6.35,
+       0
+      ],
+      [
+       -3.81,
+       0
+      ],
+      [
+       -1.27,
+       0
+      ],
+      [
+       1.27,
+       0
+      ],
+      [
+       3.81,
+       0
+      ],
+      [
+       6.35,
+       0
+      ],
+      [
+       8.89,
+       0
+      ]
+     ]
+    },
+    "lqfp32": {
+     "title": "LQFP-32 7×7 mm 0.8 mm",
+     "width": 10,
+     "height": 10,
+     "mass": 0.3,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -4.175,
+       -2.8,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       -1.9999999999999998,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       -1.1999999999999997,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       -0.39999999999999947,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       0.40000000000000036,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       1.2000000000000002,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       2.000000000000001,
+       1.5,
+       0.5
+      ],
+      [
+       -4.175,
+       2.8000000000000007,
+       1.5,
+       0.5
+      ],
+      [
+       -2.8,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -1.9999999999999998,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -1.1999999999999997,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -0.39999999999999947,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       0.40000000000000036,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       1.2000000000000002,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       2.000000000000001,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       2.8000000000000007,
+       4.175,
+       0.5,
+       1.5
+      ],
+      [
+       4.175,
+       2.8,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       1.9999999999999998,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       1.1999999999999997,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       0.39999999999999947,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       -0.40000000000000036,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       -1.2000000000000002,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       -2.000000000000001,
+       1.5,
+       0.5
+      ],
+      [
+       4.175,
+       -2.8000000000000007,
+       1.5,
+       0.5
+      ],
+      [
+       2.8,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       1.9999999999999998,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       1.1999999999999997,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       0.39999999999999947,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -0.40000000000000036,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -1.2000000000000002,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -2.000000000000001,
+       -4.175,
+       0.5,
+       1.5
+      ],
+      [
+       -2.8000000000000007,
+       -4.175,
+       0.5,
+       1.5
+      ]
+     ]
+    },
+    "psop8": {
+     "title": "PSOP-8 with exposed pad",
+     "width": 6.9,
+     "height": 5,
+     "mass": 0.15,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -2.7,
+       -1.905,
+       1.55,
+       0.6
+      ],
+      [
+       -2.7,
+       -0.635,
+       1.55,
+       0.6
+      ],
+      [
+       -2.7,
+       0.635,
+       1.55,
+       0.6
+      ],
+      [
+       -2.7,
+       1.905,
+       1.55,
+       0.6
+      ],
+      [
+       2.7,
+       1.905,
+       1.55,
+       0.6
+      ],
+      [
+       2.7,
+       0.635,
+       1.55,
+       0.6
+      ],
+      [
+       2.7,
+       -0.635,
+       1.55,
+       0.6
+      ],
+      [
+       2.7,
+       -1.905,
+       1.55,
+       0.6
+      ],
+      [
+       0,
+       0,
+       2.29,
+       3
+      ]
+     ]
+    },
+    "sot235": {
+     "title": "SOT-23-5",
+     "width": 4.1,
+     "height": 3.1,
+     "mass": 0.02,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -1.1375,
+       -0.95,
+       1.325,
+       0.6
+      ],
+      [
+       -1.1375,
+       0,
+       1.325,
+       0.6
+      ],
+      [
+       -1.1375,
+       0.95,
+       1.325,
+       0.6
+      ],
+      [
+       1.1375,
+       0.95,
+       1.325,
+       0.6
+      ],
+      [
+       1.1375,
+       -0.95,
+       1.325,
+       0.6
+      ]
+     ]
+    },
+    "r2512": {
+     "title": "2512 shunt",
+     "width": 7.4,
+     "height": 3.5,
+     "mass": 0.05,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -2.9625,
+       0,
+       1.225,
+       3.35
+      ],
+      [
+       2.9625,
+       0,
+       1.225,
+       3.35
+      ]
+     ]
+    },
+    "srr1260": {
+     "title": "Bourns SRR1260",
+     "width": 13,
+     "height": 13,
+     "mass": 4.5,
+     "pad": 1.6,
+     "drill": 0.9,
+     "smd": true,
+     "pads": [
+      [
+       -4.85,
+       0,
+       2.9,
+       5.4
+      ],
+      [
+       4.85,
+       0,
+       2.9,
+       5.4
+      ]
+     ]
+    }
+   },
+   "pours": [
+    {
+     "id": "vbat",
+     "net": "VBAT",
+     "layer": "top",
+     "points": [
+      [
+       12.5,
+       1
+      ],
+      [
+       77,
+       1
+      ],
+      [
+       77,
+       7.35
+      ],
+      [
+       12.5,
+       7.35
+      ]
+     ]
+    },
+    {
+     "id": "batin",
+     "net": "BAT_P",
+     "layer": "top",
+     "points": [
+      [
+       1,
+       1
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       7.35
+      ],
+      [
+       1,
+       7.35
+      ]
+     ]
+    },
+    {
+     "id": "gnd",
+     "net": "GND",
+     "layer": "bottom",
+     "points": [
+      [
+       1,
+       1
+      ],
+      [
+       77,
+       1
+      ],
+      [
+       77,
+       41
+      ],
+      [
+       1,
+       41
+      ]
+     ]
+    },
+    {
+     "id": "phA",
+     "net": "PH_A",
+     "layer": "top",
+     "points": [
+      [
+       14,
+       7.75
+      ],
+      [
+       22.3,
+       7.75
+      ],
+      [
+       22.3,
+       17.4
+      ],
+      [
+       14,
+       17.4
+      ]
+     ]
+    },
+    {
+     "id": "gndA",
+     "net": "GND",
+     "layer": "top",
+     "points": [
+      [
+       18,
+       17.75
+      ],
+      [
+       22.3,
+       17.75
+      ],
+      [
+       22.3,
+       21.4
+      ],
+      [
+       18,
+       21.4
+      ]
+     ]
+    },
+    {
+     "id": "phB",
+     "net": "PH_B",
+     "layer": "top",
+     "points": [
+      [
+       34,
+       7.75
+      ],
+      [
+       42.3,
+       7.75
+      ],
+      [
+       42.3,
+       17.4
+      ],
+      [
+       34,
+       17.4
+      ]
+     ]
+    },
+    {
+     "id": "gndB",
+     "net": "GND",
+     "layer": "top",
+     "points": [
+      [
+       38,
+       17.75
+      ],
+      [
+       42.3,
+       17.75
+      ],
+      [
+       42.3,
+       21.4
+      ],
+      [
+       38,
+       21.4
+      ]
+     ]
+    },
+    {
+     "id": "phC",
+     "net": "PH_C",
+     "layer": "top",
+     "points": [
+      [
+       54,
+       7.75
+      ],
+      [
+       62.3,
+       7.75
+      ],
+      [
+       62.3,
+       17.4
+      ],
+      [
+       54,
+       17.4
+      ]
+     ]
+    },
+    {
+     "id": "gndC",
+     "net": "GND",
+     "layer": "top",
+     "points": [
+      [
+       58,
+       17.75
+      ],
+      [
+       62.3,
+       17.75
+      ],
+      [
+       62.3,
+       21.4
+      ],
+      [
+       58,
+       21.4
+      ]
+     ]
+    }
+   ],
    "components": [
     {
-     "id": "J1",
-     "name": "Power in",
-     "footprint": "connector",
-     "x": 10,
-     "y": 16,
-     "rotation": 90,
+     "id": "Q1",
+     "name": "A high side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 21,
+     "y": 6,
+     "rotation": 0,
      "nets": [
-      "VCC",
+      "PH_A",
+      "PH_A",
+      "PH_A",
+      "GH_A",
+      "VBAT"
+     ]
+    },
+    {
+     "id": "Q2",
+     "name": "A low side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 21,
+     "y": 16,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "GND",
+      "GND",
+      "GL_A",
+      "PH_A"
+     ]
+    },
+    {
+     "id": "VSA1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 18.6,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSA2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 19.8,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSA3",
+     "name": "Via",
+     "footprint": "via",
+     "x": 21,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSA4",
+     "name": "Via",
+     "footprint": "via",
+     "x": 18.6,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSA5",
+     "name": "Via",
+     "footprint": "via",
+     "x": 19.8,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSA6",
+     "name": "Via",
+     "footprint": "via",
+     "x": 21,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
       "GND"
      ]
     },
     {
      "id": "U1",
-     "name": "Gate driver",
-     "footprint": "dip8",
-     "x": 32,
-     "y": 26,
+     "name": "A gate driver, TI UCC27211",
+     "footprint": "soic8",
+     "x": 29.5,
+     "y": 12.5,
      "rotation": 0,
      "nets": [
-      "VCC",
-      "PWM",
+      "V12",
+      "BOOT_A",
+      "GHD_A",
+      "PH_A",
+      "HI_A",
+      "LI_A",
       "GND",
-      "GATE",
-      "GND",
-      "GATE",
-      "PWM",
-      "VCC"
-     ]
-    },
-    {
-     "id": "Q1",
-     "name": "Power switch",
-     "footprint": "transistor",
-     "x": 59,
-     "y": 26,
-     "rotation": 0,
-     "nets": [
-      "GATE",
-      "OUT",
-      "GND"
+      "GLD_A"
      ]
     },
     {
      "id": "R1",
-     "name": "Gate resistor",
-     "footprint": "resistor",
-     "x": 46,
-     "y": 16,
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 25,
+     "y": 8.5,
      "rotation": 0,
      "nets": [
-      "GATE",
-      "GATE"
+      "GH_A",
+      "GHD_A"
+     ]
+    },
+    {
+     "id": "R2",
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 25,
+     "y": 18.5,
+     "rotation": 0,
+     "nets": [
+      "GL_A",
+      "GLD_A"
      ]
     },
     {
      "id": "C1",
-     "name": "Decoupling",
-     "footprint": "capacitor",
-     "x": 19,
-     "y": 32,
+     "name": "100 nF 100 V 0603 bootstrap",
+     "footprint": "r0603",
+     "x": 24.25,
+     "y": 13,
+     "rotation": 90,
+     "nets": [
+      "BOOT_A",
+      "PH_A"
+     ]
+    },
+    {
+     "id": "C2",
+     "name": "1 µF 25 V 0603 driver bypass",
+     "footprint": "r0603",
+     "x": 29.5,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "GND"
+     ]
+    },
+    {
+     "id": "VBA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 31.25,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VPA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33.75,
+     "y": 11.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VRA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 27.5,
+     "y": 9,
+     "rotation": 0,
+     "nets": [
+      "V12"
+     ]
+    },
+    {
+     "id": "VGA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33.75,
+     "y": 9.75,
+     "rotation": 0,
+     "nets": [
+      "GLD_A"
+     ]
+    },
+    {
+     "id": "VHA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 27,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GLD_A"
+     ]
+    },
+    {
+     "id": "C3",
+     "name": "4.7 µF 100 V X7S 1210 bus",
+     "footprint": "c1210",
+     "x": 29.5,
+     "y": 4.25,
+     "rotation": 0,
+     "nets": [
+      "VBAT",
+      "GND"
+     ]
+    },
+    {
+     "id": "VCA1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33,
+     "y": 3.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VCA2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33,
+     "y": 5.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VHOA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 25.5,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "GHD_A"
+     ]
+    },
+    {
+     "id": "VHPA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 24.75,
+     "y": 10.25,
+     "rotation": 0,
+     "nets": [
+      "GHD_A"
+     ]
+    },
+    {
+     "id": "J2",
+     "name": "Motor phase A",
+     "footprint": "wirepad",
+     "x": 16.25,
+     "y": 12.5,
+     "rotation": 0,
+     "nets": [
+      "PH_A"
+     ]
+    },
+    {
+     "id": "Q3",
+     "name": "B high side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 41,
+     "y": 6,
+     "rotation": 0,
+     "nets": [
+      "PH_B",
+      "PH_B",
+      "PH_B",
+      "GH_B",
+      "VBAT"
+     ]
+    },
+    {
+     "id": "Q4",
+     "name": "B low side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 41,
+     "y": 16,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "GND",
+      "GND",
+      "GL_B",
+      "PH_B"
+     ]
+    },
+    {
+     "id": "VSB1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 38.6,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSB2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 39.8,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSB3",
+     "name": "Via",
+     "footprint": "via",
+     "x": 41,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSB4",
+     "name": "Via",
+     "footprint": "via",
+     "x": 38.6,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSB5",
+     "name": "Via",
+     "footprint": "via",
+     "x": 39.8,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSB6",
+     "name": "Via",
+     "footprint": "via",
+     "x": 41,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "U2",
+     "name": "B gate driver, TI UCC27211",
+     "footprint": "soic8",
+     "x": 49.5,
+     "y": 12.5,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "BOOT_B",
+      "GHD_B",
+      "PH_B",
+      "HI_B",
+      "LI_B",
+      "GND",
+      "GLD_B"
+     ]
+    },
+    {
+     "id": "R3",
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 45,
+     "y": 8.5,
+     "rotation": 0,
+     "nets": [
+      "GH_B",
+      "GHD_B"
+     ]
+    },
+    {
+     "id": "R4",
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 45,
+     "y": 18.5,
+     "rotation": 0,
+     "nets": [
+      "GL_B",
+      "GLD_B"
+     ]
+    },
+    {
+     "id": "C4",
+     "name": "100 nF 100 V 0603 bootstrap",
+     "footprint": "r0603",
+     "x": 44.25,
+     "y": 13,
+     "rotation": 90,
+     "nets": [
+      "BOOT_B",
+      "PH_B"
+     ]
+    },
+    {
+     "id": "C5",
+     "name": "1 µF 25 V 0603 driver bypass",
+     "footprint": "r0603",
+     "x": 49.5,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "GND"
+     ]
+    },
+    {
+     "id": "VBB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 51.25,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VPB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 53.75,
+     "y": 11.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VRB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 47.5,
+     "y": 9,
+     "rotation": 0,
+     "nets": [
+      "V12"
+     ]
+    },
+    {
+     "id": "VGB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 53.75,
+     "y": 9.75,
+     "rotation": 0,
+     "nets": [
+      "GLD_B"
+     ]
+    },
+    {
+     "id": "VHB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 47,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GLD_B"
+     ]
+    },
+    {
+     "id": "C6",
+     "name": "4.7 µF 100 V X7S 1210 bus",
+     "footprint": "c1210",
+     "x": 49.5,
+     "y": 4.25,
+     "rotation": 0,
+     "nets": [
+      "VBAT",
+      "GND"
+     ]
+    },
+    {
+     "id": "VCB1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 53,
+     "y": 3.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VCB2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 53,
+     "y": 5.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VHOB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 45.5,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "GHD_B"
+     ]
+    },
+    {
+     "id": "VHPB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 44.75,
+     "y": 10.25,
+     "rotation": 0,
+     "nets": [
+      "GHD_B"
+     ]
+    },
+    {
+     "id": "J3",
+     "name": "Motor phase B",
+     "footprint": "wirepad",
+     "x": 36.25,
+     "y": 12.5,
+     "rotation": 0,
+     "nets": [
+      "PH_B"
+     ]
+    },
+    {
+     "id": "Q5",
+     "name": "C high side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 61,
+     "y": 6,
+     "rotation": 0,
+     "nets": [
+      "PH_C",
+      "PH_C",
+      "PH_C",
+      "GH_C",
+      "VBAT"
+     ]
+    },
+    {
+     "id": "Q6",
+     "name": "C low side, Infineon BSC040N10NS5",
+     "footprint": "tdson8",
+     "x": 61,
+     "y": 16,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "GND",
+      "GND",
+      "GL_C",
+      "PH_C"
+     ]
+    },
+    {
+     "id": "VSC1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 58.6,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSC2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 59.8,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSC3",
+     "name": "Via",
+     "footprint": "via",
+     "x": 61,
+     "y": 19.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSC4",
+     "name": "Via",
+     "footprint": "via",
+     "x": 58.6,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSC5",
+     "name": "Via",
+     "footprint": "via",
+     "x": 59.8,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VSC6",
+     "name": "Via",
+     "footprint": "via",
+     "x": 61,
+     "y": 20.9,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "U3",
+     "name": "C gate driver, TI UCC27211",
+     "footprint": "soic8",
+     "x": 69.5,
+     "y": 12.5,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "BOOT_C",
+      "GHD_C",
+      "PH_C",
+      "HI_C",
+      "LI_C",
+      "GND",
+      "GLD_C"
+     ]
+    },
+    {
+     "id": "R5",
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 65,
+     "y": 8.5,
+     "rotation": 0,
+     "nets": [
+      "GH_C",
+      "GHD_C"
+     ]
+    },
+    {
+     "id": "R6",
+     "name": "3 Ω 0603 gate resistor",
+     "footprint": "r0603",
+     "x": 65,
+     "y": 18.5,
+     "rotation": 0,
+     "nets": [
+      "GL_C",
+      "GLD_C"
+     ]
+    },
+    {
+     "id": "C7",
+     "name": "100 nF 100 V 0603 bootstrap",
+     "footprint": "r0603",
+     "x": 64.25,
+     "y": 13,
+     "rotation": 90,
+     "nets": [
+      "BOOT_C",
+      "PH_C"
+     ]
+    },
+    {
+     "id": "C8",
+     "name": "1 µF 25 V 0603 driver bypass",
+     "footprint": "r0603",
+     "x": 69.5,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "GND"
+     ]
+    },
+    {
+     "id": "VBC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 71.25,
+     "y": 8.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VPC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 73.75,
+     "y": 11.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VRC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 67.5,
+     "y": 9,
+     "rotation": 0,
+     "nets": [
+      "V12"
+     ]
+    },
+    {
+     "id": "VGC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 73.75,
+     "y": 9.75,
+     "rotation": 0,
+     "nets": [
+      "GLD_C"
+     ]
+    },
+    {
+     "id": "VHC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 67,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GLD_C"
+     ]
+    },
+    {
+     "id": "C9",
+     "name": "4.7 µF 100 V X7S 1210 bus",
+     "footprint": "c1210",
+     "x": 69.5,
+     "y": 4.25,
+     "rotation": 0,
+     "nets": [
+      "VBAT",
+      "GND"
+     ]
+    },
+    {
+     "id": "VCC1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 73,
+     "y": 3.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VCC2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 73,
+     "y": 5.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VHOC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 65.5,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "GHD_C"
+     ]
+    },
+    {
+     "id": "VHPC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 64.75,
+     "y": 10.25,
+     "rotation": 0,
+     "nets": [
+      "GHD_C"
+     ]
+    },
+    {
+     "id": "J4",
+     "name": "Motor phase C",
+     "footprint": "wirepad",
+     "x": 56.25,
+     "y": 12.5,
+     "rotation": 0,
+     "nets": [
+      "PH_C"
+     ]
+    },
+    {
+     "id": "J1",
+     "name": "Battery +",
+     "footprint": "wirepad",
+     "x": 3.5,
+     "y": 4,
+     "rotation": 0,
+     "nets": [
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "J5",
+     "name": "Battery −",
+     "footprint": "wirepad",
+     "x": 3.75,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "RS1",
+     "name": "1 mΩ 2512 current shunt",
+     "footprint": "r2512",
+     "x": 10,
+     "y": 4,
+     "rotation": 0,
+     "nets": [
+      "BAT_P",
+      "VBAT"
+     ]
+    },
+    {
+     "id": "U7",
+     "name": "Current sense, TI INA240A2",
+     "footprint": "soic8",
+     "x": 9.5,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "VBAT",
+      "GND",
+      "GND",
+      "GND",
+      "ISENSE",
+      "3V3",
+      "GND",
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "C20",
+     "name": "100 nF 0603 INA240 bypass",
+     "footprint": "r0603",
+     "x": 9.5,
+     "y": 18,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "3V3"
+     ]
+    },
+    {
+     "id": "VKP1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 7.5,
+     "y": 8.5,
+     "rotation": 0,
+     "nets": [
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "VKP2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 13.25,
+     "y": 9.25,
+     "rotation": 0,
+     "nets": [
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "VI1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 6.75,
+     "y": 16.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VI2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 7.25,
+     "y": 18,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VIS2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 10,
+     "y": 14.25,
+     "rotation": 0,
+     "nets": [
+      "ISENSE"
+     ]
+    },
+    {
+     "id": "U6",
+     "name": "12 V buck, TI LM5017MR",
+     "footprint": "psop8",
+     "x": 8.5,
+     "y": 27,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "BAT_P",
+      "BAT_P",
+      "RON",
+      "FB",
+      "VCC",
+      "BST",
+      "SW",
+      "GND"
+     ]
+    },
+    {
+     "id": "VE1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 7.9,
+     "y": 26.2,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VE2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 9.1,
+     "y": 26.2,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VE3",
+     "name": "Via",
+     "footprint": "via",
+     "x": 8.5,
+     "y": 27.8,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "C21",
+     "name": "2.2 µF 100 V X7R 1210 buck input",
+     "footprint": "c1210",
+     "x": 2.75,
+     "y": 26.5,
+     "rotation": 90,
+     "nets": [
+      "GND",
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "R11",
+     "name": "604 kΩ 0603 on-time",
+     "footprint": "r0603",
+     "x": 3,
+     "y": 31.5,
+     "rotation": 0,
+     "nets": [
+      "BAT_P",
+      "RON"
+     ]
+    },
+    {
+     "id": "R14",
+     "name": "1.00 kΩ 0603 feedback bottom",
+     "footprint": "r0603",
+     "x": 14,
+     "y": 30.75,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "FB"
+     ]
+    },
+    {
+     "id": "R15",
+     "name": "8.87 kΩ 0603 feedback top",
+     "footprint": "r0603",
+     "x": 14,
+     "y": 32.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "FB"
+     ]
+    },
+    {
+     "id": "C22",
+     "name": "33 nF 0603 ripple feed",
+     "footprint": "r0603",
+     "x": 14,
+     "y": 34.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "FB"
+     ]
+    },
+    {
+     "id": "C23",
+     "name": "1 µF 25 V 0603 VCC",
+     "footprint": "r0603",
+     "x": 13.5,
+     "y": 28.25,
      "rotation": 0,
      "nets": [
       "VCC",
@@ -947,38 +1862,4897 @@
      ]
     },
     {
-     "id": "J2",
-     "name": "Load",
-     "footprint": "connector",
-     "x": 69,
-     "y": 42,
+     "id": "C24",
+     "name": "10 nF 0603 bootstrap",
+     "footprint": "r0603",
+     "x": 13.5,
+     "y": 25.25,
+     "rotation": 0,
+     "nets": [
+      "BST",
+      "SW"
+     ]
+    },
+    {
+     "id": "VF1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 15.75,
+     "y": 26.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VF2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 12,
+     "y": 30.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "L1",
+     "name": "220 µH Bourns SRR1260-221K",
+     "footprint": "srr1260",
+     "x": 22,
+     "y": 32.5,
+     "rotation": 0,
+     "nets": [
+      "SW",
+      "V12"
+     ]
+    },
+    {
+     "id": "C25",
+     "name": "22 µF 25 V X7R 1210 output",
+     "footprint": "c1210",
+     "x": 31.75,
+     "y": 24.75,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "CESR"
+     ]
+    },
+    {
+     "id": "R16",
+     "name": "0.33 Ω 0603 ripple resistor",
+     "footprint": "r0603",
+     "x": 36,
+     "y": 24.75,
+     "rotation": 0,
+     "nets": [
+      "CESR",
+      "GND"
+     ]
+    },
+    {
+     "id": "VC12",
+     "name": "Via",
+     "footprint": "via",
+     "x": 30.25,
+     "y": 23.6,
+     "rotation": 0,
+     "nets": [
+      "V12"
+     ]
+    },
+    {
+     "id": "VF4",
+     "name": "Via",
+     "footprint": "via",
+     "x": 37.5,
+     "y": 26,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "U5",
+     "name": "3.3 V regulator, TI LP2985-33",
+     "footprint": "sot235",
+     "x": 33.5,
+     "y": 31.25,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "GND",
+      "V12",
+      "BP",
+      "3V3"
+     ]
+    },
+    {
+     "id": "C26",
+     "name": "1 µF 25 V 0603 LDO input",
+     "footprint": "r0603",
+     "x": 31,
+     "y": 34.5,
+     "rotation": 0,
+     "nets": [
+      "V12",
+      "GND"
+     ]
+    },
+    {
+     "id": "C27",
+     "name": "2.2 µF 10 V 0603 LDO output",
+     "footprint": "r0603",
+     "x": 37.5,
+     "y": 29,
+     "rotation": 0,
+     "nets": [
+      "3V3",
+      "GND"
+     ]
+    },
+    {
+     "id": "C28",
+     "name": "10 nF 0603 LDO noise",
+     "footprint": "r0603",
+     "x": 37.5,
+     "y": 32.25,
+     "rotation": 0,
+     "nets": [
+      "BP",
+      "GND"
+     ]
+    },
+    {
+     "id": "VF5",
+     "name": "Via",
+     "footprint": "via",
+     "x": 39.75,
+     "y": 29,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VF6",
+     "name": "Via",
+     "footprint": "via",
+     "x": 39.75,
+     "y": 32.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VF7",
+     "name": "Via",
+     "footprint": "via",
+     "x": 31,
+     "y": 30.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VF8",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33.25,
+     "y": 34.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "V33A",
+     "name": "Via",
+     "footprint": "via",
+     "x": 38.75,
+     "y": 27,
+     "rotation": 0,
+     "nets": [
+      "3V3"
+     ]
+    },
+    {
+     "id": "U4",
+     "name": "Controller, ST STM32F051K8T6, AM32",
+     "footprint": "lqfp32",
+     "x": 56,
+     "y": 31,
+     "rotation": 270,
+     "nets": [
+      "3V3",
+      "NC",
+      "NC",
+      "NRST",
+      "3V3",
+      "BEMF_A",
+      "BEMF_N",
+      "NC",
+      "ISENSE",
+      "BEMF_B",
+      "BEMF_C",
+      "VSENSE",
+      "LI_C",
+      "LI_B",
+      "LI_A",
+      "GND",
+      "3V3",
+      "HI_C",
+      "HI_B",
+      "HI_A",
+      "NC",
+      "NC",
+      "SWDIO",
+      "SWCLK",
+      "NC",
+      "NC",
+      "INPUT",
+      "NC",
+      "NC",
+      "NC",
+      "GND",
+      "GND"
+     ]
+    },
+    {
+     "id": "J6",
+     "name": "Signal, telemetry and SWD",
+     "footprint": "header8",
+     "x": 39.5,
+     "y": 37,
+     "rotation": 0,
+     "nets": [
+      "NC",
+      "NC",
+      "3V3",
+      "NRST",
+      "SWDIO",
+      "SWCLK",
+      "GND",
+      "INPUT_IN"
+     ]
+    },
+    {
+     "id": "R17",
+     "name": "100 Ω 0603 signal input",
+     "footprint": "r0603",
+     "x": 47.5,
+     "y": 33.5,
+     "rotation": 0,
+     "nets": [
+      "INPUT_IN",
+      "INPUT"
+     ]
+    },
+    {
+     "id": "C29",
+     "name": "100 nF 0603 VDD",
+     "footprint": "r0603",
+     "x": 61.25,
+     "y": 25,
+     "rotation": 0,
+     "nets": [
+      "3V3",
+      "GND"
+     ]
+    },
+    {
+     "id": "C31",
+     "name": "1 µF 0603 VDDA",
+     "footprint": "r0603",
+     "x": 56,
+     "y": 40,
+     "rotation": 0,
+     "nets": [
+      "3V3",
+      "GND"
+     ]
+    },
+    {
+     "id": "C30",
+     "name": "100 nF 0603 VDD",
+     "footprint": "r0603",
+     "x": 52.5,
+     "y": 37.5,
      "rotation": 90,
      "nets": [
-      "OUT",
+      "3V3",
       "GND"
+     ]
+    },
+    {
+     "id": "VM1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 61.75,
+     "y": 27,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VM2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 49.75,
+     "y": 34.75,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VM3",
+     "name": "Via",
+     "footprint": "via",
+     "x": 51,
+     "y": 38.25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VM6",
+     "name": "Via",
+     "footprint": "via",
+     "x": 58.25,
+     "y": 40,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "V33E",
+     "name": "Via",
+     "footprint": "via",
+     "x": 56,
+     "y": 38.25,
+     "rotation": 0,
+     "nets": [
+      "3V3"
+     ]
+    },
+    {
+     "id": "VM5",
+     "name": "Via",
+     "footprint": "via",
+     "x": 63.25,
+     "y": 25,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "V33B",
+     "name": "Via",
+     "footprint": "via",
+     "x": 51,
+     "y": 35.25,
+     "rotation": 0,
+     "nets": [
+      "3V3"
+     ]
+    },
+    {
+     "id": "V33D",
+     "name": "Via",
+     "footprint": "via",
+     "x": 58,
+     "y": 28.5,
+     "rotation": 0,
+     "nets": [
+      "3V3"
+     ]
+    },
+    {
+     "id": "VNR",
+     "name": "Via",
+     "footprint": "via",
+     "x": 54.75,
+     "y": 37.25,
+     "rotation": 0,
+     "nets": [
+      "NRST"
+     ]
+    },
+    {
+     "id": "VMA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 59.25,
+     "y": 38.75,
+     "rotation": 0,
+     "nets": [
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "VLA1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 33.75,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "LI_A"
+     ]
+    },
+    {
+     "id": "VLA2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 62.5,
+     "y": 28.75,
+     "rotation": 0,
+     "nets": [
+      "LI_A"
+     ]
+    },
+    {
+     "id": "VLB1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 53.75,
+     "y": 13,
+     "rotation": 0,
+     "nets": [
+      "LI_B"
+     ]
+    },
+    {
+     "id": "VLB2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 64.5,
+     "y": 29.75,
+     "rotation": 0,
+     "nets": [
+      "LI_B"
+     ]
+    },
+    {
+     "id": "VIS",
+     "name": "Via",
+     "footprint": "via",
+     "x": 61.75,
+     "y": 35.5,
+     "rotation": 0,
+     "nets": [
+      "ISENSE"
+     ]
+    },
+    {
+     "id": "VMC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 62.5,
+     "y": 32.25,
+     "rotation": 0,
+     "nets": [
+      "BEMF_C"
+     ]
+    },
+    {
+     "id": "VMB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 62.75,
+     "y": 34.25,
+     "rotation": 0,
+     "nets": [
+      "BEMF_B"
+     ]
+    },
+    {
+     "id": "R30",
+     "name": "150 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 15.5,
+     "y": 18.25,
+     "rotation": 90,
+     "nets": [
+      "PH_A",
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "R31",
+     "name": "10 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 11.75,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "R32",
+     "name": "10 kΩ 0603 neutral",
+     "footprint": "r0603",
+     "x": 58,
+     "y": 37.75,
+     "rotation": 90,
+     "nets": [
+      "BEMF_N",
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "VNA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 9.5,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VBS2",
+     "name": "Via",
+     "footprint": "via",
+     "x": 13.25,
+     "y": 21,
+     "rotation": 0,
+     "nets": [
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "VBSA",
+     "name": "Via",
+     "footprint": "via",
+     "x": 15.5,
+     "y": 21.5,
+     "rotation": 0,
+     "nets": [
+      "BEMF_A"
+     ]
+    },
+    {
+     "id": "R33",
+     "name": "150 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 35.5,
+     "y": 18.25,
+     "rotation": 90,
+     "nets": [
+      "PH_B",
+      "BEMF_B"
+     ]
+    },
+    {
+     "id": "R34",
+     "name": "10 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 32.75,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "BEMF_B"
+     ]
+    },
+    {
+     "id": "R35",
+     "name": "10 kΩ 0603 neutral",
+     "footprint": "r0603",
+     "x": 66.25,
+     "y": 34.75,
+     "rotation": 0,
+     "nets": [
+      "BEMF_B",
+      "BEMF_N"
+     ]
+    },
+    {
+     "id": "VNB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 30.5,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VBSB",
+     "name": "Via",
+     "footprint": "via",
+     "x": 35.5,
+     "y": 20.25,
+     "rotation": 0,
+     "nets": [
+      "BEMF_B"
+     ]
+    },
+    {
+     "id": "R36",
+     "name": "150 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 55.5,
+     "y": 18.25,
+     "rotation": 90,
+     "nets": [
+      "PH_C",
+      "BEMF_C"
+     ]
+    },
+    {
+     "id": "R37",
+     "name": "10 kΩ 0603 phase sense",
+     "footprint": "r0603",
+     "x": 52.75,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND",
+      "BEMF_C"
+     ]
+    },
+    {
+     "id": "R38",
+     "name": "10 kΩ 0603 neutral",
+     "footprint": "r0603",
+     "x": 66.25,
+     "y": 33,
+     "rotation": 0,
+     "nets": [
+      "BEMF_C",
+      "BEMF_N"
+     ]
+    },
+    {
+     "id": "VNC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 50.5,
+     "y": 19.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VBSC",
+     "name": "Via",
+     "footprint": "via",
+     "x": 55.5,
+     "y": 22.75,
+     "rotation": 0,
+     "nets": [
+      "BEMF_C"
+     ]
+    },
+    {
+     "id": "R40",
+     "name": "170 kΩ 0603 bus sense",
+     "footprint": "r0603",
+     "x": 75.5,
+     "y": 8,
+     "rotation": 90,
+     "nets": [
+      "VBAT",
+      "VSENSE"
+     ]
+    },
+    {
+     "id": "R41",
+     "name": "10 kΩ 0603 bus sense",
+     "footprint": "r0603",
+     "x": 70.5,
+     "y": 31.5,
+     "rotation": 0,
+     "nets": [
+      "VSENSE",
+      "GND"
+     ]
+    },
+    {
+     "id": "VF9",
+     "name": "Via",
+     "footprint": "via",
+     "x": 72.5,
+     "y": 31.5,
+     "rotation": 0,
+     "nets": [
+      "GND"
+     ]
+    },
+    {
+     "id": "VV1",
+     "name": "Via",
+     "footprint": "via",
+     "x": 1.75,
+     "y": 7,
+     "rotation": 0,
+     "nets": [
+      "BAT_P"
+     ]
+    },
+    {
+     "id": "VV4",
+     "name": "Via",
+     "footprint": "via",
+     "x": 1.25,
+     "y": 28.75,
+     "rotation": 0,
+     "nets": [
+      "BAT_P"
      ]
     }
    ],
-   "routes": [],
+   "routes": [
+    {
+     "id": "route-8a55beb1-17a",
+     "from": "U1:8",
+     "to": "VGA:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       32.2,
+       10.595
+      ],
+      [
+       32.25,
+       10.5
+      ],
+      [
+       33,
+       10.5
+      ],
+      [
+       33.75,
+       9.75
+      ]
+     ]
+    },
+    {
+     "id": "route-695ce262-7ca",
+     "from": "VGA:1",
+     "to": "VHA:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       33.75,
+       9.75
+      ],
+      [
+       27,
+       16.5
+      ],
+      [
+       27,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-8369c1e2-d19",
+     "from": "VHA:1",
+     "to": "R2:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       27,
+       19.5
+      ],
+      [
+       26,
+       18.5
+      ],
+      [
+       25.8,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-ec47c918-347",
+     "from": "U1:1",
+     "to": "VRA:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       26.8,
+       10.595
+      ],
+      [
+       26.75,
+       10.5
+      ],
+      [
+       26.75,
+       9.75
+      ],
+      [
+       27.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-56711e5e-301",
+     "from": "U1:1",
+     "to": "C2:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       26.8,
+       10.595
+      ],
+      [
+       26.75,
+       10.5
+      ],
+      [
+       27,
+       10.5
+      ],
+      [
+       28.75,
+       8.75
+      ],
+      [
+       28.7,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-fa1b3451-fb1",
+     "from": "C2:2",
+     "to": "VBA:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       30.3,
+       8.75
+      ],
+      [
+       31.25,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-68aa398f-920",
+     "from": "U1:7",
+     "to": "VPA:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       32.2,
+       11.865
+      ],
+      [
+       32.25,
+       11.75
+      ],
+      [
+       33.75,
+       11.75
+      ]
+     ]
+    },
+    {
+     "id": "route-728d04c1-996",
+     "from": "C3:2",
+     "to": "VCA1:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       31.05,
+       4.25
+      ],
+      [
+       32,
+       4.25
+      ],
+      [
+       33,
+       3.25
+      ]
+     ]
+    },
+    {
+     "id": "route-531ef1b7-e5e",
+     "from": "C3:2",
+     "to": "VCA2:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       31.05,
+       4.25
+      ],
+      [
+       32,
+       4.25
+      ],
+      [
+       33,
+       5.25
+      ]
+     ]
+    },
+    {
+     "id": "route-32c02dba-750",
+     "from": "U1:2",
+     "to": "C1:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       26.8,
+       11.865
+      ],
+      [
+       26.75,
+       11.75
+      ],
+      [
+       24.75,
+       11.75
+      ],
+      [
+       24.25,
+       12.25
+      ],
+      [
+       24.25,
+       12.2
+      ]
+     ]
+    },
+    {
+     "id": "route-fbe916f4-763",
+     "from": "U1:3",
+     "to": "VHOA:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       26.8,
+       13.135
+      ],
+      [
+       26.75,
+       13.25
+      ],
+      [
+       25.75,
+       13.25
+      ],
+      [
+       25.5,
+       13
+      ]
+     ]
+    },
+    {
+     "id": "route-4288b4cb-319",
+     "from": "VHOA:1",
+     "to": "VHPA:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       25.5,
+       13
+      ],
+      [
+       25.5,
+       11
+      ],
+      [
+       24.75,
+       10.25
+      ]
+     ]
+    },
+    {
+     "id": "route-1d9b9b41-1a0",
+     "from": "VHPA:1",
+     "to": "R1:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       24.75,
+       10.25
+      ],
+      [
+       24.75,
+       9.5
+      ],
+      [
+       25.75,
+       8.5
+      ],
+      [
+       25.8,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-7d08695c-623",
+     "from": "U2:8",
+     "to": "VGB:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       52.2,
+       10.595
+      ],
+      [
+       52.25,
+       10.5
+      ],
+      [
+       53,
+       10.5
+      ],
+      [
+       53.75,
+       9.75
+      ]
+     ]
+    },
+    {
+     "id": "route-0ab1a206-5fa",
+     "from": "VGB:1",
+     "to": "VHB:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       53.75,
+       9.75
+      ],
+      [
+       47,
+       16.5
+      ],
+      [
+       47,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-98b67286-af0",
+     "from": "VHB:1",
+     "to": "R4:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       47,
+       19.5
+      ],
+      [
+       46,
+       18.5
+      ],
+      [
+       45.8,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-7f43193c-3d1",
+     "from": "U2:1",
+     "to": "VRB:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       46.8,
+       10.595
+      ],
+      [
+       46.75,
+       10.5
+      ],
+      [
+       46.75,
+       9.75
+      ],
+      [
+       47.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-d1c1bee2-218",
+     "from": "U2:1",
+     "to": "C5:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       46.8,
+       10.595
+      ],
+      [
+       46.75,
+       10.5
+      ],
+      [
+       47,
+       10.5
+      ],
+      [
+       48.75,
+       8.75
+      ],
+      [
+       48.7,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-4f586212-952",
+     "from": "C5:2",
+     "to": "VBB:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       50.3,
+       8.75
+      ],
+      [
+       51.25,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-1801e72f-e3a",
+     "from": "U2:7",
+     "to": "VPB:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       52.2,
+       11.865
+      ],
+      [
+       52.25,
+       11.75
+      ],
+      [
+       53.75,
+       11.75
+      ]
+     ]
+    },
+    {
+     "id": "route-366178ea-6d1",
+     "from": "C6:2",
+     "to": "VCB1:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       51.05,
+       4.25
+      ],
+      [
+       52,
+       4.25
+      ],
+      [
+       53,
+       3.25
+      ]
+     ]
+    },
+    {
+     "id": "route-d8073dcf-4ca",
+     "from": "C6:2",
+     "to": "VCB2:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       51.05,
+       4.25
+      ],
+      [
+       52,
+       4.25
+      ],
+      [
+       53,
+       5.25
+      ]
+     ]
+    },
+    {
+     "id": "route-cc5d5455-6a0",
+     "from": "U2:2",
+     "to": "C4:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       46.8,
+       11.865
+      ],
+      [
+       46.75,
+       11.75
+      ],
+      [
+       44.75,
+       11.75
+      ],
+      [
+       44.25,
+       12.25
+      ],
+      [
+       44.25,
+       12.2
+      ]
+     ]
+    },
+    {
+     "id": "route-d8652bf8-b8d",
+     "from": "U2:3",
+     "to": "VHOB:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       46.8,
+       13.135
+      ],
+      [
+       46.75,
+       13.25
+      ],
+      [
+       45.75,
+       13.25
+      ],
+      [
+       45.5,
+       13
+      ]
+     ]
+    },
+    {
+     "id": "route-b2f52a8f-954",
+     "from": "VHOB:1",
+     "to": "VHPB:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       45.5,
+       13
+      ],
+      [
+       45.5,
+       11
+      ],
+      [
+       44.75,
+       10.25
+      ]
+     ]
+    },
+    {
+     "id": "route-9838e129-403",
+     "from": "VHPB:1",
+     "to": "R3:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       44.75,
+       10.25
+      ],
+      [
+       44.75,
+       9.5
+      ],
+      [
+       45.75,
+       8.5
+      ],
+      [
+       45.8,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-58f07297-3e2",
+     "from": "U3:8",
+     "to": "VGC:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       72.2,
+       10.595
+      ],
+      [
+       72.25,
+       10.5
+      ],
+      [
+       73,
+       10.5
+      ],
+      [
+       73.75,
+       9.75
+      ]
+     ]
+    },
+    {
+     "id": "route-62d2b4ad-538",
+     "from": "VGC:1",
+     "to": "VHC:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       73.75,
+       9.75
+      ],
+      [
+       67,
+       16.5
+      ],
+      [
+       67,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-1add70a7-a83",
+     "from": "VHC:1",
+     "to": "R6:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       67,
+       19.5
+      ],
+      [
+       66,
+       18.5
+      ],
+      [
+       65.8,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-0dd544df-e88",
+     "from": "U3:1",
+     "to": "VRC:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       66.8,
+       10.595
+      ],
+      [
+       66.75,
+       10.5
+      ],
+      [
+       66.75,
+       9.75
+      ],
+      [
+       67.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-7b023cf4-c87",
+     "from": "U3:1",
+     "to": "C8:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       66.8,
+       10.595
+      ],
+      [
+       66.75,
+       10.5
+      ],
+      [
+       67,
+       10.5
+      ],
+      [
+       68.75,
+       8.75
+      ],
+      [
+       68.7,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-2b57c713-7ff",
+     "from": "C8:2",
+     "to": "VBC:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       70.3,
+       8.75
+      ],
+      [
+       71.25,
+       8.75
+      ]
+     ]
+    },
+    {
+     "id": "route-5e20b87e-935",
+     "from": "U3:7",
+     "to": "VPC:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       72.2,
+       11.865
+      ],
+      [
+       72.25,
+       11.75
+      ],
+      [
+       73.75,
+       11.75
+      ]
+     ]
+    },
+    {
+     "id": "route-692a8679-d84",
+     "from": "C9:2",
+     "to": "VCC1:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       71.05,
+       4.25
+      ],
+      [
+       72,
+       4.25
+      ],
+      [
+       73,
+       3.25
+      ]
+     ]
+    },
+    {
+     "id": "route-8b715177-40c",
+     "from": "C9:2",
+     "to": "VCC2:1",
+     "layer": "top",
+     "width": 0.8,
+     "points": [
+      [
+       71.05,
+       4.25
+      ],
+      [
+       72,
+       4.25
+      ],
+      [
+       73,
+       5.25
+      ]
+     ]
+    },
+    {
+     "id": "route-b3544733-497",
+     "from": "U3:2",
+     "to": "C7:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       66.8,
+       11.865
+      ],
+      [
+       66.75,
+       11.75
+      ],
+      [
+       64.75,
+       11.75
+      ],
+      [
+       64.25,
+       12.25
+      ],
+      [
+       64.25,
+       12.2
+      ]
+     ]
+    },
+    {
+     "id": "route-23f0a424-818",
+     "from": "U3:3",
+     "to": "VHOC:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       66.8,
+       13.135
+      ],
+      [
+       66.75,
+       13.25
+      ],
+      [
+       65.75,
+       13.25
+      ],
+      [
+       65.5,
+       13
+      ]
+     ]
+    },
+    {
+     "id": "route-0c7c420b-7b6",
+     "from": "VHOC:1",
+     "to": "VHPC:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       65.5,
+       13
+      ],
+      [
+       65.5,
+       11
+      ],
+      [
+       64.75,
+       10.25
+      ]
+     ]
+    },
+    {
+     "id": "route-c964344f-ad3",
+     "from": "VHPC:1",
+     "to": "R5:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       64.75,
+       10.25
+      ],
+      [
+       64.75,
+       9.5
+      ],
+      [
+       65.75,
+       8.5
+      ],
+      [
+       65.8,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-59f103c0-0a6",
+     "from": "VRA:1",
+     "to": "VRB:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       27.5,
+       9
+      ],
+      [
+       28.75,
+       7.75
+      ],
+      [
+       46.25,
+       7.75
+      ],
+      [
+       47.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-125d22ed-d82",
+     "from": "VRB:1",
+     "to": "VRC:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       47.5,
+       9
+      ],
+      [
+       48.75,
+       7.75
+      ],
+      [
+       66.25,
+       7.75
+      ],
+      [
+       67.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-acbd02e7-cbc",
+     "from": "U6:8",
+     "to": "L1:1",
+     "layer": "top",
+     "width": 0.5,
+     "points": [
+      [
+       11.2,
+       25.095
+      ],
+      [
+       11.25,
+       25
+      ],
+      [
+       12.25,
+       24
+      ],
+      [
+       14.5,
+       24
+      ],
+      [
+       17.25,
+       26.75
+      ],
+      [
+       17.25,
+       32.5
+      ],
+      [
+       17.15,
+       32.5
+      ]
+     ]
+    },
+    {
+     "id": "route-46a99645-06d",
+     "from": "U6:7",
+     "to": "C24:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       11.2,
+       26.365
+      ],
+      [
+       11.25,
+       26.25
+      ],
+      [
+       12,
+       26.25
+      ],
+      [
+       12.75,
+       25.5
+      ],
+      [
+       12.75,
+       25.25
+      ],
+      [
+       12.7,
+       25.25
+      ]
+     ]
+    },
+    {
+     "id": "route-7dd9c56a-703",
+     "from": "U6:8",
+     "to": "C24:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       11.2,
+       25.095
+      ],
+      [
+       11.25,
+       25
+      ],
+      [
+       12,
+       24.25
+      ],
+      [
+       13.25,
+       24.25
+      ],
+      [
+       14.25,
+       25.25
+      ],
+      [
+       14.3,
+       25.25
+      ]
+     ]
+    },
+    {
+     "id": "route-2907dd7a-1e7",
+     "from": "U6:6",
+     "to": "C23:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       11.2,
+       27.635
+      ],
+      [
+       11.25,
+       27.75
+      ],
+      [
+       12.25,
+       27.75
+      ],
+      [
+       12.75,
+       28.25
+      ],
+      [
+       12.7,
+       28.25
+      ]
+     ]
+    },
+    {
+     "id": "route-bf0b5d5d-973",
+     "from": "U6:1",
+     "to": "C21:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       5.8,
+       25.095
+      ],
+      [
+       5.75,
+       25
+      ],
+      [
+       2.75,
+       25
+      ],
+      [
+       2.75,
+       24.95
+      ]
+     ]
+    },
+    {
+     "id": "route-8af6fd21-ef6",
+     "from": "U6:2",
+     "to": "C21:2",
+     "layer": "top",
+     "width": 0.4,
+     "points": [
+      [
+       5.8,
+       26.365
+      ],
+      [
+       5.75,
+       26.25
+      ],
+      [
+       4,
+       28
+      ],
+      [
+       2.75,
+       28
+      ],
+      [
+       2.75,
+       28.05
+      ]
+     ]
+    },
+    {
+     "id": "route-d4afb13a-ad3",
+     "from": "RS1:1",
+     "to": "VKP1:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       7.0375,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       7.5,
+       4.5
+      ],
+      [
+       7.5,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-a4f960a7-a4c",
+     "from": "VKP1:1",
+     "to": "VKP2:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       7.5,
+       8.5
+      ],
+      [
+       8.25,
+       9.25
+      ],
+      [
+       13.25,
+       9.25
+      ]
+     ]
+    },
+    {
+     "id": "route-12241dfe-b9f",
+     "from": "VKP2:1",
+     "to": "U7:8",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       13.25,
+       9.25
+      ],
+      [
+       12.25,
+       10.25
+      ],
+      [
+       12.25,
+       11
+      ],
+      [
+       12.2,
+       11.095
+      ]
+     ]
+    },
+    {
+     "id": "route-58b3e707-a99",
+     "from": "RS1:2",
+     "to": "U7:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       12.9625,
+       4
+      ],
+      [
+       13,
+       4
+      ],
+      [
+       13,
+       4.75
+      ],
+      [
+       6.75,
+       11
+      ],
+      [
+       6.8,
+       11.095
+      ]
+     ]
+    },
+    {
+     "id": "route-c5ff8d84-91f",
+     "from": "R31:1",
+     "to": "VNA:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       10.95,
+       19.5
+      ],
+      [
+       9.5,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-edec98cf-6c8",
+     "from": "R30:2",
+     "to": "VBSA:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       15.5,
+       19.05
+      ],
+      [
+       15.5,
+       21.5
+      ]
+     ]
+    },
+    {
+     "id": "route-ea4edfa4-27e",
+     "from": "R34:1",
+     "to": "VNB:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       31.95,
+       19.5
+      ],
+      [
+       30.5,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-afa9e5cd-b67",
+     "from": "R33:2",
+     "to": "R34:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       35.5,
+       19.05
+      ],
+      [
+       35.5,
+       19
+      ],
+      [
+       34,
+       19
+      ],
+      [
+       33.5,
+       19.5
+      ],
+      [
+       33.55,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-c45acfc5-94a",
+     "from": "R33:2",
+     "to": "VBSB:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       35.5,
+       19.05
+      ],
+      [
+       35.5,
+       20.25
+      ]
+     ]
+    },
+    {
+     "id": "route-0ada5716-157",
+     "from": "R37:1",
+     "to": "VNC:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       51.95,
+       19.5
+      ],
+      [
+       50.5,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-72eb5ac3-66b",
+     "from": "R36:2",
+     "to": "R37:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       55.5,
+       19.05
+      ],
+      [
+       55.5,
+       19
+      ],
+      [
+       54,
+       19
+      ],
+      [
+       53.5,
+       19.5
+      ],
+      [
+       53.55,
+       19.5
+      ]
+     ]
+    },
+    {
+     "id": "route-1bc539f4-484",
+     "from": "R36:2",
+     "to": "VBSC:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       55.5,
+       19.05
+      ],
+      [
+       55.5,
+       22.75
+      ]
+     ]
+    },
+    {
+     "id": "route-cd81a154-1b5",
+     "from": "R31:2",
+     "to": "VBS2:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       12.55,
+       19.5
+      ],
+      [
+       12.5,
+       19.5
+      ],
+      [
+       12.5,
+       20.25
+      ],
+      [
+       13.25,
+       21
+      ]
+     ]
+    },
+    {
+     "id": "route-8bc6f46a-800",
+     "from": "VBS2:1",
+     "to": "VBSA:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       13.25,
+       21
+      ],
+      [
+       15,
+       21
+      ],
+      [
+       15.5,
+       21.5
+      ]
+     ]
+    },
+    {
+     "id": "route-a1ce9f59-8d8",
+     "from": "U5:5",
+     "to": "C27:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       34.6375,
+       30.3
+      ],
+      [
+       34.75,
+       30.25
+      ],
+      [
+       35.5,
+       30.25
+      ],
+      [
+       36.75,
+       29
+      ],
+      [
+       36.7,
+       29
+      ]
+     ]
+    },
+    {
+     "id": "route-e6248d91-175",
+     "from": "C27:1",
+     "to": "V33A:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       36.7,
+       29
+      ],
+      [
+       36.75,
+       29
+      ],
+      [
+       38.75,
+       27
+      ]
+     ]
+    },
+    {
+     "id": "route-312567d9-4ff",
+     "from": "V33A:1",
+     "to": "U7:6",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       38.75,
+       27
+      ],
+      [
+       38.75,
+       22.75
+      ],
+      [
+       14.25,
+       22.75
+      ],
+      [
+       14,
+       22.5
+      ],
+      [
+       14,
+       16
+      ],
+      [
+       13.5,
+       15.5
+      ],
+      [
+       13.5,
+       14.5
+      ],
+      [
+       12.2,
+       13.635
+      ]
+     ]
+    },
+    {
+     "id": "route-c0badf07-078",
+     "from": "U7:6",
+     "to": "C20:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       12.2,
+       13.635
+      ],
+      [
+       12.25,
+       13.75
+      ],
+      [
+       13,
+       13.75
+      ],
+      [
+       13.5,
+       14.25
+      ],
+      [
+       13.5,
+       15.5
+      ],
+      [
+       11,
+       18
+      ],
+      [
+       10.3,
+       18
+      ]
+     ]
+    },
+    {
+     "id": "route-fcd83bd2-40f",
+     "from": "C20:1",
+     "to": "VI2:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       8.7,
+       18
+      ],
+      [
+       7.25,
+       18
+      ]
+     ]
+    },
+    {
+     "id": "route-7a8d7cb8-ed0",
+     "from": "U7:5",
+     "to": "VIS2:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       12.2,
+       14.905
+      ],
+      [
+       12.25,
+       15
+      ],
+      [
+       10.75,
+       15
+      ],
+      [
+       10,
+       14.25
+      ]
+     ]
+    },
+    {
+     "id": "route-6db1cb29-549",
+     "from": "C27:1",
+     "to": "J6:3",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       36.7,
+       29
+      ],
+      [
+       36,
+       29
+      ],
+      [
+       33.5,
+       31.5
+      ],
+      [
+       33.5,
+       33.5
+      ],
+      [
+       35.75,
+       35.75
+      ],
+      [
+       35.75,
+       37
+      ],
+      [
+       35.69,
+       37
+      ]
+     ]
+    },
+    {
+     "id": "route-b80f7b34-d16",
+     "from": "VLA2:1",
+     "to": "U4:15",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       62.5,
+       28.75
+      ],
+      [
+       62.25,
+       29
+      ],
+      [
+       60.175,
+       29
+      ]
+     ]
+    },
+    {
+     "id": "route-66472287-914",
+     "from": "VLB2:1",
+     "to": "U4:14",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       64.5,
+       29.75
+      ],
+      [
+       60.25,
+       29.75
+      ],
+      [
+       60.175,
+       29.8
+      ]
+     ]
+    },
+    {
+     "id": "route-438508c4-9ce",
+     "from": "U1:5",
+     "to": "U4:20",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       32.2,
+       14.405
+      ],
+      [
+       32.25,
+       15.25
+      ],
+      [
+       31.75,
+       15.75
+      ],
+      [
+       29.25,
+       15.75
+      ],
+      [
+       28.75,
+       16.25
+      ],
+      [
+       28.75,
+       20.75
+      ],
+      [
+       29.75,
+       21.75
+      ],
+      [
+       39.5,
+       21.75
+      ],
+      [
+       42.5,
+       24.75
+      ],
+      [
+       55.25,
+       24.75
+      ],
+      [
+       56.4,
+       25.9
+      ],
+      [
+       56.4,
+       26.825
+      ]
+     ]
+    },
+    {
+     "id": "route-164fc1cf-3e4",
+     "from": "U2:5",
+     "to": "U4:19",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       52.2,
+       14.405
+      ],
+      [
+       52.25,
+       14.5
+      ],
+      [
+       49.5,
+       17.25
+      ],
+      [
+       49.5,
+       19.75
+      ],
+      [
+       53.75,
+       24
+      ],
+      [
+       55.5,
+       24
+      ],
+      [
+       57.25,
+       25.75
+      ],
+      [
+       57.25,
+       26.75
+      ],
+      [
+       57.2,
+       26.825
+      ]
+     ]
+    },
+    {
+     "id": "route-4eb37d10-c81",
+     "from": "U3:5",
+     "to": "U4:18",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       72.2,
+       14.405
+      ],
+      [
+       72.25,
+       14.5
+      ],
+      [
+       72.25,
+       15.5
+      ],
+      [
+       63.75,
+       24
+      ],
+      [
+       59.75,
+       24
+      ],
+      [
+       58,
+       25.75
+      ],
+      [
+       58,
+       26.825
+      ]
+     ]
+    },
+    {
+     "id": "route-c576b18a-860",
+     "from": "R41:1",
+     "to": "U4:12",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       69.7,
+       31.5
+      ],
+      [
+       61.2,
+       31.5
+      ],
+      [
+       60.175,
+       31.4
+      ]
+     ]
+    },
+    {
+     "id": "route-89d9f170-b9c",
+     "from": "U4:24",
+     "to": "J6:6",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       53.2,
+       26.825
+      ],
+      [
+       53.25,
+       26.75
+      ],
+      [
+       51.5,
+       26.75
+      ],
+      [
+       43.25,
+       35
+      ],
+      [
+       43.25,
+       37
+      ],
+      [
+       43.31,
+       37
+      ]
+     ]
+    },
+    {
+     "id": "route-6b7341a7-57e",
+     "from": "U4:23",
+     "to": "J6:5",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       54,
+       26.825
+      ],
+      [
+       54,
+       25.75
+      ],
+      [
+       53.75,
+       25.5
+      ],
+      [
+       51.75,
+       25.5
+      ],
+      [
+       40.75,
+       36.5
+      ],
+      [
+       40.75,
+       37
+      ],
+      [
+       40.77,
+       37
+      ]
+     ]
+    },
+    {
+     "id": "route-27e7bdff-081",
+     "from": "U3:6",
+     "to": "U4:13",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       72.2,
+       13.135
+      ],
+      [
+       72.25,
+       13.25
+      ],
+      [
+       72.75,
+       13.25
+      ],
+      [
+       73.5,
+       14
+      ],
+      [
+       73.5,
+       22
+      ],
+      [
+       64.75,
+       30.75
+      ],
+      [
+       61.25,
+       30.75
+      ],
+      [
+       61,
+       30.5
+      ],
+      [
+       60.25,
+       30.5
+      ],
+      [
+       60.175,
+       30.6
+      ]
+     ]
+    },
+    {
+     "id": "route-89f3560c-e71",
+     "from": "U1:6",
+     "to": "VLA1:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       32.2,
+       13.135
+      ],
+      [
+       32.25,
+       13.25
+      ],
+      [
+       33.5,
+       13.25
+      ],
+      [
+       33.75,
+       13
+      ]
+     ]
+    },
+    {
+     "id": "route-1cc36b42-3ff",
+     "from": "VLA1:1",
+     "to": "VLA2:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       33.75,
+       13
+      ],
+      [
+       37.2,
+       16.45
+      ],
+      [
+       37.2,
+       21.9
+      ],
+      [
+       61.5,
+       21.9
+      ],
+      [
+       62.5,
+       22.9
+      ],
+      [
+       62.5,
+       28.75
+      ]
+     ]
+    },
+    {
+     "id": "route-34f06484-2d5",
+     "from": "U2:6",
+     "to": "VLB1:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       52.2,
+       13.135
+      ],
+      [
+       52.25,
+       13.25
+      ],
+      [
+       53.5,
+       13.25
+      ],
+      [
+       53.75,
+       13
+      ]
+     ]
+    },
+    {
+     "id": "route-7879ddaa-736",
+     "from": "VLB1:1",
+     "to": "VLB2:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       53.75,
+       13
+      ],
+      [
+       55.75,
+       15
+      ],
+      [
+       63.5,
+       15
+      ],
+      [
+       64.5,
+       16
+      ],
+      [
+       64.5,
+       29.75
+      ]
+     ]
+    },
+    {
+     "id": "route-61d80ab0-276",
+     "from": "VBSC:1",
+     "to": "VMC:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       55.5,
+       22.75
+      ],
+      [
+       60.75,
+       22.75
+      ],
+      [
+       60.75,
+       30.5
+      ],
+      [
+       62.5,
+       32.25
+      ]
+     ]
+    },
+    {
+     "id": "route-345b71cd-147",
+     "from": "VBSB:1",
+     "to": "VMB:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       35.5,
+       20.25
+      ],
+      [
+       35.5,
+       22.6
+      ],
+      [
+       36.5,
+       23.6
+      ],
+      [
+       60.1,
+       23.6
+      ],
+      [
+       60.1,
+       34.25
+      ],
+      [
+       62.75,
+       34.25
+      ]
+     ]
+    },
+    {
+     "id": "route-bd071776-3cb",
+     "from": "VIS2:1",
+     "to": "VIS:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       10,
+       14.25
+      ],
+      [
+       13.5,
+       17.75
+      ],
+      [
+       17,
+       21.25
+      ],
+      [
+       17.75,
+       22
+      ],
+      [
+       20.15,
+       24.4
+      ],
+      [
+       59.45,
+       24.4
+      ],
+      [
+       59.45,
+       35.5
+      ],
+      [
+       61.75,
+       35.5
+      ]
+     ]
+    },
+    {
+     "id": "route-799f7ac4-d78",
+     "from": "U4:9",
+     "to": "VIS:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       60.175,
+       33.8
+      ],
+      [
+       60.25,
+       33.75
+      ],
+      [
+       60.25,
+       34
+      ],
+      [
+       61.75,
+       35.5
+      ]
+     ]
+    },
+    {
+     "id": "route-8869b117-f7f",
+     "from": "VBSA:1",
+     "to": "VMA:1",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       15.5,
+       21.5
+      ],
+      [
+       15.5,
+       24.3
+      ],
+      [
+       16.3,
+       25.1
+      ],
+      [
+       58.25,
+       25.1
+      ],
+      [
+       58.75,
+       25.6
+      ],
+      [
+       58.75,
+       37.25
+      ],
+      [
+       59.25,
+       37.75
+      ],
+      [
+       59.25,
+       38.75
+      ]
+     ]
+    },
+    {
+     "id": "route-cb640a01-806",
+     "from": "U4:11",
+     "to": "VMC:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       60.175,
+       32.2
+      ],
+      [
+       60.25,
+       32.25
+      ],
+      [
+       62.5,
+       32.25
+      ]
+     ]
+    },
+    {
+     "id": "route-5dcc0ee5-d4e",
+     "from": "U4:10",
+     "to": "VMB:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       60.175,
+       33
+      ],
+      [
+       61.5,
+       33
+      ],
+      [
+       62.75,
+       34.25
+      ]
+     ]
+    },
+    {
+     "id": "route-ac45566b-200",
+     "from": "VMC:1",
+     "to": "R38:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       62.5,
+       32.25
+      ],
+      [
+       63.25,
+       33
+      ],
+      [
+       65.45,
+       33
+      ]
+     ]
+    },
+    {
+     "id": "route-6cb6ff60-258",
+     "from": "VMB:1",
+     "to": "R35:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       62.75,
+       34.25
+      ],
+      [
+       63.25,
+       34.75
+      ],
+      [
+       65.45,
+       34.75
+      ]
+     ]
+    },
+    {
+     "id": "route-9b7aa189-edf",
+     "from": "U4:7",
+     "to": "R32:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       58,
+       35.175
+      ],
+      [
+       58,
+       36.95
+      ]
+     ]
+    },
+    {
+     "id": "route-677f5f71-aa0",
+     "from": "U4:6",
+     "to": "R32:2",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       57.2,
+       35.175
+      ],
+      [
+       57.25,
+       35.25
+      ],
+      [
+       57.25,
+       36
+      ],
+      [
+       57,
+       36.25
+      ],
+      [
+       57,
+       37.5
+      ],
+      [
+       58,
+       38.5
+      ],
+      [
+       58,
+       38.55
+      ]
+     ]
+    },
+    {
+     "id": "route-10a519e1-034",
+     "from": "VMA:1",
+     "to": "R32:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       59.25,
+       38.75
+      ],
+      [
+       58.25,
+       38.75
+      ],
+      [
+       58,
+       38.5
+      ],
+      [
+       58,
+       38.55
+      ]
+     ]
+    },
+    {
+     "id": "route-0a145a37-611",
+     "from": "R38:2",
+     "to": "R35:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       67.05,
+       33
+      ],
+      [
+       67,
+       33
+      ],
+      [
+       67,
+       34.75
+      ],
+      [
+       67.05,
+       34.75
+      ]
+     ]
+    },
+    {
+     "id": "route-3c79e985-b53",
+     "from": "R35:2",
+     "to": "R32:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       67.05,
+       34.75
+      ],
+      [
+       67,
+       34.75
+      ],
+      [
+       64.75,
+       37
+      ],
+      [
+       58,
+       37
+      ],
+      [
+       58,
+       36.95
+      ]
+     ]
+    },
+    {
+     "id": "route-1f338e07-6d4",
+     "from": "R40:2",
+     "to": "R41:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       75.5,
+       8.8
+      ],
+      [
+       75.5,
+       25.75
+      ],
+      [
+       69.75,
+       31.5
+      ],
+      [
+       69.7,
+       31.5
+      ]
+     ]
+    },
+    {
+     "id": "route-d5fd635c-d14",
+     "from": "R41:2",
+     "to": "VF9:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       71.3,
+       31.5
+      ],
+      [
+       72.5,
+       31.5
+      ]
+     ]
+    },
+    {
+     "id": "route-aff657bb-9f5",
+     "from": "U4:4",
+     "to": "VNR:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       55.6,
+       35.175
+      ],
+      [
+       55.5,
+       35.25
+      ],
+      [
+       55.5,
+       36.5
+      ],
+      [
+       54.75,
+       37.25
+      ]
+     ]
+    },
+    {
+     "id": "route-43cb2bfc-61d",
+     "from": "VNR:1",
+     "to": "J6:4",
+     "layer": "bottom",
+     "width": 0.25,
+     "points": [
+      [
+       54.75,
+       37.25
+      ],
+      [
+       54.75,
+       40.75
+      ],
+      [
+       54.5,
+       41
+      ],
+      [
+       38.25,
+       41
+      ],
+      [
+       38.25,
+       37
+      ],
+      [
+       38.23,
+       37
+      ]
+     ]
+    },
+    {
+     "id": "route-b615a329-dc6",
+     "from": "U4:5",
+     "to": "V33E:1",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       56.4,
+       35.175
+      ],
+      [
+       56.5,
+       35.25
+      ],
+      [
+       56.5,
+       36
+      ],
+      [
+       56.25,
+       36.25
+      ],
+      [
+       56.25,
+       38
+      ],
+      [
+       56,
+       38.25
+      ]
+     ]
+    },
+    {
+     "id": "route-9008390f-848",
+     "from": "V33E:1",
+     "to": "C31:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       56,
+       38.25
+      ],
+      [
+       55.25,
+       39
+      ],
+      [
+       55.25,
+       40
+      ],
+      [
+       55.2,
+       40
+      ]
+     ]
+    },
+    {
+     "id": "route-ce3696f5-a90",
+     "from": "C31:2",
+     "to": "VM6:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       56.8,
+       40
+      ],
+      [
+       58.25,
+       40
+      ]
+     ]
+    },
+    {
+     "id": "route-e22c4c89-cf9",
+     "from": "VV1:1",
+     "to": "VV4:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       1.75,
+       7
+      ],
+      [
+       1.25,
+       7.5
+      ],
+      [
+       1.25,
+       28.75
+      ]
+     ]
+    },
+    {
+     "id": "route-8e76065c-191",
+     "from": "VV4:1",
+     "to": "C21:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       1.25,
+       28.75
+      ],
+      [
+       2,
+       28.75
+      ],
+      [
+       2.75,
+       28
+      ],
+      [
+       2.75,
+       28.05
+      ]
+     ]
+    },
+    {
+     "id": "route-96e7d8b5-bdd",
+     "from": "C21:2",
+     "to": "U6:3",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       2.75,
+       28.05
+      ],
+      [
+       2.75,
+       28
+      ],
+      [
+       3,
+       27.75
+      ],
+      [
+       5.75,
+       27.75
+      ],
+      [
+       5.8,
+       27.635
+      ]
+     ]
+    },
+    {
+     "id": "route-f780282f-841",
+     "from": "U6:3",
+     "to": "U6:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       5.8,
+       27.635
+      ],
+      [
+       5.75,
+       27.75
+      ],
+      [
+       5.75,
+       26.25
+      ],
+      [
+       5.8,
+       26.365
+      ]
+     ]
+    },
+    {
+     "id": "route-e3e15877-213",
+     "from": "C21:2",
+     "to": "R11:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       2.75,
+       28.05
+      ],
+      [
+       2.75,
+       28
+      ],
+      [
+       2.25,
+       28.5
+      ],
+      [
+       2.25,
+       31.5
+      ],
+      [
+       2.2,
+       31.5
+      ]
+     ]
+    },
+    {
+     "id": "route-fd114d5d-0e7",
+     "from": "U6:4",
+     "to": "R11:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       5.8,
+       28.905
+      ],
+      [
+       5.75,
+       29
+      ],
+      [
+       5.75,
+       29.5
+      ],
+      [
+       3.75,
+       31.5
+      ],
+      [
+       3.8,
+       31.5
+      ]
+     ]
+    },
+    {
+     "id": "route-171b7eb9-225",
+     "from": "L1:2",
+     "to": "C25:1",
+     "layer": "top",
+     "width": 0.5,
+     "points": [
+      [
+       26.85,
+       32.5
+      ],
+      [
+       26.75,
+       32.5
+      ],
+      [
+       26.75,
+       28.25
+      ],
+      [
+       30.25,
+       24.75
+      ],
+      [
+       30.2,
+       24.75
+      ]
+     ]
+    },
+    {
+     "id": "route-4b1e7325-d28",
+     "from": "C25:1",
+     "to": "VC12:1",
+     "layer": "top",
+     "width": 0.5,
+     "points": [
+      [
+       30.2,
+       24.75
+      ],
+      [
+       30.25,
+       24.75
+      ],
+      [
+       30.25,
+       23.6
+      ]
+     ]
+    },
+    {
+     "id": "route-78d889da-cc3",
+     "from": "VC12:1",
+     "to": "VRA:1",
+     "layer": "bottom",
+     "width": 0.4,
+     "points": [
+      [
+       30.25,
+       23.6
+      ],
+      [
+       30.25,
+       23.5
+      ],
+      [
+       29.5,
+       23.5
+      ],
+      [
+       26,
+       20
+      ],
+      [
+       26,
+       14
+      ],
+      [
+       27.5,
+       12.5
+      ],
+      [
+       27.5,
+       9
+      ]
+     ]
+    },
+    {
+     "id": "route-c8498df7-4f0",
+     "from": "L1:2",
+     "to": "U5:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       26.85,
+       32.5
+      ],
+      [
+       26.75,
+       32.5
+      ],
+      [
+       29.75,
+       29.5
+      ],
+      [
+       31.5,
+       29.5
+      ],
+      [
+       32.25,
+       30.25
+      ],
+      [
+       32.3625,
+       30.3
+      ]
+     ]
+    },
+    {
+     "id": "route-597bf49f-fab",
+     "from": "U5:1",
+     "to": "U5:3",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       32.3625,
+       30.3
+      ],
+      [
+       32.25,
+       30.25
+      ],
+      [
+       31.5,
+       29.5
+      ],
+      [
+       30.75,
+       29.5
+      ],
+      [
+       30,
+       30.25
+      ],
+      [
+       30,
+       30.75
+      ],
+      [
+       31.5,
+       32.25
+      ],
+      [
+       32.25,
+       32.25
+      ],
+      [
+       32.3625,
+       32.2
+      ]
+     ]
+    },
+    {
+     "id": "route-148f54a8-cb2",
+     "from": "U5:1",
+     "to": "C26:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       32.3625,
+       30.3
+      ],
+      [
+       32.25,
+       30.25
+      ],
+      [
+       31.5,
+       29.5
+      ],
+      [
+       30.75,
+       29.5
+      ],
+      [
+       30,
+       30.25
+      ],
+      [
+       30,
+       34.25
+      ],
+      [
+       30.25,
+       34.5
+      ],
+      [
+       30.2,
+       34.5
+      ]
+     ]
+    },
+    {
+     "id": "route-16d97c86-8e8",
+     "from": "U6:5",
+     "to": "R14:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       11.2,
+       28.905
+      ],
+      [
+       11.25,
+       29
+      ],
+      [
+       12,
+       29.75
+      ],
+      [
+       13.75,
+       29.75
+      ],
+      [
+       14.75,
+       30.75
+      ],
+      [
+       14.8,
+       30.75
+      ]
+     ]
+    },
+    {
+     "id": "route-be6ef757-de6",
+     "from": "R14:2",
+     "to": "R15:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       14.8,
+       30.75
+      ],
+      [
+       14.75,
+       30.75
+      ],
+      [
+       14.75,
+       32.75
+      ],
+      [
+       14.8,
+       32.75
+      ]
+     ]
+    },
+    {
+     "id": "route-85e13693-662",
+     "from": "R15:2",
+     "to": "C22:2",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       14.8,
+       32.75
+      ],
+      [
+       14.75,
+       32.75
+      ],
+      [
+       14.75,
+       34.75
+      ],
+      [
+       14.8,
+       34.75
+      ]
+     ]
+    },
+    {
+     "id": "route-24e73591-ea9",
+     "from": "L1:2",
+     "to": "C22:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       26.85,
+       32.5
+      ],
+      [
+       26.75,
+       32.5
+      ],
+      [
+       23.5,
+       35.75
+      ],
+      [
+       14.25,
+       35.75
+      ],
+      [
+       13.25,
+       34.75
+      ],
+      [
+       13.2,
+       34.75
+      ]
+     ]
+    },
+    {
+     "id": "route-dec64507-d27",
+     "from": "C22:1",
+     "to": "R15:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       13.2,
+       34.75
+      ],
+      [
+       13.25,
+       34.75
+      ],
+      [
+       13.25,
+       32.75
+      ],
+      [
+       13.2,
+       32.75
+      ]
+     ]
+    },
+    {
+     "id": "route-45c1c4f7-67c",
+     "from": "V33A:1",
+     "to": "V33B:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       38.75,
+       27
+      ],
+      [
+       43.25,
+       27
+      ],
+      [
+       51,
+       34.75
+      ],
+      [
+       51,
+       35.25
+      ]
+     ]
+    },
+    {
+     "id": "route-bff2e3d4-7f2",
+     "from": "V33B:1",
+     "to": "U4:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       51,
+       35.25
+      ],
+      [
+       53.25,
+       35.25
+      ],
+      [
+       53.2,
+       35.175
+      ]
+     ]
+    },
+    {
+     "id": "route-d2d10a67-797",
+     "from": "U4:1",
+     "to": "C30:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       53.2,
+       35.175
+      ],
+      [
+       53.25,
+       35.25
+      ],
+      [
+       53.25,
+       36
+      ],
+      [
+       52.5,
+       36.75
+      ],
+      [
+       52.5,
+       36.7
+      ]
+     ]
+    },
+    {
+     "id": "route-816f07b3-ac5",
+     "from": "V33A:1",
+     "to": "V33D:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       38.75,
+       27
+      ],
+      [
+       56.5,
+       27
+      ],
+      [
+       58,
+       28.5
+      ]
+     ]
+    },
+    {
+     "id": "route-aef4f427-1a1",
+     "from": "V33D:1",
+     "to": "U4:17",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       58,
+       28.5
+      ],
+      [
+       58.75,
+       27.75
+      ],
+      [
+       58.75,
+       26.75
+      ],
+      [
+       58.8,
+       26.825
+      ]
+     ]
+    },
+    {
+     "id": "route-8d6999d9-859",
+     "from": "V33D:1",
+     "to": "C29:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       58,
+       28.5
+      ],
+      [
+       60.5,
+       26
+      ],
+      [
+       60.5,
+       25
+      ],
+      [
+       60.45,
+       25
+      ]
+     ]
+    },
+    {
+     "id": "route-cc39e4c2-b11",
+     "from": "V33B:1",
+     "to": "V33E:1",
+     "layer": "bottom",
+     "width": 0.3,
+     "points": [
+      [
+       51,
+       35.25
+      ],
+      [
+       54,
+       35.25
+      ],
+      [
+       56,
+       37.25
+      ],
+      [
+       56,
+       38.25
+      ]
+     ]
+    },
+    {
+     "id": "route-c5bf9c7c-88e",
+     "from": "J6:8",
+     "to": "R17:1",
+     "layer": "top",
+     "width": 0.25,
+     "points": [
+      [
+       48.39,
+       37
+      ],
+      [
+       48.5,
+       37
+      ],
+      [
+       46.75,
+       35.25
+      ],
+      [
+       46.75,
+       33.5
+      ],
+      [
+       46.7,
+       33.5
+      ]
+     ]
+    },
+    {
+     "id": "route-2729ba1d-9e1",
+     "from": "R17:2",
+     "to": "U4:27",
+     "layer": "top",
+     "width": 0.2,
+     "points": [
+      [
+       48.3,
+       33.5
+      ],
+      [
+       48.25,
+       33.5
+      ],
+      [
+       48.25,
+       32.5
+      ],
+      [
+       51,
+       29.75
+      ],
+      [
+       51.75,
+       29.75
+      ],
+      [
+       51.825,
+       29.8
+      ]
+     ]
+    },
+    {
+     "id": "route-d1078dd4-787",
+     "from": "U5:4",
+     "to": "C28:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       34.6375,
+       32.2
+      ],
+      [
+       34.75,
+       32.25
+      ],
+      [
+       36.7,
+       32.25
+      ]
+     ]
+    },
+    {
+     "id": "route-6d68c45f-f33",
+     "from": "C25:2",
+     "to": "R16:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       33.3,
+       24.75
+      ],
+      [
+       35.2,
+       24.75
+      ]
+     ]
+    },
+    {
+     "id": "route-da67be24-3fa",
+     "from": "Q1:4",
+     "to": "R1:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       22.905,
+       8.4
+      ],
+      [
+       23,
+       8.5
+      ],
+      [
+       24.2,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-7384033d-a25",
+     "from": "Q3:4",
+     "to": "R3:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       42.905,
+       8.4
+      ],
+      [
+       43,
+       8.5
+      ],
+      [
+       44.2,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-41d300e6-33c",
+     "from": "Q5:4",
+     "to": "R5:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       62.905,
+       8.4
+      ],
+      [
+       63,
+       8.5
+      ],
+      [
+       64.2,
+       8.5
+      ]
+     ]
+    },
+    {
+     "id": "route-53239324-7fe",
+     "from": "Q2:4",
+     "to": "R2:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       22.905,
+       18.4
+      ],
+      [
+       23,
+       18.5
+      ],
+      [
+       24.2,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-71a5bac9-b32",
+     "from": "Q4:4",
+     "to": "R4:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       42.905,
+       18.4
+      ],
+      [
+       43,
+       18.5
+      ],
+      [
+       44.2,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-4b642d18-b2d",
+     "from": "Q6:4",
+     "to": "R6:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       62.905,
+       18.4
+      ],
+      [
+       63,
+       18.5
+      ],
+      [
+       64.2,
+       18.5
+      ]
+     ]
+    },
+    {
+     "id": "route-cc48c07d-128",
+     "from": "VE3:1",
+     "to": "U6:9",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       8.5,
+       27.8
+      ],
+      [
+       8.5,
+       27
+      ]
+     ]
+    },
+    {
+     "id": "route-ae3aec59-181",
+     "from": "VF2:1",
+     "to": "R14:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       12,
+       30.75
+      ],
+      [
+       13.2,
+       30.75
+      ]
+     ]
+    },
+    {
+     "id": "route-e5bf0f49-7f3",
+     "from": "VM5:1",
+     "to": "C29:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       63.25,
+       25
+      ],
+      [
+       62.05,
+       25
+      ]
+     ]
+    },
+    {
+     "id": "route-875be095-672",
+     "from": "VF4:1",
+     "to": "R16:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       37.5,
+       26
+      ],
+      [
+       37.5,
+       25.5
+      ],
+      [
+       36.75,
+       24.75
+      ],
+      [
+       36.8,
+       24.75
+      ]
+     ]
+    },
+    {
+     "id": "route-331df595-d2a",
+     "from": "VF8:1",
+     "to": "C26:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       33.25,
+       34.5
+      ],
+      [
+       31.8,
+       34.5
+      ]
+     ]
+    },
+    {
+     "id": "route-0f8102aa-4bf",
+     "from": "VF5:1",
+     "to": "C27:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       39.75,
+       29
+      ],
+      [
+       38.3,
+       29
+      ]
+     ]
+    },
+    {
+     "id": "route-b92b5225-f56",
+     "from": "VF6:1",
+     "to": "C28:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       39.75,
+       32.25
+      ],
+      [
+       38.3,
+       32.25
+      ]
+     ]
+    },
+    {
+     "id": "route-67967f03-2d3",
+     "from": "VM3:1",
+     "to": "C30:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       51,
+       38.25
+      ],
+      [
+       52.5,
+       38.25
+      ],
+      [
+       52.5,
+       38.3
+      ]
+     ]
+    },
+    {
+     "id": "route-5d4c84d9-75d",
+     "from": "VF7:1",
+     "to": "U5:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       31,
+       30.5
+      ],
+      [
+       31,
+       30.75
+      ],
+      [
+       31.5,
+       31.25
+      ],
+      [
+       32.3625,
+       31.25
+      ]
+     ]
+    },
+    {
+     "id": "route-c9db2a59-f8d",
+     "from": "VI1:1",
+     "to": "U7:4",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       6.75,
+       16.75
+      ],
+      [
+       6.75,
+       15
+      ],
+      [
+       6.8,
+       14.905
+      ]
+     ]
+    },
+    {
+     "id": "route-0ad18a2d-1c9",
+     "from": "U7:4",
+     "to": "U7:3",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       6.8,
+       14.905
+      ],
+      [
+       6.75,
+       15
+      ],
+      [
+       6.75,
+       13.75
+      ],
+      [
+       6.8,
+       13.635
+      ]
+     ]
+    },
+    {
+     "id": "route-1001987e-901",
+     "from": "U7:3",
+     "to": "U7:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       6.8,
+       13.635
+      ],
+      [
+       6.75,
+       13.75
+      ],
+      [
+       6.75,
+       12.25
+      ],
+      [
+       6.8,
+       12.365
+      ]
+     ]
+    },
+    {
+     "id": "route-c38e759e-2b8",
+     "from": "VM1:1",
+     "to": "U4:16",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       61.75,
+       27
+      ],
+      [
+       61.5,
+       27
+      ],
+      [
+       60.25,
+       28.25
+      ],
+      [
+       60.175,
+       28.2
+      ]
+     ]
+    },
+    {
+     "id": "route-808cb574-cdf",
+     "from": "VF1:1",
+     "to": "C23:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       15.75,
+       26.75
+      ],
+      [
+       14.25,
+       28.25
+      ],
+      [
+       14.3,
+       28.25
+      ]
+     ]
+    },
+    {
+     "id": "route-b5cb25f0-d6c",
+     "from": "VM2:1",
+     "to": "U4:32",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       49.75,
+       34.75
+      ],
+      [
+       50.75,
+       33.75
+      ],
+      [
+       51.75,
+       33.75
+      ],
+      [
+       51.825,
+       33.8
+      ]
+     ]
+    },
+    {
+     "id": "route-9fe86f00-a13",
+     "from": "U4:32",
+     "to": "U4:31",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       51.825,
+       33.8
+      ],
+      [
+       51.75,
+       33.75
+      ],
+      [
+       51.75,
+       33
+      ],
+      [
+       51.825,
+       33
+      ]
+     ]
+    },
+    {
+     "id": "route-62f862e1-fa2",
+     "from": "VE1:1",
+     "to": "U6:1",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       7.9,
+       26.2
+      ],
+      [
+       8,
+       26.25
+      ],
+      [
+       6.75,
+       25
+      ],
+      [
+       5.75,
+       25
+      ],
+      [
+       5.8,
+       25.095
+      ]
+     ]
+    },
+    {
+     "id": "route-3176df53-d60",
+     "from": "U7:2",
+     "to": "U7:7",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       6.8,
+       12.365
+      ],
+      [
+       6.75,
+       12.25
+      ],
+      [
+       12.25,
+       12.25
+      ],
+      [
+       12.2,
+       12.365
+      ]
+     ]
+    },
+    {
+     "id": "route-275ec636-44c",
+     "from": "Q2:5",
+     "to": "C1:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       21,
+       14.9025
+      ],
+      [
+       21,
+       15
+      ],
+      [
+       22.25,
+       13.75
+      ],
+      [
+       24.25,
+       13.75
+      ],
+      [
+       24.25,
+       13.8
+      ]
+     ]
+    },
+    {
+     "id": "route-b879ad05-faf",
+     "from": "C1:2",
+     "to": "U1:4",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       24.25,
+       13.8
+      ],
+      [
+       24.25,
+       13.75
+      ],
+      [
+       25,
+       14.5
+      ],
+      [
+       26.75,
+       14.5
+      ],
+      [
+       26.8,
+       14.405
+      ]
+     ]
+    },
+    {
+     "id": "route-12d62a42-429",
+     "from": "Q4:5",
+     "to": "C4:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       41,
+       14.9025
+      ],
+      [
+       41,
+       15
+      ],
+      [
+       42.25,
+       13.75
+      ],
+      [
+       44.25,
+       13.75
+      ],
+      [
+       44.25,
+       13.8
+      ]
+     ]
+    },
+    {
+     "id": "route-1dbb8cee-a38",
+     "from": "C4:2",
+     "to": "U2:4",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       44.25,
+       13.8
+      ],
+      [
+       44.25,
+       13.75
+      ],
+      [
+       45,
+       14.5
+      ],
+      [
+       46.75,
+       14.5
+      ],
+      [
+       46.8,
+       14.405
+      ]
+     ]
+    },
+    {
+     "id": "route-850be40a-918",
+     "from": "Q6:5",
+     "to": "C7:2",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       61,
+       14.9025
+      ],
+      [
+       61,
+       15
+      ],
+      [
+       62.25,
+       13.75
+      ],
+      [
+       64.25,
+       13.75
+      ],
+      [
+       64.25,
+       13.8
+      ]
+     ]
+    },
+    {
+     "id": "route-12686bf6-642",
+     "from": "C7:2",
+     "to": "U3:4",
+     "layer": "top",
+     "width": 0.3,
+     "points": [
+      [
+       64.25,
+       13.8
+      ],
+      [
+       64.25,
+       13.75
+      ],
+      [
+       65,
+       14.5
+      ],
+      [
+       66.75,
+       14.5
+      ],
+      [
+       66.8,
+       14.405
+      ]
+     ]
+    }
+   ],
    "stackup": {
     "thickness": 1.6,
-    "copper": 1,
+    "copper": 2,
     "epsr": 4.4
    },
    "currents": {
-    "GATE": 0.4,
-    "GND": 30,
-    "OUT": 30,
-    "PWM": 0.05,
-    "VCC": 0.5
+    "3V3": 0.05,
+    "BAT_P": 12,
+    "BOOT_A": 0.1,
+    "BOOT_B": 0.1,
+    "BOOT_C": 0.1,
+    "GHD_A": 0.3,
+    "GHD_B": 0.3,
+    "GHD_C": 0.3,
+    "GH_A": 0.3,
+    "GH_B": 0.3,
+    "GH_C": 0.3,
+    "GLD_A": 0.3,
+    "GLD_B": 0.3,
+    "GLD_C": 0.3,
+    "GL_A": 0.3,
+    "GL_B": 0.3,
+    "GL_C": 0.3,
+    "GND": 12,
+    "HI_A": 0.01,
+    "HI_B": 0.01,
+    "HI_C": 0.01,
+    "LI_A": 0.01,
+    "LI_B": 0.01,
+    "LI_C": 0.01,
+    "PH_A": 11,
+    "PH_B": 11,
+    "PH_C": 11,
+    "SW": 0.3,
+    "V12": 0.2,
+    "VBAT": 12
    },
-   "powers": {
-    "R1": 0.05,
-    "U1": 0.35
-   },
+   "powers": {},
    "loadNets": [
-    "OUT",
-    "GND"
+    "PH_A",
+    "PH_B",
+    "PH_C"
    ]
   },
   "silicon": {
@@ -1117,6 +6891,7 @@
    ],
    "pixel": 3.45,
    "requiredGsd": 1,
+   "objectDistance": 60,
    "target": {
     "name": "Image sensor",
     "z": 70.17675,
@@ -1169,6 +6944,7 @@
    "temperature": 25,
    "pressure": 101325,
    "heatLimit": 15,
+   "heatLoad": 0,
    "fan": {
     "preset": "wake",
     "shutoff": 30,
@@ -1234,6 +7010,7 @@
    },
    "units": 6,
    "limit": 35,
+   "equipmentPower": 0,
    "rooms": [
     {
      "id": "charge",
@@ -1353,6 +7130,2753 @@
      }
     }
    ]
+  },
+  "parts": {
+   "parts": [
+    {
+     "id": "arms",
+     "name": "Arm tubes",
+     "template": "arm",
+     "model": {
+      "name": "arm tube",
+      "params": {
+       "od": 25,
+       "wall": 1.5,
+       "start": 70,
+       "length": 310
+      },
+      "shape": {
+       "op": "kit",
+       "kit": "pipe_run",
+       "args": {
+        "pipe": {
+         "outer": "od",
+         "wall": "wall"
+        },
+        "part": "wall",
+        "sides": 32,
+        "run": {
+         "start": [
+          "start",
+          0,
+          0
+         ],
+         "direction": [
+          1,
+          0,
+          0
+         ],
+         "legs": [
+          {
+           "leg": "straight",
+           "length": "length"
+          }
+         ]
+        }
+       }
+      },
+      "cell": 0.9
+     },
+     "overrides": {
+      "od": 35,
+      "wall": 2
+     },
+     "x": 0,
+     "y": 0,
+     "z": 17.5,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "cfrp",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "plates",
+     "name": "Centre plates (top and bottom)",
+     "template": "plate",
+     "model": {
+      "name": "centre plate",
+      "params": {
+       "size": 190,
+       "t": 2.5,
+       "hole": 22,
+       "pitch": 48,
+       "holes": 3
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "box",
+        "center": [
+         0,
+         0,
+         "t/2"
+        ],
+        "half": [
+         "size/2",
+         "size/2",
+         "t/2"
+        ],
+        "round": 12
+       },
+       "b": {
+        "op": "array",
+        "shape": {
+         "op": "cylinder_z",
+         "center": [
+          0,
+          0,
+          "t/2"
+         ],
+         "radius": "hole/2",
+         "height": "4*t"
+        },
+        "period": [
+         "pitch",
+         "pitch",
+         0
+        ],
+        "counts": [
+         "holes",
+         "holes",
+         1
+        ]
+       }
+      },
+      "cell": 0.9
+     },
+     "overrides": {},
+     "x": 0,
+     "y": 0,
+     "z": -2.5,
+     "rz": 0,
+     "count": 2,
+     "pattern": "stack",
+     "stack": 37.5,
+     "material": "cfrp",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "mounts",
+     "name": "Motor mounts",
+     "template": "mount",
+     "model": {
+      "name": "motor mount",
+      "params": {
+       "bolts": 4,
+       "bolt_circle": 25,
+       "bolt": 1.6,
+       "thickness": 3,
+       "bore": 8,
+       "od": "bolt_circle + 6*bolt",
+       "hub": 5
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           "thickness/2"
+          ],
+          "radius": "od/2",
+          "height": "thickness"
+         },
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           "thickness + hub/2"
+          ],
+          "radius": "bore/2 + 3",
+          "height": "hub"
+         }
+        ]
+       },
+       "b": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "cylinder_z",
+          "center": [
+           0,
+           0,
+           0
+          ],
+          "radius": "bore/2",
+          "height": "4*(thickness + hub)"
+         },
+         {
+          "op": "polar_array",
+          "axis": [
+           0,
+           0,
+           1
+          ],
+          "count": "bolts",
+          "shape": {
+           "op": "cylinder_z",
+           "center": [
+            "bolt_circle/2",
+            0,
+            "thickness/2"
+           ],
+           "radius": "bolt",
+           "height": "4*thickness"
+          }
+         }
+        ]
+       }
+      },
+      "cell": 0.35
+     },
+     "overrides": {},
+     "x": 368,
+     "y": 0,
+     "z": 35,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "al-6061",
+     "domain": "Mechanical"
+    },
+    {
+     "id": "escbox",
+     "name": "ESC enclosures",
+     "template": "enclosure",
+     "model": {
+      "name": "enclosure",
+      "params": {
+       "w": 90,
+       "d": 70,
+       "h": 40,
+       "wall": 2,
+       "round": 4,
+       "vent": 3,
+       "vents": 6
+      },
+      "shape": {
+       "op": "difference",
+       "a": {
+        "op": "shell",
+        "thickness": "wall",
+        "shape": {
+         "op": "box",
+         "center": [
+          0,
+          0,
+          "h/2"
+         ],
+         "half": [
+          "w/2",
+          "d/2",
+          "h/2"
+         ],
+         "round": "round"
+        }
+       },
+       "b": {
+        "op": "union",
+        "parts": [
+         {
+          "op": "box",
+          "center": [
+           0,
+           0,
+           "h"
+          ],
+          "half": [
+           "w/2 - wall",
+           "d/2 - wall",
+           "wall"
+          ]
+         },
+         {
+          "op": "array",
+          "shape": {
+           "op": "box",
+           "center": [
+            0,
+            "-d/2",
+            "h/2"
+           ],
+           "half": [
+            "vent/2",
+            "wall*2",
+            "h/4"
+           ]
+          },
+          "period": [
+           "vent*2.5",
+           0,
+           0
+          ],
+          "counts": [
+           "vents",
+           1,
+           1
+          ]
+         }
+        ]
+       }
+      },
+      "cell": 0.7
+     },
+     "overrides": {
+      "w": 84,
+      "d": 48,
+      "h": 34,
+      "vents": 5
+     },
+     "x": 190,
+     "y": 0,
+     "z": 36,
+     "rz": 45,
+     "count": 4,
+     "pattern": "polar",
+     "stack": 0,
+     "material": "abs",
+     "domain": "Mechanical"
+    }
+   ]
+  },
+  "flight": {
+   "name": "Inspection quadcopter",
+   "rotors": 4,
+   "prop": 457.2,
+   "fm": 0.65,
+   "motorEfficiency": 0.82,
+   "escEfficiency": 0.97,
+   "designTW": 1.5,
+   "battery": {
+    "cells": 12,
+    "capacity": 16,
+    "usable": 0.8,
+    "mass": 4.25,
+    "resistance": 0.03
+   },
+   "masses": [
+    {
+     "id": "motors",
+     "name": "Motors × 4",
+     "mass": 0.512,
+     "part": "T-MOTOR MN5008 KV170",
+     "source": "https://www.ligpower.com/product/mn5008-kv170-motor-antigravity-type.html"
+    },
+    {
+     "id": "props",
+     "name": "Propellers × 4",
+     "mass": 0.252,
+     "part": "T-MOTOR P18×6.1 CF, 31.5 g per blade",
+     "source": "https://www.ligpower.com/product/18x6-1-polish-carbon-fiber-propeller.html"
+    },
+    {
+     "id": "gimbal",
+     "name": "Gimbal and camera body",
+     "mass": 0.55,
+     "part": "Estimate"
+    },
+    {
+     "id": "avionics",
+     "name": "Autopilot on mini baseboard",
+     "mass": 0.0578,
+     "part": "Holybro Pixhawk 6X (31.3 g + 26.5 g)",
+     "source": "https://rcdrone.top/products/holybro-pixhawk-6x-autopilot-h753-flight-controller-module-standard-base-mini-base-pm02d-m9n-m10-gps-rc-multirotor-airplanes-1"
+    },
+    {
+     "id": "radio",
+     "name": "GNSS, radio and power module",
+     "mass": 0.12,
+     "part": "Estimate: Holybro M9N, telemetry radio, PM02D-12S"
+    },
+    {
+     "id": "wiring",
+     "name": "Wiring and connectors",
+     "mass": 0.3,
+     "part": "Estimate"
+    },
+    {
+     "id": "gear",
+     "name": "Landing gear",
+     "mass": 0.25,
+     "part": "Estimate"
+    },
+    {
+     "id": "fasteners",
+     "name": "Fasteners and clamps",
+     "mass": 0.12,
+     "part": "Estimate"
+    }
+   ],
+   "avionicsPower": 14,
+   "temperature": 15,
+   "pressure": 101325,
+   "altitude": 60,
+   "requiredTime": 20,
+   "minTW": 1.5,
+   "capture": 0.15,
+   "arm": 368,
+   "propulsion": {
+    "motor": "T-MOTOR MN5008 KV170",
+    "propeller": "T-MOTOR P18×6.1 CF",
+    "source": "https://www.ligpower.com/product/mn5008-kv170-motor-antigravity-type.html",
+    "kv": 170,
+    "resistance": 0.27,
+    "peakCurrent": 15,
+    "maxPower": 720,
+    "rotorInertia": 0.0007,
+    "density": 1.2,
+    "blockage": 0.05,
+    "table": [
+     {
+      "throttle": 0.4,
+      "volts": 47.39,
+      "amps": 1.51,
+      "watts": 71,
+      "rpm": 2807,
+      "torque": 0.19,
+      "grams": 868
+     },
+     {
+      "throttle": 0.45,
+      "volts": 47.37,
+      "amps": 2.05,
+      "watts": 97,
+      "rpm": 3120,
+      "torque": 0.24,
+      "grams": 1096
+     },
+     {
+      "throttle": 0.5,
+      "volts": 47.34,
+      "amps": 2.74,
+      "watts": 130,
+      "rpm": 3477,
+      "torque": 0.29,
+      "grams": 1343
+     },
+     {
+      "throttle": 0.55,
+      "volts": 47.3,
+      "amps": 3.63,
+      "watts": 171,
+      "rpm": 3819,
+      "torque": 0.36,
+      "grams": 1633
+     },
+     {
+      "throttle": 0.6,
+      "volts": 47.27,
+      "amps": 4.57,
+      "watts": 216,
+      "rpm": 4125,
+      "torque": 0.42,
+      "grams": 1926
+     },
+     {
+      "throttle": 0.65,
+      "volts": 47.23,
+      "amps": 5.63,
+      "watts": 266,
+      "rpm": 4410,
+      "torque": 0.48,
+      "grams": 2229
+     },
+     {
+      "throttle": 0.7,
+      "volts": 47.19,
+      "amps": 6.73,
+      "watts": 317,
+      "rpm": 4663,
+      "torque": 0.53,
+      "grams": 2519
+     },
+     {
+      "throttle": 0.75,
+      "volts": 47.15,
+      "amps": 8.01,
+      "watts": 378,
+      "rpm": 4945,
+      "torque": 0.6,
+      "grams": 2821
+     },
+     {
+      "throttle": 0.8,
+      "volts": 47.1,
+      "amps": 9.48,
+      "watts": 446,
+      "rpm": 5208,
+      "torque": 0.67,
+      "grams": 3156
+     },
+     {
+      "throttle": 0.9,
+      "volts": 46.99,
+      "amps": 12.85,
+      "watts": 604,
+      "rpm": 5716,
+      "torque": 0.81,
+      "grams": 3807
+     },
+     {
+      "throttle": 1,
+      "volts": 46.94,
+      "amps": 14.63,
+      "watts": 687,
+      "rpm": 5963,
+      "torque": 0.87,
+      "grams": 4100
+     }
+    ]
+   }
+  },
+  "system": {
+   "links": [
+    {
+     "id": "sink-mass",
+     "from": "mech.sink_mass",
+     "to": "flight.esc_mass",
+     "enabled": true,
+     "note": "Each ESC carries one heat sink"
+    },
+    {
+     "id": "board-mass",
+     "from": "pcb.board_mass",
+     "to": "flight.esc_mass",
+     "enabled": true,
+     "note": "Each ESC carries one power board"
+    },
+    {
+     "id": "camera-mass",
+     "from": "optics.mass",
+     "to": "flight.camera_mass",
+     "enabled": true,
+     "note": "Lens glass"
+    },
+    {
+     "id": "frame-mass",
+     "from": "parts.mass",
+     "to": "flight.parts_mass",
+     "enabled": true,
+     "note": "Airframe parts"
+    },
+    {
+     "id": "altitude",
+     "from": "flight.altitude",
+     "to": "optics.altitude",
+     "enabled": true,
+     "note": "Mission altitude sets the ground sample distance"
+    },
+    {
+     "id": "wake",
+     "from": "flight.wake_pressure",
+     "to": "fluids.drive_pressure",
+     "enabled": true,
+     "note": "Rotor downwash drives the ESC cooling duct"
+    },
+    {
+     "id": "fluids-mech",
+     "from": "fluids.duct_velocity",
+     "to": "mech.velocity",
+     "enabled": true,
+     "note": "Duct flow sets the heat-sink approach velocity"
+    },
+    {
+     "id": "mech-fluids-gap",
+     "from": "mech.gap",
+     "to": "fluids.sink_gap",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-height",
+     "from": "mech.finHeight_out",
+     "to": "fluids.sink_height",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-length",
+     "from": "mech.length_out",
+     "to": "fluids.sink_length",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-width",
+     "from": "mech.width_out",
+     "to": "fluids.sink_width",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-fins",
+     "from": "mech.fins_out",
+     "to": "fluids.fin_count",
+     "enabled": true
+    },
+    {
+     "id": "air-mech",
+     "from": "architecture.outdoor_temperature",
+     "to": "mech.ambient",
+     "enabled": true,
+     "note": "Outside air is the ESC inlet air in flight"
+    },
+    {
+     "id": "air-flight",
+     "from": "architecture.outdoor_temperature",
+     "to": "flight.air_temperature",
+     "enabled": true,
+     "note": "Air density for thrust"
+    },
+    {
+     "id": "air-fluids",
+     "from": "architecture.outdoor_temperature",
+     "to": "fluids.air_temperature",
+     "enabled": true
+    },
+    {
+     "id": "air-silicon",
+     "from": "architecture.outdoor_temperature",
+     "to": "silicon.ambient",
+     "enabled": true
+    },
+    {
+     "id": "mech-fluids-heat",
+     "from": "mech.q1_power",
+     "to": "fluids.heat_load",
+     "enabled": true,
+     "note": "Q1 heat warms the duct air"
+    },
+    {
+     "id": "chargers",
+     "from": "flight.charger_heat",
+     "to": "architecture.equipment_power",
+     "enabled": true,
+     "note": "Battery chargers in the hangar charging room"
+    },
+    {
+     "id": "esc-phase",
+     "from": "flight.phase_current",
+     "to": "power.phase_current",
+     "enabled": true,
+     "note": "Motor current at the design point, from measured torque and KV"
+    },
+    {
+     "id": "esc-bus",
+     "from": "flight.bus_voltage",
+     "to": "power.bus_voltage",
+     "enabled": true,
+     "note": "Pack voltage under load"
+    },
+    {
+     "id": "esc-duty",
+     "from": "flight.design_duty",
+     "to": "power.duty",
+     "enabled": true,
+     "note": "Back-EMF and IR drop against the bus"
+    },
+    {
+     "id": "esc-peak",
+     "from": "flight.peak_voltage",
+     "to": "power.peak_voltage",
+     "enabled": true
+    },
+    {
+     "id": "esc-tj",
+     "from": "mech.q1_tj",
+     "to": "power.junction",
+     "enabled": true,
+     "note": "RDS(on) at the junction temperature the sink gives"
+    },
+    {
+     "id": "fet-rms",
+     "from": "power.fet_rms",
+     "to": "mech.current",
+     "enabled": true,
+     "note": "RMS current in the hottest of the six MOSFETs"
+    },
+    {
+     "id": "fet-sw",
+     "from": "power.fet_switching",
+     "to": "mech.switching",
+     "enabled": true,
+     "note": "That MOSFET's switching loss"
+    },
+    {
+     "id": "fet-rds",
+     "from": "power.rds_on",
+     "to": "mech.rdsOn",
+     "enabled": true,
+     "note": "From the datasheet"
+    },
+    {
+     "id": "fet-other",
+     "from": "power.other_heat",
+     "to": "mech.heat",
+     "enabled": true,
+     "note": "The other FETs share the sink (conservative: taken through Q1's junction)"
+    },
+    {
+     "id": "copper-heat",
+     "from": "pcb.copper_loss",
+     "to": "mech.heat",
+     "enabled": true,
+     "note": "Board copper loss conducted into the sink (conservative)"
+    },
+    {
+     "id": "cap-mass",
+     "from": "power.capacitor_mass",
+     "to": "flight.esc_mass",
+     "enabled": true,
+     "note": "Each ESC carries its bus capacitors"
+    },
+    {
+     "id": "load-phase",
+     "from": "flight.phase_current",
+     "to": "pcb.load_current",
+     "enabled": true,
+     "note": "Motor current in the load nets"
+    },
+    {
+     "id": "arm-od",
+     "from": "parts.arms_od",
+     "to": "structures.od",
+     "enabled": true
+    },
+    {
+     "id": "arm-wall",
+     "from": "parts.arms_wall",
+     "to": "structures.wall",
+     "enabled": true
+    },
+    {
+     "id": "arm-thrust",
+     "from": "flight.max_thrust",
+     "to": "structures.thrust",
+     "enabled": true,
+     "note": "Full-throttle thrust at the tip"
+    },
+    {
+     "id": "arm-torque",
+     "from": "flight.max_torque",
+     "to": "structures.torque",
+     "enabled": true
+    },
+    {
+     "id": "arm-tip",
+     "from": "flight.tip_mass",
+     "to": "structures.tip_mass",
+     "enabled": true,
+     "note": "Motor and propeller at the tip"
+    },
+    {
+     "id": "arm-low",
+     "from": "flight.hover_rpm",
+     "to": "structures.rpm_low",
+     "enabled": true
+    },
+    {
+     "id": "arm-high",
+     "from": "flight.max_rpm",
+     "to": "structures.rpm_high",
+     "enabled": true
+    },
+    {
+     "id": "ctl-mass",
+     "from": "flight.total_mass",
+     "to": "controls.mass",
+     "enabled": true
+    },
+    {
+     "id": "ctl-ixx",
+     "from": "flight.ixx",
+     "to": "controls.ixx",
+     "enabled": true
+    },
+    {
+     "id": "ctl-iyy",
+     "from": "flight.iyy",
+     "to": "controls.iyy",
+     "enabled": true
+    },
+    {
+     "id": "ctl-izz",
+     "from": "flight.izz",
+     "to": "controls.izz",
+     "enabled": true
+    },
+    {
+     "id": "ctl-arm",
+     "from": "flight.arm_length",
+     "to": "controls.arm",
+     "enabled": true
+    },
+    {
+     "id": "ctl-rotors",
+     "from": "flight.rotor_count",
+     "to": "controls.rotors",
+     "enabled": true
+    },
+    {
+     "id": "ctl-hover-throttle",
+     "from": "flight.hover_throttle",
+     "to": "controls.hover_throttle",
+     "enabled": true
+    },
+    {
+     "id": "ctl-max-thrust",
+     "from": "flight.max_thrust",
+     "to": "controls.max_thrust",
+     "enabled": true
+    },
+    {
+     "id": "ctl-motor-tau",
+     "from": "flight.motor_tau",
+     "to": "controls.motor_tau",
+     "enabled": true
+    },
+    {
+     "id": "ctl-torque-ratio",
+     "from": "flight.torque_ratio",
+     "to": "controls.torque_ratio",
+     "enabled": true
+    }
+   ],
+   "confirmed": {}
+  },
+  "project": {
+   "name": "Inspection quadcopter",
+   "summary": "An 8 kg-class inspection quadcopter built from real parts: T-MOTOR MN5008 KV170 motors and P18×6.1 propellers on their published bench table, a Tattu 16 Ah 12S pack, a routed ESC with Infineon MOSFETs, TI drivers and an STM32F051 on AM32's pin map, carbon arms checked against blade-pass, and gains flown on real PX4 firmware in simulation. Mass sets thrust, thrust sets current, current heats the MOSFETs, and the sink is mass again. Nothing here has been built: Testing shows what is predicted, what real software has checked, and what has not been run.",
+   "domains": [
+    "flight",
+    "mech",
+    "parts",
+    "structures",
+    "power",
+    "pcb",
+    "silicon",
+    "optics",
+    "fluids",
+    "architecture",
+    "controls",
+    "testing"
+   ],
+   "headline": [
+    {
+     "port": "flight.total_mass",
+     "label": "Take-off mass"
+    },
+    {
+     "port": "flight.flight_time",
+     "label": "Hover endurance"
+    },
+    {
+     "port": "flight.hover_throttle",
+     "label": "Hover throttle"
+    },
+    {
+     "port": "flight.tw_end",
+     "label": "Thrust to weight, end of charge"
+    },
+    {
+     "port": "mech.q1_tj",
+     "label": "ESC MOSFET junction"
+    },
+    {
+     "port": "structures.frequency",
+     "label": "Arm first mode"
+    },
+    {
+     "port": "controls.phase_margin",
+     "label": "Roll rate phase margin, degrees"
+    },
+    {
+     "port": "testing.not_run",
+     "label": "Tests not yet run"
+    }
+   ],
+   "requirements": [],
+   "studies": [
+    {
+     "id": "gimbal",
+     "label": "Gimbal mass",
+     "domain": "flight",
+     "path": "masses.gimbal.mass"
+    },
+    {
+     "id": "battery",
+     "label": "Battery capacity",
+     "domain": "flight",
+     "path": "battery.capacity"
+    },
+    {
+     "id": "fin-height",
+     "label": "Heat-sink fin height",
+     "domain": "mech",
+     "path": "params.finHeight",
+     "max": 35
+    },
+    {
+     "id": "sink-length",
+     "label": "Heat-sink length",
+     "domain": "mech",
+     "path": "params.length",
+     "max": 90
+    },
+    {
+     "id": "outdoor",
+     "label": "Outdoor temperature",
+     "domain": "architecture",
+     "path": "site.outdoor"
+    },
+    {
+     "id": "clock",
+     "label": "ASIC study clock",
+     "domain": "silicon",
+     "path": "chip.frequency"
+    },
+    {
+     "id": "arm-span",
+     "label": "Arm free length",
+     "domain": "structures",
+     "path": "length",
+     "min": 180,
+     "max": 320
+    },
+    {
+     "id": "rate-p",
+     "label": "Roll rate P gain",
+     "domain": "controls",
+     "path": "params.MC_ROLLRATE_P",
+     "min": 0.02,
+     "max": 0.5
+    }
+   ],
+   "optimize": {
+    "title": "Close the weight spiral",
+    "summary": "Lightest take-off mass with the ESC MOSFET junction at or below 100 °C and every linked model inside its validated range. Each trial is a full coupled solve.",
+    "objective": {
+     "port": "flight.total_mass",
+     "sense": "min"
+    },
+    "constraints": [
+     {
+      "port": "mech.q1_tj",
+      "max": 100,
+      "label": "ESC MOSFET junction ≤ 100 °C"
+     }
+    ],
+    "variables": [
+     {
+      "domain": "mech",
+      "path": "params.fins",
+      "label": "Fin count",
+      "min": 5,
+      "max": 14,
+      "step": 1,
+      "integer": true
+     },
+     {
+      "domain": "mech",
+      "path": "params.finHeight",
+      "label": "Fin height",
+      "min": 10,
+      "max": 35,
+      "step": 0.5
+     },
+     {
+      "domain": "mech",
+      "path": "params.length",
+      "label": "Sink length",
+      "min": 30,
+      "max": 90,
+      "step": 0.5
+     }
+    ],
+    "trials": 40
+   },
+   "tour": [
+    {
+     "studio": "system",
+     "title": "Twelve domains, one solve",
+     "text": "This project is one file: its design documents, the links between them and this tour. Mass sets thrust through the measured bench table, thrust sets motor current, current heats the MOSFETs, and the sink is mass again. The solver iterates that loop until it settles and says so."
+    },
+    {
+     "studio": "flight",
+     "title": "Carry a heavier camera",
+     "text": "A heavier gimbal raises take-off mass. The bench table gives the throttle and current that thrust really takes, and the MOSFET temperature and endurance follow.",
+     "command": "flight.mass gimbal 1.6",
+     "watch": [
+      "flight.total_mass",
+      "flight.hover_throttle",
+      "flight.phase_current",
+      "mech.q1_tj",
+      "flight.flight_time"
+     ]
+    },
+    {
+     "studio": "mechanical",
+     "title": "Grow the ESC heat sink",
+     "text": "This sink is the lightest the model can vouch for at the real MOSFET currents. Taller fins run cooler, but every motor has to lift them. The Rust electrothermal graph re-solves the sink, and the fluids studio re-solves the duct around it.",
+     "command": "mech.set finHeight 20",
+     "watch": [
+      "mech.sink_mass",
+      "flight.total_mass",
+      "fluids.duct_velocity",
+      "mech.q1_tj"
+     ],
+     "checks": [
+      "mech/REQ-TJ"
+     ]
+    },
+    {
+     "studio": "structures",
+     "title": "Save weight on the arms",
+     "text": "A 30 mm tube is lighter and strong enough, but its first bending mode falls into the rotor's blade-pass band across the flying speed range. Strength alone would have passed it.",
+     "command": "parts.param arms od 30",
+     "watch": [
+      "parts.mass",
+      "structures.margin",
+      "structures.frequency"
+     ],
+     "checks": [
+      "structures/resonance"
+     ]
+    },
+    {
+     "studio": "power",
+     "title": "Slow the gates down",
+     "text": "A bigger gate resistor slows the MOSFET edges, which rings less but stays longer in the switching region. The loss comes from the datasheet's gate charges at the real phase current.",
+     "command": "power.set gate_resistor=20",
+     "watch": [
+      "power.fet_switching",
+      "power.esc_loss",
+      "mech.q1_tj"
+     ]
+    },
+    {
+     "studio": "pcb",
+     "title": "Use thinner copper on the ESC",
+     "text": "The board is a whole ESC: MOSFETs on Infineon's land pattern, UCC27211 drivers, an STM32F051 wired to AM32's pin map, an LM5017 buck, current and voltage sensing, and poured copper that KiCad's own checks pass. Going to 1 oz copper doubles the resistance the phase current runs through.",
+     "command": "pcb.board copper=1",
+     "watch": [
+      "pcb.copper_loss",
+      "pcb.board_mass"
+     ]
+    },
+    {
+     "studio": "controls",
+     "title": "Turn up the rate gain",
+     "text": "PX4's own defaults are meant for a much smaller aircraft, so this project carries gains tuned to its inertia and motor lag. Double the rate gain and the model loses phase margin, which is the shape a real over-tuned aircraft shows.",
+     "command": "controls.gain MC_ROLLRATE_P 0.3",
+     "watch": [
+      "controls.bandwidth",
+      "controls.phase_margin",
+      "controls.overshoot"
+     ]
+    },
+    {
+     "studio": "silicon",
+     "title": "Clock the ASIC study faster",
+     "text": "The flight controller here is a real Pixhawk. This open-source PWM controller and CPU are a study of moving motor control onto a small die, not a part on the aircraft. Its RTL is synthesized onto characterised cells and timed across nine corners; faster clocks cost power and slack.",
+     "command": "silicon.chip frequency=400",
+     "watch": [
+      "silicon.power",
+      "silicon.junction"
+     ],
+     "checks": [
+      "silicon/setup-cpu"
+     ]
+    },
+    {
+     "studio": "optics",
+     "title": "Fly higher for coverage",
+     "text": "Mission altitude is a Flight output linked into the camera. The Cooke triplet's focal length and the sensor pixel set the ground sample distance.",
+     "command": "flight.set altitude=150",
+     "watch": [
+      "optics.gsd"
+     ],
+     "checks": [
+      "optics/gsd"
+     ]
+    },
+    {
+     "studio": "fluids",
+     "title": "Scoop more rotor wake",
+     "text": "More of the downwash's dynamic pressure drives the ESC duct. Past Re 2300 the fin channels leave the laminar correlation, and the mechanical model refuses to extrapolate instead of guessing.",
+     "command": "flight.set capture=0.3",
+     "watch": [
+      "flight.wake_pressure",
+      "fluids.duct_velocity"
+     ],
+     "checks": [
+      "mech/REQ-TJ"
+     ]
+    },
+    {
+     "studio": "architecture",
+     "title": "Charge more packs in the hangar",
+     "text": "Each charger dissipates the pack energy's 8% loss over a one-hour charge. The charging room uses the BESTEST 600 envelope; its supply air sets its temperature.",
+     "command": "architecture.site units=14",
+     "watch": [
+      "architecture.equipment_load",
+      "architecture.room_temperature"
+     ],
+     "checks": [
+      "architecture/room"
+     ]
+    },
+    {
+     "studio": "testing",
+     "title": "What has actually been tested",
+     "text": "Simulations are predictions, and correlation checks a model against measurements it was not fitted to. Real PX4 firmware has flown these gains on a simulated aircraft and KiCad has checked the board, and those results go stale if the design changes. Physical tests stay not run until a person records a measurement. Nothing on this aircraft has been built."
+    },
+    {
+     "studio": "system",
+     "title": "Everything above was a command",
+     "text": "Each step ran through the same registry the command line, scripts, the CLI and the MCP server use. End the tour to restore your design exactly as it was."
+    }
+   ],
+   "scene": {
+    "placements": {
+     "mech": {
+      "at": [
+       190,
+       0,
+       45
+      ],
+      "rz": 90,
+      "phase": 45,
+      "count": "flight:rotors"
+     },
+     "pcb": {
+      "at": [
+       190,
+       0,
+       42
+      ],
+      "phase": 45,
+      "count": "flight:rotors"
+     },
+     "optics": {
+      "at": [
+       0,
+       70,
+       -8
+      ],
+      "rx": 180
+     },
+     "flight": {
+      "at": [
+       0,
+       0,
+       0
+      ]
+     },
+     "parts": {
+      "at": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    "site": {
+     "room": "bay",
+     "z": 1200
+    }
+   },
+   "credits": [
+    {
+     "title": "T-MOTOR MN5008 KV170 with P18×6.1: bench table, 128 g, 270 mΩ",
+     "url": "https://www.ligpower.com/product/mn5008-kv170-motor-antigravity-type.html",
+     "domain": "flight",
+     "note": "Copied from an authorised distributor's page, which marks it for reference only."
+    },
+    {
+     "title": "T-MOTOR P18×6.1 carbon propeller: 31.5 g per blade",
+     "url": "https://www.ligpower.com/product/18x6-1-polish-carbon-fiber-propeller.html",
+     "domain": "flight",
+     "note": "Other listings say 13 g, so the heavier figure is used."
+    },
+    {
+     "title": "Tattu Plus 1.0 Compact 16000 mAh 12S 15C: 4250 g",
+     "url": "https://genstattu.com/ta-plus1-0-15c-16000-12s1p-c-xt90.html",
+     "domain": "flight"
+    },
+    {
+     "title": "Holybro Pixhawk 6X on mini baseboard: 31.3 g + 26.5 g",
+     "url": "https://rcdrone.top/products/holybro-pixhawk-6x-autopilot-h753-flight-controller-module-standard-base-mini-base-pm02d-m9n-m10-gps-rc-multirotor-airplanes-1",
+     "domain": "flight",
+     "note": "Retailer listing."
+    },
+    {
+     "title": "Infineon BSC040N10NS5 data sheet, Rev. 2.4",
+     "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-bsc040n10ns5-datasheet-en.pdf",
+     "domain": "power",
+     "note": "Gate charges, RDS(on), land pattern."
+    },
+    {
+     "title": "Rubycon 63ZLJ470M12.5X20: 470 µF, 63 V, 33 mΩ, 2.4 A at 100 kHz",
+     "url": "https://www.digikey.com.mx/en/products/detail/rubycon/63ZLJ470M12-5X20/15667867",
+     "domain": "power",
+     "note": "Distributor listing, which does not give the ESR's frequency. The 4 g mass is an estimate."
+    },
+    {
+     "title": "TI UCC27211 half-bridge gate driver, SOIC-8 pinout",
+     "url": "https://www.ti.com/product/UCC27211",
+     "domain": "pcb"
+    },
+    {
+     "title": "ST STM32F051K8T6, pin numbers from KiCad's symbol library",
+     "url": "https://www.st.com/en/microcontrollers-microprocessors/stm32f051k8.html",
+     "domain": "pcb"
+    },
+    {
+     "title": "AM32 ESC firmware: F0 group B pin map",
+     "url": "https://github.com/am32-firmware/AM32",
+     "domain": "pcb",
+     "licence": "GPL-3.0",
+     "note": "Read as text. This board's target is written but has not been compiled."
+    },
+    {
+     "title": "TI LM5017 100 V buck: ripple, on-time and layout guidance",
+     "url": "https://www.ti.com/product/LM5017",
+     "domain": "pcb"
+    },
+    {
+     "title": "TI INA240 and LP2985",
+     "url": "https://www.ti.com/product/INA240",
+     "domain": "pcb"
+    },
+    {
+     "title": "Bourns SRR1260-221K: 220 µH, 1.38 A, 1.3 A saturation",
+     "url": "https://www.digikey.co.uk/en/products/detail/bourns-inc/SRR1260-221K/1969970",
+     "domain": "pcb",
+     "note": "Distributor listing."
+    },
+    {
+     "title": "KiCad 9.0.9: design-rule check, zone fill, footprints and symbols",
+     "url": "https://www.kicad.org",
+     "domain": "testing",
+     "licence": "GPL-3.0"
+    },
+    {
+     "title": "PX4 Autopilot v1.17.0 with SIH",
+     "url": "https://github.com/PX4/PX4-Autopilot/tree/v1.17.0",
+     "domain": "testing",
+     "licence": "BSD-3-Clause",
+     "note": "Built from source and flown with this aircraft's numbers."
+    },
+    {
+     "title": "PX4 autopilot parameter reference",
+     "url": "https://docs.px4.io/main/en/advanced_config/parameter_reference.html",
+     "domain": "controls",
+     "licence": "BSD-3-Clause",
+     "note": "Parameter names, defaults and the cascade structure. PX4 itself is not running here."
+    },
+    {
+     "title": "Roll-wrapped carbon tube: 90 GPa, 750 MPa",
+     "url": "https://www.easycomposites.co.uk/63mm-roll-wrapped-carbon-fibre-tube",
+     "domain": "structures",
+     "note": "Supplier figures for one layup; 600 MPa is used as the allowable."
+    },
+    {
+     "title": "Tiny Tapeout dual-channel PWM motor controller (tt_um_hadjal001_motor_controller)",
+     "url": "https://github.com/HADJAL001/tt-motor-controller",
+     "domain": "silicon",
+     "licence": "Apache-2.0",
+     "note": "At 0f078f5, adapted to the native Verilog subset; every change is listed in the file header."
+    },
+    {
+     "title": "mini8 CPU",
+     "url": "https://github.com/anthony-firn/emergence/tree/main/fluid/projects/mini-cpu",
+     "domain": "silicon",
+     "licence": "Apache-2.0"
+    },
+    {
+     "title": "Cooke triplet, Optiland gallery (after Kingslake)",
+     "url": "https://optiland.readthedocs.io/en/latest/gallery/basic_lenses/Cooke_Triplet.html",
+     "domain": "optics",
+     "licence": "MIT",
+     "note": "The stop is a plane just past surface 4; clear diameters chosen here."
+    },
+    {
+     "title": "ANSI/ASHRAE Standard 140 BESTEST case 600 (charging room geometry and envelope)",
+     "url": "https://simulationresearch.lbl.gov/modelica/releases/v9.0.0/help/Buildings_ThermalZones_Detailed_Validation_BESTEST_Cases6xx.html",
+     "domain": "architecture",
+     "note": "Solved as a ventilated steady-state room, not the standard's annual test."
+    }
+   ]
+  },
+  "equations": {
+   "inputs": [],
+   "outputs": []
+  },
+  "power": {
+   "name": "ESC power stage",
+   "pwm": 24000,
+   "deadtime": 500,
+   "gateDrive": 12,
+   "gateResistor": 3,
+   "driverPeak": 3.7,
+   "ringing": 1.5,
+   "efficiencyLimit": 95,
+   "phase": 15,
+   "bus": 44,
+   "duty": 60,
+   "junction": 60,
+   "peakBus": 50.4,
+   "mosfet": {
+    "part": "Infineon BSC040N10NS5",
+    "vds": 100,
+    "rds25": 3.4,
+    "rdsTc": 0.006,
+    "qg": 58,
+    "qsw": 19,
+    "qoss": 75,
+    "qrr": 90,
+    "vplateau": 4.6,
+    "rg": 1.3,
+    "vsd": 0.86,
+    "rthJc": 0.5,
+    "tjMax": 150,
+    "source": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-bsc040n10ns5-datasheet-en.pdf"
+   },
+   "capacitor": {
+    "part": "Rubycon 63ZLJ470M12.5X20",
+    "count": 3,
+    "capacitance": 470,
+    "esr": 33,
+    "rating": 2.4,
+    "voltage": 63,
+    "grams": 4,
+    "limit": 2,
+    "source": "https://www.digikey.com.mx/en/products/detail/rubycon/63ZLJ470M12-5X20/15667867"
+   }
+  },
+  "structures": {
+   "name": "Motor arm",
+   "od": 35,
+   "wall": 2,
+   "length": 240,
+   "modulus": 90,
+   "density": 1.55,
+   "strength": 600,
+   "safetyFactor": 1.5,
+   "deflectionLimit": 3,
+   "separation": 15,
+   "blades": 2,
+   "tipMass": 0.2,
+   "loadThrust": 40,
+   "loadTorque": 1,
+   "source": "https://www.easycomposites.co.uk/63mm-roll-wrapped-carbon-fibre-tube"
+  },
+  "controls": {
+   "loopRate": 400,
+   "gyroNoise": 0.0028,
+   "gust": 8,
+   "wind": 3,
+   "stepAngle": 15,
+   "plant": {
+    "mass": 2,
+    "ixx": 0.03,
+    "iyy": 0.03,
+    "izz": 0.06,
+    "arm": 250,
+    "rotors": 4,
+    "hoverThrottle": 55,
+    "maxThrust": 10,
+    "tau": 0.04,
+    "kappa": 0.016,
+    "dragArea": 0.15
+   },
+   "params": {
+    "MC_ROLL_P": 4,
+    "MC_PITCH_P": 4,
+    "MC_YAW_P": 2.8,
+    "MC_ROLLRATE_P": 0.0835,
+    "MC_ROLLRATE_I": 0.5,
+    "MC_ROLLRATE_D": 0.00501,
+    "MC_ROLLRATE_K": 1,
+    "MC_PITCHRATE_P": 0.0835,
+    "MC_PITCHRATE_I": 0.5,
+    "MC_PITCHRATE_D": 0.00501,
+    "MC_PITCHRATE_K": 1,
+    "MC_YAWRATE_P": 0.2,
+    "MC_YAWRATE_I": 0.1,
+    "MC_YAWRATE_D": 0,
+    "MC_YAWRATE_K": 1,
+    "MC_ROLLRATE_MAX": 220,
+    "MC_PITCHRATE_MAX": 220,
+    "MC_YAWRATE_MAX": 200,
+    "MPC_XY_P": 0.95,
+    "MPC_XY_VEL_P_ACC": 1.8,
+    "MPC_XY_VEL_I_ACC": 0.4,
+    "MPC_XY_VEL_D_ACC": 0.2,
+    "MPC_Z_P": 1,
+    "MPC_Z_VEL_P_ACC": 4,
+    "MPC_Z_VEL_I_ACC": 2,
+    "MPC_Z_VEL_D_ACC": 0,
+    "MPC_TILTMAX_AIR": 45,
+    "IMU_GYRO_CUTOFF": 40,
+    "IMU_DGYRO_CUTOFF": 20
+   },
+   "limits": {
+    "phaseMargin": 45,
+    "gainMargin": 6,
+    "overshoot": 25,
+    "settle": 1.5,
+    "drift": 3
+   }
+  },
+  "testing": {
+   "datasets": [
+    {
+     "id": "kv340-p18",
+     "title": "MN5008 KV340 with P18×6.1, measured",
+     "source": "https://www.ligpower.com/product/mn5008-kv340-motor-antigravity-type.html",
+     "rows": [
+      {
+       "rpm": 2958,
+       "grams": 996,
+       "torque": 0.21
+      },
+      {
+       "rpm": 3314,
+       "grams": 1238,
+       "torque": 0.27
+      },
+      {
+       "rpm": 3677,
+       "grams": 1541,
+       "torque": 0.32
+      },
+      {
+       "rpm": 4013,
+       "grams": 1822,
+       "torque": 0.38
+      },
+      {
+       "rpm": 4303,
+       "grams": 2120,
+       "torque": 0.45
+      },
+      {
+       "rpm": 4579,
+       "grams": 2394,
+       "torque": 0.5
+      },
+      {
+       "rpm": 4846,
+       "grams": 2675,
+       "torque": 0.56
+      },
+      {
+       "rpm": 5111,
+       "grams": 2966,
+       "torque": 0.62
+      },
+      {
+       "rpm": 5370,
+       "grams": 3262,
+       "torque": 0.7
+      },
+      {
+       "rpm": 5842,
+       "grams": 3909,
+       "torque": 0.83
+      },
+      {
+       "rpm": 6049,
+       "grams": 4215,
+       "torque": 0.89
+      }
+     ]
+    }
+   ],
+   "traces": [
+    {
+     "id": "px4-roll",
+     "title": "15° roll step on PX4 against the model",
+     "unit": "°",
+     "note": "One flight, with PX4's simulated gyro noise in it.",
+     "source": "https://github.com/PX4/PX4-Autopilot/tree/v1.17.0",
+     "rows": [
+      [
+       0,
+       -0.21,
+       0
+      ],
+      [
+       0.015,
+       -0.2,
+       0.06
+      ],
+      [
+       0.03,
+       -0.18,
+       0.36
+      ],
+      [
+       0.045,
+       -0.05,
+       0.97
+      ],
+      [
+       0.06,
+       0.17,
+       0.97
+      ],
+      [
+       0.075,
+       0.72,
+       1.79
+      ],
+      [
+       0.09,
+       1.45,
+       2.74
+      ],
+      [
+       0.105,
+       2.09,
+       3.78
+      ],
+      [
+       0.12,
+       2.87,
+       4.88
+      ],
+      [
+       0.135,
+       3.66,
+       4.88
+      ],
+      [
+       0.15,
+       4.45,
+       6.01
+      ],
+      [
+       0.165,
+       5.31,
+       7.13
+      ],
+      [
+       0.18,
+       6.22,
+       7.13
+      ],
+      [
+       0.195,
+       7.15,
+       8.21
+      ],
+      [
+       0.21,
+       7.92,
+       9.23
+      ],
+      [
+       0.225,
+       8.71,
+       10.16
+      ],
+      [
+       0.24,
+       9.47,
+       10.16
+      ],
+      [
+       0.255,
+       10.15,
+       11.01
+      ],
+      [
+       0.27,
+       10.82,
+       11.75
+      ],
+      [
+       0.285,
+       11.37,
+       12.38
+      ],
+      [
+       0.3,
+       11.96,
+       12.38
+      ],
+      [
+       0.315,
+       12.56,
+       12.91
+      ],
+      [
+       0.33,
+       12.96,
+       13.33
+      ],
+      [
+       0.345,
+       13.19,
+       13.66
+      ],
+      [
+       0.36,
+       13.44,
+       13.66
+      ],
+      [
+       0.375,
+       13.69,
+       13.89
+      ],
+      [
+       0.39,
+       13.79,
+       14.05
+      ],
+      [
+       0.405,
+       14,
+       14.14
+      ],
+      [
+       0.42,
+       14.19,
+       14.14
+      ],
+      [
+       0.435,
+       14.25,
+       14.18
+      ],
+      [
+       0.45,
+       14.18,
+       14.17
+      ],
+      [
+       0.465,
+       14.15,
+       14.13
+      ],
+      [
+       0.48,
+       14.23,
+       14.13
+      ],
+      [
+       0.495,
+       14.14,
+       14.06
+      ],
+      [
+       0.51,
+       13.99,
+       13.98
+      ],
+      [
+       0.525,
+       13.86,
+       13.9
+      ],
+      [
+       0.54,
+       13.81,
+       13.9
+      ],
+      [
+       0.555,
+       13.66,
+       13.81
+      ],
+      [
+       0.57,
+       13.58,
+       13.74
+      ],
+      [
+       0.585,
+       13.59,
+       13.67
+      ],
+      [
+       0.6,
+       13.53,
+       13.62
+      ],
+      [
+       0.615,
+       13.51,
+       13.62
+      ],
+      [
+       0.63,
+       13.4,
+       13.59
+      ],
+      [
+       0.645,
+       13.28,
+       13.57
+      ],
+      [
+       0.66,
+       13.16,
+       13.58
+      ],
+      [
+       0.675,
+       13.17,
+       13.58
+      ],
+      [
+       0.69,
+       13.26,
+       13.6
+      ],
+      [
+       0.705,
+       13.26,
+       13.63
+      ],
+      [
+       0.72,
+       13.21,
+       13.63
+      ],
+      [
+       0.735,
+       13.3,
+       13.68
+      ],
+      [
+       0.75,
+       13.35,
+       13.74
+      ],
+      [
+       0.765,
+       13.47,
+       13.82
+      ],
+      [
+       0.78,
+       13.55,
+       13.82
+      ],
+      [
+       0.795,
+       13.59,
+       13.89
+      ],
+      [
+       0.81,
+       13.69,
+       13.98
+      ],
+      [
+       0.825,
+       13.79,
+       14.06
+      ],
+      [
+       0.84,
+       13.84,
+       14.06
+      ],
+      [
+       0.855,
+       13.87,
+       14.15
+      ],
+      [
+       0.87,
+       13.94,
+       14.23
+      ],
+      [
+       0.885,
+       14.02,
+       14.31
+      ],
+      [
+       0.9,
+       14.22,
+       14.31
+      ],
+      [
+       0.915,
+       14.22,
+       14.39
+      ],
+      [
+       0.93,
+       14.29,
+       14.46
+      ],
+      [
+       0.945,
+       14.33,
+       14.53
+      ],
+      [
+       0.96,
+       14.44,
+       14.53
+      ],
+      [
+       0.975,
+       14.44,
+       14.58
+      ],
+      [
+       0.99,
+       14.42,
+       14.63
+      ],
+      [
+       1.005,
+       14.42,
+       14.68
+      ],
+      [
+       1.02,
+       14.48,
+       14.68
+      ],
+      [
+       1.035,
+       14.59,
+       14.71
+      ],
+      [
+       1.05,
+       14.58,
+       14.74
+      ],
+      [
+       1.065,
+       14.5,
+       14.77
+      ],
+      [
+       1.08,
+       14.54,
+       14.77
+      ],
+      [
+       1.095,
+       14.57,
+       14.79
+      ],
+      [
+       1.11,
+       14.64,
+       14.8
+      ],
+      [
+       1.125,
+       14.72,
+       14.81
+      ],
+      [
+       1.14,
+       14.75,
+       14.81
+      ],
+      [
+       1.155,
+       14.73,
+       14.82
+      ],
+      [
+       1.17,
+       14.83,
+       14.83
+      ],
+      [
+       1.185,
+       14.8,
+       14.83
+      ],
+      [
+       1.2,
+       14.72,
+       14.83
+      ],
+      [
+       1.215,
+       14.73,
+       14.83
+      ],
+      [
+       1.23,
+       14.67,
+       14.83
+      ],
+      [
+       1.245,
+       14.6,
+       14.84
+      ],
+      [
+       1.26,
+       14.62,
+       14.84
+      ],
+      [
+       1.275,
+       14.63,
+       14.84
+      ],
+      [
+       1.29,
+       14.57,
+       14.84
+      ],
+      [
+       1.305,
+       14.62,
+       14.84
+      ],
+      [
+       1.32,
+       14.74,
+       14.84
+      ],
+      [
+       1.335,
+       14.67,
+       14.84
+      ],
+      [
+       1.35,
+       14.5,
+       14.85
+      ],
+      [
+       1.365,
+       14.53,
+       14.85
+      ],
+      [
+       1.38,
+       14.71,
+       14.85
+      ],
+      [
+       1.395,
+       14.83,
+       14.86
+      ],
+      [
+       1.41,
+       14.77,
+       14.86
+      ],
+      [
+       1.425,
+       14.74,
+       14.87
+      ],
+      [
+       1.44,
+       14.77,
+       14.87
+      ],
+      [
+       1.455,
+       14.68,
+       14.87
+      ],
+      [
+       1.47,
+       14.67,
+       14.88
+      ],
+      [
+       1.485,
+       14.75,
+       14.89
+      ],
+      [
+       1.5,
+       14.87,
+       14.89
+      ],
+      [
+       1.515,
+       14.89,
+       14.9
+      ],
+      [
+       1.53,
+       14.91,
+       14.9
+      ],
+      [
+       1.545,
+       14.87,
+       14.91
+      ],
+      [
+       1.56,
+       14.84,
+       14.91
+      ],
+      [
+       1.575,
+       14.84,
+       14.92
+      ],
+      [
+       1.59,
+       14.84,
+       14.93
+      ],
+      [
+       1.605,
+       14.87,
+       14.93
+      ],
+      [
+       1.62,
+       14.84,
+       14.93
+      ],
+      [
+       1.635,
+       14.8,
+       14.94
+      ],
+      [
+       1.65,
+       14.8,
+       14.94
+      ],
+      [
+       1.665,
+       14.71,
+       14.95
+      ],
+      [
+       1.68,
+       14.76,
+       14.95
+      ],
+      [
+       1.695,
+       14.77,
+       14.95
+      ],
+      [
+       1.71,
+       14.81,
+       14.96
+      ],
+      [
+       1.725,
+       14.83,
+       14.96
+      ],
+      [
+       1.74,
+       14.87,
+       14.96
+      ],
+      [
+       1.755,
+       14.86,
+       14.96
+      ],
+      [
+       1.77,
+       14.93,
+       14.97
+      ],
+      [
+       1.785,
+       14.82,
+       14.97
+      ],
+      [
+       1.8,
+       14.65,
+       14.97
+      ],
+      [
+       1.815,
+       14.72,
+       14.97
+      ],
+      [
+       1.83,
+       14.89,
+       14.97
+      ],
+      [
+       1.845,
+       14.9,
+       14.97
+      ],
+      [
+       1.86,
+       14.9,
+       14.98
+      ],
+      [
+       1.875,
+       14.85,
+       14.98
+      ],
+      [
+       1.89,
+       14.78,
+       14.98
+      ],
+      [
+       1.905,
+       14.85,
+       14.98
+      ],
+      [
+       1.92,
+       14.94,
+       14.98
+      ],
+      [
+       1.935,
+       15.01,
+       14.98
+      ],
+      [
+       1.95,
+       14.97,
+       14.98
+      ],
+      [
+       1.965,
+       14.97,
+       14.98
+      ],
+      [
+       1.98,
+       14.94,
+       14.98
+      ],
+      [
+       1.995,
+       14.96,
+       14.98
+      ]
+     ]
+    },
+    {
+     "id": "px4-rate",
+     "title": "30 °/s rate step on PX4 against the model",
+     "unit": "°/s",
+     "note": "24 steps averaged. PX4 starts about 20 ms late: setpoint latency outside the feedback loop.",
+     "source": "https://github.com/PX4/PX4-Autopilot/tree/v1.17.0",
+     "rows": [
+      [
+       0,
+       0.01,
+       0.03
+      ],
+      [
+       0.01,
+       0.24,
+       3.73
+      ],
+      [
+       0.02,
+       -0.56,
+       3.73
+      ],
+      [
+       0.03,
+       1.21,
+       11.24
+      ],
+      [
+       0.04,
+       5.71,
+       11.24
+      ],
+      [
+       0.05,
+       12.08,
+       18.27
+      ],
+      [
+       0.06,
+       15.27,
+       18.27
+      ],
+      [
+       0.07,
+       16.61,
+       23.05
+      ],
+      [
+       0.08,
+       19.35,
+       23.05
+      ],
+      [
+       0.09,
+       21.32,
+       26.45
+      ],
+      [
+       0.1,
+       23.96,
+       29.46
+      ],
+      [
+       0.11,
+       27.39,
+       29.46
+      ],
+      [
+       0.12,
+       27.69,
+       32.13
+      ],
+      [
+       0.13,
+       29.05,
+       32.13
+      ],
+      [
+       0.14,
+       30.48,
+       34.23
+      ],
+      [
+       0.15,
+       32.06,
+       34.23
+      ],
+      [
+       0.16,
+       31.05,
+       34.23
+      ],
+      [
+       0.17,
+       32.26,
+       35.69
+      ],
+      [
+       0.18,
+       34.78,
+       35.69
+      ],
+      [
+       0.19,
+       33.69,
+       36.67
+      ],
+      [
+       0.2,
+       36.62,
+       36.67
+      ],
+      [
+       0.21,
+       36.87,
+       37.29
+      ],
+      [
+       0.22,
+       36.92,
+       37.29
+      ],
+      [
+       0.23,
+       37.8,
+       37.61
+      ],
+      [
+       0.24,
+       36.58,
+       37.61
+      ],
+      [
+       0.25,
+       37.59,
+       37.67
+      ],
+      [
+       0.26,
+       37.01,
+       37.67
+      ],
+      [
+       0.27,
+       37.53,
+       37.51
+      ],
+      [
+       0.28,
+       37.5,
+       37.51
+      ],
+      [
+       0.29,
+       35.33,
+       37.19
+      ],
+      [
+       0.3,
+       36.69,
+       37.19
+      ],
+      [
+       0.31,
+       36.34,
+       36.74
+      ],
+      [
+       0.32,
+       36.54,
+       36.74
+      ],
+      [
+       0.33,
+       37.19,
+       36.22
+      ],
+      [
+       0.34,
+       35.8,
+       35.63
+      ],
+      [
+       0.35,
+       36.05,
+       35.63
+      ],
+      [
+       0.36,
+       36.29,
+       35.63
+      ],
+      [
+       0.37,
+       37.13,
+       35.02
+      ]
+     ]
+    }
+   ],
+   "plan": [
+    {
+     "id": "endurance",
+     "title": "Hover endurance",
+     "kind": "simulation",
+     "port": "flight.flight_time",
+     "min": 20
+    },
+    {
+     "id": "hover",
+     "title": "Hover throttle",
+     "kind": "simulation",
+     "port": "flight.hover_throttle",
+     "max": 70
+    },
+    {
+     "id": "tw-end",
+     "title": "Thrust to weight at end of charge",
+     "kind": "simulation",
+     "port": "flight.tw_end",
+     "min": 1.5
+    },
+    {
+     "id": "efficiency",
+     "title": "ESC efficiency at the design point",
+     "kind": "simulation",
+     "port": "power.efficiency",
+     "min": 95
+    },
+    {
+     "id": "junction",
+     "title": "Hottest MOSFET junction",
+     "kind": "simulation",
+     "port": "mech.q1_tj",
+     "max": 100
+    },
+    {
+     "id": "bus-ripple",
+     "title": "Bus ripple at the design point",
+     "kind": "simulation",
+     "port": "power.bus_ripple",
+     "max": 1
+    },
+    {
+     "id": "routed",
+     "title": "ESC board fully routed",
+     "kind": "simulation",
+     "port": "pcb.unrouted",
+     "max": 0
+    },
+    {
+     "id": "arm-margin",
+     "title": "Arm strength margin",
+     "kind": "simulation",
+     "port": "structures.margin",
+     "min": 0
+    },
+    {
+     "id": "arm-mode",
+     "title": "Arm mode above blade-pass plus 15%",
+     "kind": "simulation",
+     "port": "structures.frequency",
+     "min": 229
+    },
+    {
+     "id": "rate-pm",
+     "title": "Roll rate phase margin",
+     "kind": "simulation",
+     "port": "controls.phase_margin",
+     "min": 45
+    },
+    {
+     "id": "rate-gm",
+     "title": "Roll rate gain margin",
+     "kind": "simulation",
+     "port": "controls.gain_margin",
+     "min": 6
+    },
+    {
+     "id": "roll-os",
+     "title": "Roll step overshoot",
+     "kind": "simulation",
+     "port": "controls.overshoot",
+     "max": 25
+    },
+    {
+     "id": "gust",
+     "title": "Drift in the design gust",
+     "kind": "simulation",
+     "port": "controls.gust_drift",
+     "max": 3
+    },
+    {
+     "id": "thrust-model",
+     "title": "Thrust model against a motor it was not fitted to",
+     "kind": "correlation",
+     "method": "T = c·n² fitted to the KV170 bench table, then asked to predict the same propeller on the KV340 motor.",
+     "dataset": "kv340-p18",
+     "max": 5,
+     "unit": "%"
+    },
+    {
+     "id": "px4-params",
+     "title": "Parameters against PX4 v1.17.0's own table",
+     "kind": "software",
+     "method": "Every parameter name, default and range, against the parameters.json PX4 builds. The tuned gains are inside PX4's ranges.",
+     "covers": [
+      "controls"
+     ],
+     "max": 0,
+     "unit": "mismatches",
+     "result": {
+      "value": 0,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0",
+      "note": "All 29 parameters exist, every default matches, and the tuned gains are inside PX4's ranges.",
+      "digest": "1a4f1071"
+     }
+    },
+    {
+     "id": "px4-roll",
+     "title": "15° roll step flown on PX4, against the model",
+     "kind": "software",
+     "method": "Real PX4 v1.17.0 firmware flying this aircraft's mass, inertia, thrust slope and motor lag in its built-in SIH simulator, against this project's own simulation of the same plant.",
+     "covers": [
+      "controls",
+      "flight",
+      "parts"
+     ],
+     "max": 1,
+     "unit": "deg RMS",
+     "result": {
+      "value": 0.493,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0, SIH",
+      "note": "Rise 0.275 s on PX4 against 0.275 s in the model; settle 0.920 s against 0.880 s.",
+      "digest": "98928a7c"
+     }
+    },
+    {
+     "id": "px4-rate",
+     "title": "Rate step overshoot on PX4, against the model",
+     "kind": "software",
+     "method": "24 steps of 30 °/s averaged by sign, because PX4's simulator injects heavy gyro noise. The result is how far the model's overshoot is from PX4's.",
+     "covers": [
+      "controls",
+      "flight",
+      "parts"
+     ],
+     "max": 10,
+     "unit": "points",
+     "result": {
+      "value": 1.622,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0, SIH",
+      "note": "Overshoot 27.2% on PX4 against 25.6% in the model, 24 steps averaged.",
+      "digest": "98928a7c"
+     }
+    },
+    {
+     "id": "px4-crossover",
+     "title": "Rate-loop crossover on PX4, against the model",
+     "kind": "software",
+     "method": "Identified from a 0.7 to 16 Hz sweep by cross-spectra against the setpoint, which the gyro noise is not correlated with.",
+     "covers": [
+      "controls",
+      "flight",
+      "parts"
+     ],
+     "max": 10,
+     "unit": "%",
+     "result": {
+      "value": 4.503,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0, SIH",
+      "note": "5.90 Hz on PX4 against 5.65 Hz in the model at the same 250 Hz loop, coherence 0.90.",
+      "digest": "98928a7c"
+     }
+    },
+    {
+     "id": "px4-phase",
+     "title": "Rate-loop phase margin measured on PX4",
+     "kind": "software",
+     "method": "From the same sweep. Coherence at crossover is above 0.9, so this figure can be trusted.",
+     "covers": [
+      "controls",
+      "flight",
+      "parts"
+     ],
+     "min": 45,
+     "unit": "deg",
+     "result": {
+      "value": 64.878,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0, SIH",
+      "note": "The model says 57.1° at the same 250 Hz loop, so it errs on the safe side.",
+      "digest": "98928a7c"
+     }
+    },
+    {
+     "id": "px4-gain",
+     "title": "Rate-loop gain margin measured on PX4",
+     "kind": "software",
+     "method": "From the same sweep, high in the band where coherence falls away, so this one is weak evidence.",
+     "covers": [
+      "controls",
+      "flight",
+      "parts"
+     ],
+     "min": 6,
+     "unit": "dB",
+     "result": {
+      "value": 9.342,
+      "date": "2026-10-31",
+      "by": "PX4 v1.17.0, SIH",
+      "note": "The model says 7.7 dB. Coherence is 0.24 at 15.0 Hz, so this is weak evidence.",
+      "digest": "98928a7c"
+     }
+    },
+    {
+     "id": "kicad-drc",
+     "title": "KiCad 9.0.9 design-rule errors",
+     "kind": "software",
+     "method": "kicad-cli pcb drc on the exported board after filling zones with KiCad's own filler. The only warnings say the footprint library is not installed.",
+     "covers": [
+      "pcb"
+     ],
+     "max": 0,
+     "unit": "errors",
+     "result": {
+      "value": 0,
+      "date": "2026-10-31",
+      "by": "KiCad 9.0.9",
+      "note": "64 warnings, all lib_footprint_issues: the board's footprint library is not installed in KiCad.",
+      "digest": "6fc7134f"
+     }
+    },
+    {
+     "id": "kicad-open",
+     "title": "KiCad unconnected items",
+     "kind": "software",
+     "method": "From the same run. This check found the bus pour cut in two on an earlier layout, which this project's own checks had missed.",
+     "covers": [
+      "pcb"
+     ],
+     "max": 0,
+     "unit": "items",
+     "result": {
+      "value": 0,
+      "date": "2026-10-31",
+      "by": "KiCad 9.0.9",
+      "digest": "6fc7134f"
+     }
+    },
+    {
+     "id": "kicad-copper",
+     "title": "App Gerbers against KiCad's own copper",
+     "kind": "software",
+     "method": "Overlap of the app's Gerber copper with the copper KiCad computes, per layer, on a 50 µm grid. Pours are pulled back about 0.1 mm by KiCad.",
+     "covers": [
+      "pcb"
+     ],
+     "min": 98,
+     "unit": "% worst",
+     "result": {
+      "value": 99.49,
+      "date": "2026-10-31",
+      "by": "KiCad 9.0.9",
+      "note": "99.80% on top, 99.49% on the bottom, on a 50 µm grid.",
+      "digest": "6fc7134f"
+     }
+    },
+    {
+     "id": "am32-pins",
+     "title": "Board against AM32's pin map",
+     "kind": "software",
+     "method": "Every pin AM32 drives on the F0 group B target, read from its source as text, against the net on the STM32F051K8T6 with pin numbers from KiCad's symbol.",
+     "covers": [
+      "pcb"
+     ],
+     "max": 0,
+     "unit": "mismatches",
+     "result": {
+      "value": 0,
+      "date": "2026-10-31",
+      "by": "AM32 source, read as text",
+      "note": "20 assignments checked. 50.4 V reads 2.80 V at the ADC and 3.15 V at the comparators.",
+      "digest": "6fc7134f"
+     }
+    },
+    {
+     "id": "am32-build",
+     "title": "AM32 firmware compiled for this board",
+     "kind": "software",
+     "method": "A new target with an 18:1 bus divider, 50 mV/A and 500 ns of dead time, built with arm-none-eabi-gcc. Written but not yet compiled.",
+     "covers": [
+      "pcb",
+      "power"
+     ],
+     "max": 0,
+     "unit": "errors"
+    },
+    {
+     "id": "weigh",
+     "title": "Weigh the assembled aircraft",
+     "kind": "physical",
+     "method": "Ready to fly, with the pack, on a scale good to 10 g. Every estimated mass in Flight gets replaced by a weighed one.",
+     "max": 8,
+     "unit": "kg"
+    },
+    {
+     "id": "stand",
+     "title": "Thrust stand on the assembled arm",
+     "kind": "physical",
+     "method": "Motor, propeller and ESC on the real arm at hover throttle. Thrust as a percentage of the bench table, which was measured without the arm below it.",
+     "min": 95,
+     "max": 105,
+     "unit": "%"
+    },
+    {
+     "id": "double-pulse",
+     "title": "ESC double-pulse test",
+     "kind": "physical",
+     "method": "Peak switch-node voltage at 50 V bus and 15 A, measured with a high-bandwidth probe. The limit keeps 20% below the MOSFET's 100 V rating.",
+     "max": 80,
+     "unit": "V"
+    },
+    {
+     "id": "soak",
+     "title": "ESC thermal soak",
+     "kind": "physical",
+     "method": "Hottest MOSFET case temperature after 30 minutes at the design current in the enclosure, with a thermocouple or thermal camera.",
+     "max": 100,
+     "unit": "degC"
+    },
+    {
+     "id": "tap",
+     "title": "Arm tap test",
+     "kind": "physical",
+     "method": "Accelerometer on the motor mount and an impulse hammer, with the arm clamped in the real centre plates. The model assumes a rigid root, so the real mode is lower.",
+     "min": 229,
+     "unit": "Hz"
+    },
+    {
+     "id": "motor-lag",
+     "title": "Motor step response",
+     "kind": "physical",
+     "method": "Throttle step from hover to 80% on the stand. The rotor time constant from a tachometer or eRPM log replaces the estimate.",
+     "max": 80,
+     "unit": "ms"
+    },
+    {
+     "id": "tether",
+     "title": "Tethered hover vibration",
+     "kind": "physical",
+     "method": "Peak accelerometer vibration from the flight log, tethered, at hover. Rotor vibration is not in the simulation.",
+     "max": 30,
+     "unit": "m/s²"
+    },
+    {
+     "id": "flight-step",
+     "title": "Roll step in flight",
+     "kind": "physical",
+     "method": "A 15° stick step in the PX4 flight log, with the tuned gains loaded from the parameter file. Compare it with the simulated step.",
+     "max": 25,
+     "unit": "%"
+    },
+    {
+     "id": "endurance-flown",
+     "title": "Measured hover endurance",
+     "kind": "physical",
+     "method": "Hover in still air until 20% of the pack remains, integrating the power module's current.",
+     "min": 20,
+     "unit": "min"
+    }
+   ]
+  },
+  "mech": {
+   "params": {
+    "fins": 8,
+    "velocity": 2.5,
+    "current": 30,
+    "ambient": 45,
+    "heat": 0,
+    "opticalSize": 0.1,
+    "width": 40,
+    "length": 30,
+    "finHeight": 10,
+    "base": 3,
+    "finThickness": 1.2,
+    "traceWidth": 10,
+    "opticalPower": 0,
+    "absorption": 50,
+    "rdsOn": 4.5,
+    "switching": 3
+   },
+   "features": [],
+   "drawings": {}
   }
  }
 }

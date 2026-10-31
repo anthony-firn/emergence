@@ -7,25 +7,28 @@
 //   node cli.mjs run script.json --project my.emergence.json      (atomic; - for stdin)
 //   node cli.mjs solve --project my.emergence.json [--json]       (or --example drone)
 //   node cli.mjs export kicad|gerber|gds|project <out> --project my.emergence.json
+//   node cli.mjs script --project my.emergence.json [> build.json]    (the commands that build it from blank)
 // --project saves every edit back to the file; --example works on a copy in memory.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { openProject, summary, exportArtifact, examples } from "./headless.mjs";
+import { buildScript } from "../domains/rebuild.js";
 const argv = process.argv.slice(2), flag = name => { const i = argv.indexOf(name); if (i < 0) return undefined; const v = argv[i + 1]; argv.splice(i, 2); return v; }, has = name => { const i = argv.indexOf(name); if (i < 0) return false; argv.splice(i, 1); return true; };
 const projectPath = flag("--project"), example = flag("--example"), asJSON = has("--json"), [verb, ...rest] = argv;
 const print = s => { console.log(`${s.project}: ${s.converged ? "settled" : "NOT settled"} in ${s.iterations} passes (${s.ms} ms) · ${s.domains.join(", ") || "no domains"}`); for (const c of s.checks) console.log(`  ${c.status.padEnd(11)} ${c.domain.padEnd(12)} ${c.text}${c.reason ? " · " + c.reason.slice(0, 110) : ""}`); for (const i of s.issues) console.log(`  note: ${i}`); };
 try {
-  if (!verb || verb === "help") { console.log("Usage: examples | new <file> [--example id] | commands [domain] | do \"<command>\" | run <script.json|-> | solve [--json] | export <kind> <out>\n  --project <file> opens and saves a project file; --example <id> opens an example in memory."); process.exit(0); }
+  if (!verb || verb === "help") { console.log("Usage: examples | new <file> [--example id] | commands [domain] | do \"<command>\" | run <script.json|-> | solve [--json] | script | export <kind> <out>\n  --project <file> opens and saves a project file; --example <id> opens an example in memory."); process.exit(0); }
   if (verb === "examples") { for (const e of [{ id: "blank", name: "Blank project", summary: "No domains; add them with project.add_domain." }, ...await examples()]) console.log(`${e.id.padEnd(14)} ${e.name} · ${e.summary}`); process.exit(0); }
   if (verb === "new") {
     const out = rest[0]; if (!out) throw new Error("new <file> [--example id]"); if (existsSync(out)) throw new Error(`${out} exists; choose a new file name.`);
     const { save, project } = await openProject(undefined, { example: example || "blank" }); await save(out);
     console.log(`Wrote ${out}: ${project.store.docs.project.name} (${project.active().join(", ") || "no domains"}).`); process.exit(0);
   }
-  if (["do", "run", "solve", "export"].includes(verb) && !projectPath && !example) throw new Error(`${verb} needs --project <file> or --example <id>. List examples with: cli.mjs examples`);
+  if (["do", "run", "solve", "export", "script"].includes(verb) && !projectPath && !example) throw new Error(`${verb} needs --project <file> or --example <id>. List examples with: cli.mjs examples`);
   if (projectPath && !existsSync(projectPath)) throw new Error(`${projectPath} does not exist. Create it with: cli.mjs new ${projectPath} --example <id>`);
   const ctx = await openProject(projectPath, { example }), { project, save } = ctx;
+  if (verb === "script") { console.log(JSON.stringify(buildScript(project.file().documents), null, 1)); process.exit(0); }
   if (verb === "commands") { for (const c of project.bus.list(rest[0])) console.log(`${project.bus.usage(c.op).padEnd(64)} ${c.summary || c.title}`); process.exit(0); }
   if (verb === "do") { const { op, args } = project.bus.parse(rest.join(" ")); const r = await project.bus.run(op, args, { source: "cli" }); console.log(`✓ ${op}${r?.message ? " · " + r.message : ""}`); await save(); }
   if (verb === "run") { const text = rest[0] === "-" || !rest[0] ? await new Promise(res => { let d = ""; process.stdin.on("data", c => d += c).on("end", () => res(d)); }) : await readFile(rest[0], "utf8");

@@ -200,9 +200,9 @@ export if it must survive all peers closing their browsers.
 ## Funding
 
 Support reuses `/play/fairground/#/about` and its existing donation flow. The
-public development address is unchanged:
-`UUUBTFPPZGTNNVO5YFYCHDCALODLLS3FWZAZOFWJ7R4KHUGTPAR6WEVSDE`.
-No wallet keys, new recipient or payment implementation were added.
+public explorer link follows Fairground’s current development address:
+`WMQHGXHHWQVUN2VIZQJ5OO2GSH5Q33CVABJUCLJHP4UHLTTMS2HE3W6FEM`.
+The recipient is defined by `src/defaults.ts` in Fairground. CAD does not hold wallet keys or implement a separate checkout.
 
 ## Validation
 

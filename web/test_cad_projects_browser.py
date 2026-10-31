@@ -78,9 +78,9 @@ def check(url, screenshots=None):
         page.locator("#projects-open").click(); page.locator("#project-new").click()
         page.wait_for_selector(".empty-project", timeout=60000)
         assert tabs() == ["system", "render", "history"]
-        page.locator("#system-add-optics").click(); page.wait_for_function("() => !document.querySelector('#studio-tab-optics').hidden")
-        page.locator("#studio-add").click(); page.locator("#domain-choices .project-card", has_text="Fluids").locator("button").click()
-        page.wait_for_function("() => !document.querySelector('#studio-tab-fluids').hidden"); page.locator('[data-close="domain-dialog"]').click()
+        page.locator("#system-starter-optics").click(); page.wait_for_function("() => !document.querySelector('#studio-tab-optics').hidden")
+        page.locator("#studio-add").click(); page.locator('#domain-choices [data-domain="fluids"]').get_by_role("button", name="Add starter").click()
+        page.wait_for_function("() => !document.querySelector('#studio-tab-fluids').hidden")
         page.locator("#command-input").fill("system.link optics.power_on_target fluids.heat_load"); page.keyboard.press("Enter")
         page.locator("#command-input").fill("optics.set power=3"); page.keyboard.press("Enter")
         page.wait_for_function("() => window.emergence.solution?.applied['fluids.heat_load']?.value > 0", timeout=60000)

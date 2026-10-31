@@ -31,7 +31,7 @@ const finite = (n, lo, hi) => Number.isFinite(n) && n >= lo && n <= hi;
 export function validateArchitecture(d) {
   if (!d || !d.site || typeof d.site.name !== "string" || d.site.name.length > 60 || !finite(d.site.outdoor, -40, 55) || !finite(d.site.solar, 0, 1200)
     || !d.glazing || !finite(d.glazing.U, .3, 7) || !finite(d.glazing.shgc, .05, .9) || !Number.isInteger(d.units) || d.units < 0 || d.units > 10000 || !finite(d.limit, 5, 80)
-    || !Array.isArray(d.rooms) || !d.rooms.length || d.rooms.length > 32 || new Set(d.rooms.map(r => r?.id)).size !== d.rooms.length) throw new Error("Invalid building settings.");
+    || !finite(d.equipmentPower ?? 0, 0, 1e6) || !Array.isArray(d.rooms) || d.rooms.length > 32 || new Set(d.rooms.map(r => r?.id)).size !== d.rooms.length) throw new Error("Invalid building settings.");
   const rooms = d.rooms.map(r => {
     if (!r || typeof r.id !== "string" || !/^[a-zA-Z][a-zA-Z0-9_-]{0,23}$/.test(r.id) || typeof r.name !== "string" || !r.name.trim() || r.name.length > 60
       || !finite(r.x, -500, 500) || !finite(r.y, -500, 500) || !finite(r.width, .5, 200) || !finite(r.depth, .5, 200) || !finite(r.height, 2, 20)
@@ -45,7 +45,7 @@ export function validateArchitecture(d) {
     return { id: r.id, name: r.name, x: r.x, y: r.y, width: r.width, depth: r.depth, height: r.height, people: r.people, lighting: r.lighting, mode: r.mode,
       supply: r.supply, supplyTemp: r.supplyTemp, setpoint: r.setpoint, equipment: r.equipment, roofU: r.roofU, walls };
   });
-  return { site: { name: d.site.name, outdoor: d.site.outdoor, solar: d.site.solar }, glazing: { U: d.glazing.U, shgc: d.glazing.shgc }, units: d.units, limit: d.limit, rooms };
+  return { site: { name: d.site.name, outdoor: d.site.outdoor, solar: d.site.solar }, glazing: { U: d.glazing.U, shgc: d.glazing.shgc }, units: d.units, limit: d.limit, equipmentPower: d.equipmentPower ?? 0, rooms };
 }
 export const AIR = { rho: 1.2, cp: 1006 }; // supply air at ~20 °C
 export function roomLoads(d, r, equipmentW = 0) {
@@ -69,7 +69,7 @@ export function roomLoads(d, r, equipmentW = 0) {
   return { floor, UA, solar, internal, temperature, cooling, ventilation, supplyLs: r.supply / 3.6, glass, wallArea, capacity };
 }
 export function architectureResults(d, overrides = {}) {
-  const perUnit = overrides.equipment_power ?? 0, equipmentW = perUnit * d.units;
+  const perUnit = overrides.equipment_power ?? d.equipmentPower ?? 0, equipmentW = perUnit * d.units;
   const rooms = d.rooms.map(r => ({ id: r.id, name: r.name, mode: r.mode, ...roomLoads(d, r, equipmentW) }));
   const equipmentRoom = rooms.find((r, i) => d.rooms[i].equipment) || rooms[0];
   return { rooms, equipmentRoom, equipmentW, floor: rooms.reduce((s, r) => s + r.floor, 0), UA: rooms.reduce((s, r) => s + r.UA, 0),

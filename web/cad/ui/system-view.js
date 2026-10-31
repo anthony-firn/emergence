@@ -6,9 +6,10 @@
 import { project, onSolved, mechanical, scheduleSolve } from "../app.js";
 import { DOMAIN_INFO } from "../domains/index.js";
 import { compatible, label as unitLabel } from "../core/units.js";
-import { getPath, setPath, numericPaths, slug } from "../core/project.js";
+import { getPath, setPath, numericPaths, slug, STUDIOS } from "../core/project.js";
+import { buildScript } from "../domains/rebuild.js";
 import { validParams } from "../repository.js";
-import { node, svg, button, format, checkCards, certificates, assumptionList, section, run, download, toast, live, lineChart } from "./kit.js";
+import { node, svg, button, format, checkCards, certificates, assumptionList, section, run, download, toast, live, lineChart, miniForm } from "./kit.js";
 const root = document.getElementById("system-studio");
 let solution = null, study = null, optimum = null;
 const manifest = () => project.store.docs.project;
@@ -44,7 +45,9 @@ function render() {
   hero.append(conv); root.append(hero);
   const pin = node("div", undefined, "rtl-actions pin-row"), pick = node("select"); pick.id = "system-pin"; pick.setAttribute("aria-label", "Output to headline");
   for (const [id, p] of s.ports.outputs) if (!m.headline.some(h => h.port === id)) { const o = node("option", `${DOMAIN_INFO[p.domain]?.title} · ${p.label}`); o.value = id; pick.append(o); }
-  pin.append(pick, button("＋ Headline output", () => pick.value && quiet(run("project.pin", { port: pick.value })), "", "system-pin-add")); root.append(pin);
+  const named = node("input"); named.id = "system-pin-label"; named.placeholder = "Label (optional)"; named.maxLength = 60; named.setAttribute("aria-label", "Headline label");
+  pin.append(pick, named, button("＋ Headline output", () => pick.value && quiet(run("project.pin", { port: pick.value, ...(named.value && { label: named.value }) })), "", "system-pin-add")); root.append(pin);
+  root.append(requirementsPanel(s));
   // The link graph.
   const g = section(root, "Links", `${project.store.docs.system.links.filter(l => l.enabled && !s.dormant.includes(l.id)).length} enabled · ${Object.keys(s.applied).length} inputs driven${s.dormant.length ? ` · ${s.dormant.length} dormant` : ""}`);
   g.append(graph(s), linkTable(s));
@@ -53,13 +56,11 @@ function render() {
   const byDomain = {}; for (const x of s.checks) (byDomain[x.domain] ||= []).push(x);
   for (const [d, list] of Object.entries(byDomain)) { c.append(node("h3", `${DOMAIN_INFO[d]?.icon || ""} ${DOMAIN_INFO[d]?.title || d}`, "domain-heading")); checkCards(c, list); certificates(c, s.results[d]?.certificates); }
   if (s.issues.length) { const ul = node("ul", undefined, "link-issues"); for (const i of s.issues) ul.append(node("li", i.message)); c.append(node("h3", "Link and convergence notes", "domain-heading"), ul); }
-  root.append(studyPanel(s));
-  if (m.optimize) root.append(optimizer(m.optimize));
-  if (m.credits.length) {
-    const r = section(root, "Public reference designs", "What this project's documents are built from"), ul = node("ul", undefined, "credits");
-    for (const x of m.credits) { const li = node("li"), a = node("a", x.title); a.href = x.url; a.rel = "noopener"; li.append(node("b", DOMAIN_INFO[x.domain]?.title || "Project"), a); if (x.licence) li.append(node("span", x.licence, "pill")); if (x.note) li.append(node("small", x.note)); ul.append(li); }
-    r.append(ul);
-  }
+  root.append(studyPanel(s), optimizer(m.optimize, s), tourPanel(s));
+  const r = section(root, "Public reference designs", "What this project's documents are built from"), ul = node("ul", undefined, "credits");
+  m.credits.forEach((x, i) => { const li = node("li"), a = node("a", x.title); a.href = x.url; a.rel = "noopener"; li.append(node("b", DOMAIN_INFO[x.domain]?.title || "Project"), a); if (x.licence) li.append(node("span", x.licence, "pill")); li.append(button("×", () => quiet(run("project.uncredit", { index: i + 1 })), "unpin")); if (x.note) li.append(node("small", x.note)); ul.append(li); });
+  r.append(ul);
+  authoring(r, "Credit a design", d => miniForm(d, { id: "credit", action: "＋ Credit", fields: [{ name: "title", label: "Design", wide: true }, { name: "url", label: "Link (https)", wide: true }, { name: "licence", label: "Licence" }, { name: "domain", label: "Domain", options: [["", "Whole project"], ...m.domains.map(x => [x, DOMAIN_INFO[x].title])] }, { name: "note", label: "Note", wide: true }], submit: a => run("project.credit", a) }));
   // Assumptions.
   const all = project.assumptions(), confirmed = all.filter(a => a.confirmed).length;
   const a = section(root, "Fully defined design", `${confirmed} of ${all.length} assumptions confirmed by you`);
@@ -70,11 +71,11 @@ function render() {
 }
 function emptyProject() {
   const wrap = node("div", undefined, "empty-project");
-  wrap.append(node("h3", "This project has no domains yet."), node("p", "Add the domains your design spans. Each opens a studio with a starter design; link their outputs to each other's inputs here, then headline what matters and study what drives it.", "small muted"));
+  wrap.append(node("h3", "This project has no domains yet."), node("p", "Add the domains your design spans, empty to start from nothing or with a starter design to edit. Then link their outputs to each other's inputs here, state your requirements, and study what drives them.", "small muted"));
   const cards = node("div", undefined, "project-cards");
   for (const [d, info] of Object.entries(DOMAIN_INFO)) if (info.blurb) {
     const c = node("article", undefined, "project-card"); c.append(node("h4", `${info.icon} ${info.title}`), node("p", info.blurb));
-    const row = node("div", undefined, "project-card-actions"); row.append(button("Add", () => quiet(run("project.add_domain", { domain: d })), "accent", `system-add-${d}`)); c.append(row); cards.append(c);
+    const row = node("div", undefined, "project-card-actions"); row.append(button("Add empty", () => quiet(run("project.add_domain", { domain: d, start: "empty" })), "accent", `system-add-${d}`), button("Add starter", () => quiet(run("project.add_domain", { domain: d, start: "starter" })), "", `system-starter-${d}`)); c.append(row); cards.append(c);
   }
   wrap.append(cards); return wrap;
 }
@@ -82,7 +83,8 @@ function log() {
   const log = section(root, "Everything is a command", `${project.bus.log.length} commands this session`);
   const actions = node("div", undefined, "rtl-actions");
   actions.append(button("Copy edits as script", () => { navigator.clipboard?.writeText(JSON.stringify(project.bus.script(), null, 2)).then(() => toast("Script copied."), () => toast("Clipboard unavailable; use Download.")); }),
-    button("↓ Download script", () => download(JSON.stringify(project.bus.script(), null, 2) + "\n", `${slug(manifest().name)}-script.json`, "application/json")));
+    button("↓ Download script", () => download(JSON.stringify(project.bus.script(), null, 2) + "\n", `${slug(manifest().name)}-script.json`, "application/json")),
+    button("↓ Build script", () => { const script = buildScript(project.file().documents); download(JSON.stringify(script, null, 1) + "\n", `${slug(manifest().name)}-build.json`, "application/json"); toast(`${script.length} commands that build this project from a blank one.`); }, "", "system-build-script"));
   const replay = node("label", "↑ Replay script", "file-button"), file = node("input"); file.type = "file"; file.accept = ".json,application/json"; file.id = "system-replay"; replay.htmlFor = file.id; replay.append(file);
   file.addEventListener("change", async () => { try { const list = JSON.parse(await file.files[0].text()); const r = await project.bus.batch(list, { source: "script", label: "Replay script" }); toast(`Replayed ${r.length} commands as one undoable step.`); } catch (e) { toast(`Script rejected, nothing changed: ${e.message}`); } finally { file.value = ""; } });
   actions.append(replay); log.append(actions);
@@ -173,13 +175,9 @@ function studyPanel(s) {
   const inputs = node("ul", undefined, "study-inputs");
   for (const x of m.studies) { const li = node("li"); li.append(node("span", x.label), node("code", `${x.domain} ${x.path}`), button("×", () => quiet(run("project.unstudy", { id: x.id })), "unpin")); inputs.append(li); }
   if (!m.studies.length) inputs.append(node("li", "No inputs to study yet. Add any numeric field of a domain's document.", "small muted"));
-  const add = node("div", undefined, "rtl-actions study-add"), dom = node("select"), path = node("input"), list = node("datalist");
-  dom.setAttribute("aria-label", "Study domain"); path.setAttribute("aria-label", "Field path"); path.placeholder = "Field path, e.g. battery.capacity"; list.id = "study-paths"; path.setAttribute("list", list.id);
-  for (const d of project.active()) { const o = node("option", DOMAIN_INFO[d].title); o.value = d; dom.append(o); }
-  const paths = () => { list.replaceChildren(); const doc = dom.value === "mech" ? mechanical.state() : project.store.docs[dom.value]; for (const p of numericPaths(doc)) list.append(Object.assign(node("option"), { value: p })); };
-  dom.addEventListener("change", paths); paths();
-  add.append(dom, path, list, button("＋ Study input", () => path.value && quiet(run("project.study", { domain: dom.value, path: path.value.trim() }).then(() => { path.value = ""; })), "", "study-add"));
-  sec.append(inputs, add);
+  sec.append(inputs, fieldPaths("study-paths"));
+  const form = miniForm(sec, { id: "study", action: "＋ Study input", cls: "study-add", fields: [{ name: "domain", label: "Domain", options: domains() }, { name: "path", label: "Field", list: "study-paths", placeholder: "battery.capacity", wide: true }, { name: "label", label: "Label" }, { name: "min", label: "Lowest", number: true }, { name: "max", label: "Highest", number: true }], submit: a => run("project.study", a) });
+  linkPaths(form.domain, "study-paths");
   if (study) {
     const max = Math.max(...study.rows.map(r => Math.abs(r.s) || 0), 1e-9), list = node("div", undefined, "tornado");
     for (const r of study.rows) { const row = node("div"), bar = node("i"); bar.style.width = `${50 * Math.abs(r.s || 0) / max}%`; bar.dataset.sign = r.s >= 0 ? "pos" : "neg";
@@ -188,13 +186,52 @@ function studyPanel(s) {
   }
   return sec;
 }
+const domains = () => project.active().map(d => [d, DOMAIN_INFO[d].title]);
+const outputs = s => [...s.ports.outputs].map(([id, p]) => [id, `${DOMAIN_INFO[p.domain]?.title} · ${p.label}`]);
+// Studio re-renders keep an editor open once a person has opened it.
+const opened = new Set();
+const authoring = (root, title, fill, open) => { const d = node("details", undefined, "authoring"); d.open = !!open || opened.has(title); d.append(node("summary", title)); fill(d); d.addEventListener("toggle", () => { if (d.open) opened.add(title); else opened.delete(title); }); root.append(d); return d; };
+const fieldPaths = id => Object.assign(node("datalist"), { id });
+// Suggest every numeric field of the chosen domain's document.
+const linkPaths = (select, id) => { const fill = () => { const list = document.getElementById(id); if (!list) return; list.replaceChildren(); const doc = select.value === "mech" ? mechanical.state() : project.store.docs[select.value]; if (doc) for (const p of numericPaths(doc)) list.append(Object.assign(node("option"), { value: p })); };
+  select.addEventListener("change", fill); queueMicrotask(fill); };
+function requirementsPanel(s) {
+  const m = manifest(), sec = section(node("div"), "Requirements", `${m.requirements.length} of your own, checked on every solve`), ul = node("ul", undefined, "item-list");
+  for (const q of m.requirements) { const li = node("li"), c = s.checks.find(x => x.domain === "project" && x.id === q.id), o = s.outputs[q.port];
+    li.append(node("span", c?.text ?? q.port), node("code", q.port), node("b", format(o?.value, o?.unit, 4)), node("span", c?.status ?? "—", "pill"), button("Remove", () => quiet(run("project.unrequire", { id: q.id })))); ul.append(li); }
+  if (!m.requirements.length) ul.append(node("li", "None yet. State what the design must do, on any output of any domain.", "small muted"));
+  sec.append(ul); miniForm(sec, { id: "requirement", action: "＋ Requirement", fields: [{ name: "port", label: "Output", options: outputs(s), wide: true }, { name: "max", label: "At most", number: true }, { name: "min", label: "At least", number: true }, { name: "label", label: "Label", wide: true }], submit: a => run("project.require", a) });
+  return sec;
+}
+function tourPanel(s) {
+  const m = manifest(), sec = section(node("div"), "Guided tour", `${m.tour.length} step${m.tour.length === 1 ? "" : "s"}`), ul = node("ul", undefined, "item-list");
+  m.tour.forEach((t, i) => { const li = node("li"); li.append(node("span", `${i + 1}. ${t.title}`), node("code", t.command || t.studio), button("Remove", () => quiet(run("project.tour_remove", { index: i + 1 })))); ul.append(li); });
+  if (!m.tour.length) ul.append(node("li", "No tour yet. A tour shows others around this project with live commands.", "small muted"));
+  sec.append(ul);
+  authoring(sec, "Add a tour step", d => miniForm(d, { id: "tour-step-form", action: "＋ Step", fields: [{ name: "studio", label: "Studio", options: [["system", "System"], ...m.domains.map(x => [DOMAIN_INFO[x].studio, DOMAIN_INFO[x].title]), ["render", "Render"], ["history", "History"]].filter(([k]) => STUDIOS.includes(k)) }, { name: "title", label: "Title", wide: true }, { name: "text", label: "What to say", wide: true }, { name: "command", label: "Command to run", placeholder: "flight.mass gimbal 1.6", wide: true }, { name: "watch", label: "Outputs to report", placeholder: "flight.total_mass,mech.q1_tj", wide: true }, { name: "checks", label: "Checks to report", placeholder: "mech/REQ-TJ" }], submit: a => run("project.tour_step", a) }), !m.tour.length);
+  return sec;
+}
 // Compass search over the project's variables. Feasible beats infeasible;
 // between feasible trials the objective decides, between infeasible ones the
 // smaller violation. Every trial is a full coupled solve on a copy.
-function optimizer(spec) {
+function optimizer(spec, s) {
   const sec = node("section", undefined, "domain-section optimizer"), top = node("div", undefined, "section-top");
+  const define = root => miniForm(root, { id: "optimize", action: spec ? "Update" : "＋ Define optimisation", fields: [{ name: "title", label: "Title", value: spec?.title, wide: true }, { name: "objective", label: "Objective", options: outputs(s), value: spec?.objective.port, wide: true }, { name: "sense", label: "Goal", options: [["min", "Minimise"], ["max", "Maximise"]], value: spec?.objective.sense }, { name: "trials", label: "Most trials", number: true, value: spec?.trials }, { name: "summary", label: "What it does", value: spec?.summary, wide: true }], submit: a => run("project.optimize", a) });
+  if (!spec) { top.append(node("h2", "Optimisation"), node("span", "None defined")); sec.append(top, node("p", "Choose an output to minimise or maximise, then the fields it may change and the limits it must respect. Each trial is a full coupled solve.", "small muted")); define(sec); return sec; }
   top.append(node("h2", spec.title), node("span", `${spec.objective.sense === "min" ? "Minimise" : "Maximise"} ${spec.objective.port}`)); sec.append(top);
-  sec.append(node("p", `${spec.summary ? spec.summary + " " : ""}Variables: ${spec.variables.map(v => `${v.label} ${v.min}–${v.max}`).join(", ")}. Constraints: ${spec.constraints.map(c => c.label || `${c.port} ${c.max !== undefined ? "≤ " + c.max : "≥ " + c.min}`).join("; ") || "none"}; every linked model stays in its validated range.`, "small muted"));
+  sec.append(node("p", `${spec.summary ? spec.summary + " " : ""}Every linked model stays in its validated range.`, "small muted"));
+  const vars = node("ul", undefined, "item-list");
+  spec.variables.forEach((v, i) => { const li = node("li"); li.append(node("span", `${v.label} ${v.min}–${v.max}, step ${v.step}`), node("code", `${v.domain} ${v.path}`), button("Remove", () => quiet(run("project.optimize_remove", { kind: "variable", index: i + 1 })))); vars.append(li); });
+  spec.constraints.forEach((c, i) => { const li = node("li"); li.append(node("span", c.label || `${c.port} ${c.max !== undefined ? "≤ " + c.max : ""} ${c.min !== undefined ? "≥ " + c.min : ""}`), node("code", c.port), button("Remove", () => quiet(run("project.optimize_remove", { kind: "constraint", index: i + 1 })))); vars.append(li); });
+  if (!spec.variables.length) vars.append(node("li", "Add at least one variable to run it.", "small muted"));
+  sec.append(vars);
+  authoring(sec, "Edit this optimisation", d => {
+    define(d); d.append(fieldPaths("optimize-paths"));
+    const form = miniForm(d, { id: "optimize-variable", action: "＋ Variable", fields: [{ name: "domain", label: "Domain", options: domains() }, { name: "path", label: "Field", list: "optimize-paths", wide: true }, { name: "min", label: "From", number: true }, { name: "max", label: "To", number: true }, { name: "step", label: "Smallest step", number: true }, { name: "label", label: "Label" }, { name: "integer", label: "Whole numbers", check: true }], submit: a => run("project.optimize_variable", a) });
+    linkPaths(form.domain, "optimize-paths");
+    miniForm(d, { id: "optimize-constraint", action: "＋ Constraint", fields: [{ name: "port", label: "Output", options: outputs(s), wide: true }, { name: "max", label: "At most", number: true }, { name: "min", label: "At least", number: true }, { name: "label", label: "Label", wide: true }], submit: a => run("project.optimize_constraint", a) });
+    d.append(button("Remove this optimisation", () => quiet(run("project.optimize_clear")), "", "optimize-clear"));
+  }, !spec.variables.length);
   const go = button(`Run: ${spec.title}`, async () => {
     go.disabled = true; const base = docsNow(), vars = spec.variables, eps = 1e-9;
     const snap = (v, x) => { const k = Math.round((Math.min(v.max, Math.max(v.min, x)) - v.min) / v.step); return Math.min(v.max, v.min + k * v.step); };
@@ -221,6 +258,7 @@ function optimizer(spec) {
     }
     optimum = { ...best, trials, spec }; go.disabled = false; go.textContent = `Run: ${spec.title}`; render();
   }, "accent", "optimize-run");
+  go.disabled = !spec.variables.length;
   sec.append(go);
   if (optimum && optimum.spec.title === spec.title) {
     const o = optimum, vals = spec.variables.map((v, i) => `${v.label} ${o.values[i]}`).join(", "), cons = spec.constraints.map(c => `${outputLabel(solution, c.port)} ${format(o.r?.outputs[c.port]?.value, o.r?.outputs[c.port]?.unit, 4)}`).join(", ");
@@ -232,7 +270,7 @@ function optimizer(spec) {
   return sec;
 }
 onSolved(s => { solution = s; });
-live(["system", "project"], render);
+const refresh = live(["system", "project"], render);
 document.addEventListener("emergence:studio", e => { if (e.detail === "system") render(); });
-project.bus.on(() => { if (!root.hidden) render(); });
+project.bus.on(() => { if (!root.hidden) refresh(); });
 render();

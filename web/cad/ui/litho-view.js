@@ -2,7 +2,7 @@
 // aerial image, the threshold print and an inverse-lithography mask.
 import { project } from "../app.js";
 import { rasterize, aerial, printed, patternError, ilt } from "../domains/litho.js";
-import { node, button, svg, numberField, section } from "./kit.js";
+import { node, button, svg, numberField, selectField, section, miniForm, run as command } from "./kit.js";
 let cache = null;
 function heat(canvas, n, values, mode, target) {
   canvas.width = n; canvas.height = n;
@@ -27,6 +27,11 @@ export function mountLitho(root) {
   numberField(controls, { label: "σ outer", id: "litho-sigma", value: d.sigmaOuter, min: 0, max: 1, step: .05, op: "litho.set", args: v => ({ sigma_outer: v }), status });
   numberField(controls, { label: "Threshold", id: "litho-threshold", value: d.threshold, min: .05, max: .95, step: .01, op: "litho.set", args: v => ({ threshold: v }), status });
   numberField(controls, { label: "Wavelength", id: "litho-wavelength", unit: "nm", value: d.wavelength, min: 13, max: 500, step: 1, op: "litho.set", args: v => ({ wavelength: v }), status });
+  numberField(controls, { label: "σ inner", id: "litho-sigma-inner", value: d.sigmaInner, min: 0, max: 1, step: .05, op: "litho.set", args: v => ({ sigma_inner: v }), status });
+  numberField(controls, { label: "Pixel", id: "litho-pixel", unit: "nm", value: d.pixel, min: 1, max: 200, step: 1, op: "litho.set", args: v => ({ pixel: v }), status });
+  numberField(controls, { label: "Source points", id: "litho-source-points", value: d.sourcePoints, min: 1, max: 9, step: 1, op: "litho.set", args: v => ({ source_points: v }), status });
+  numberField(controls, { label: "Resist steepness", id: "litho-steepness", value: d.steepness, min: 1, max: 200, step: 1, op: "litho.set", args: v => ({ steepness: v }), status });
+  selectField(controls, { label: "Grid", id: "litho-grid", value: String(d.n), options: [["32", "32 × 32"], ["64", "64 × 64"], ["128", "128 × 128"]], op: "litho.set", args: v => ({ grid: v }), status });
   const run = button("Run inverse lithography", async () => {
     run.disabled = true; status.textContent = "Optimising the mask…";
     const target = rasterize(d); let last = 0;
@@ -37,6 +42,11 @@ export function mountLitho(root) {
   }, "accent", "litho-ilt");
   controls.append(run);
   s.append(controls, grid, status);
+  const list = node("ul", undefined, "item-list");
+  d.shapes.forEach((r, i) => { const li = node("li"); li.append(node("span", `Rectangle ${i + 1}: ${r.w} × ${r.h} nm at ${r.x}, ${r.y}`), button("Remove", () => command("litho.remove_shape", { index: i + 1 }, status).catch(() => {}))); list.append(li); });
+  s.append(list);
+  miniForm(s, { id: "litho-shape", action: "＋ Mask rectangle", status, fields: ["x", "y", "w", "h"].map(name => ({ name, label: `${name} (nm)`, number: true })), submit: a => command("litho.shape", a, status) });
+  if (d.shapes.length) s.append(button("Clear the clip", () => command("litho.clear", {}, status).catch(() => {}), "", "litho-clear"));
   queueMicrotask(() => {
     const target = rasterize(d), { I } = aerial(d, target), print = printed(d, I), err = patternError(d, target, I);
     heat(panels[0], d.n, target, "mask"); heat(panels[1], d.n, I, "heat", target); heat(panels[2], d.n, print, "mask"); heat(panels[3], d.n, target, "mask");

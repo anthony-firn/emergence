@@ -6,7 +6,7 @@ export const PROJECT = "motor-driver";
 export const FIELDS = {
   fins: { label: "Heat-sink fins", unit: "", min: 5, max: 14, step: 1, domain: "Mechanical", value: 9 },
   velocity: { label: "Duct air velocity", unit: "m/s", min: 0.5, max: 4, step: 0.1, domain: "Mechanical", value: 2.5 },
-  current: { label: "MOSFET RMS current", unit: "A", min: 5, max: 40, step: 1, domain: "Electrical", value: 30 },
+  current: { label: "MOSFET RMS current", unit: "A", min: .5, max: 40, step: .5, domain: "Electrical", value: 30 },
   ambient: { label: "Inlet air temperature", unit: "°C", min: 15, max: 60, step: 1, domain: "Thermal", value: 45 },
   heat: { label: "Extra heat deposited at Q1", unit: "W", min: 0, max: 10, step: 0.5, domain: "Radiation", value: 0 },
   opticalSize: { label: "Optical size parameter x", unit: "", min: 0.01, max: 12, step: 0.01, domain: "Photonics", value: 0.1 },
@@ -18,6 +18,8 @@ export const FIELDS = {
   traceWidth: { label: "Power trace width", unit: "mm", min: 4, max: 15, step: 0.5, domain: "Electrical", value: 10 },
   opticalPower: { label: "Incident optical power at Q1", unit: "W", min: 0, max: 5, step: 0.1, domain: "Photonics", value: 0 },
   absorption: { label: "Prescribed absorbed fraction", unit: "%", min: 0, max: 100, step: 1, domain: "Photonics", value: 50 },
+  rdsOn: { label: "Q1 on-resistance at 25 °C", unit: "mΩ", min: .1, max: 100, step: .1, domain: "Electrical", value: 4.5 },
+  switching: { label: "Q1 switching loss", unit: "W", min: 0, max: 50, step: .1, domain: "Electrical", value: 3 },
 };
 export const DEFAULTS = Object.fromEntries(Object.entries(FIELDS).map(([key, f]) => [key, f.value]));
 // Keep the first prototype's deterministic root and content hashes intact.
@@ -66,6 +68,10 @@ const revisionBody = c => ({ parents: c.parents, branch: c.branch, params: c.par
 // refers to by hash, so an unchanged board or building costs nothing to keep.
 export const studiosOf = c => c.studios || {};
 const blobBody = b => ({ kind: b.kind, doc: b.doc });
+// Documents outlive their schema. A stored one must still validate, and
+// validation may add fields it has since gained, but never drop or change any.
+const within = (stored, projected) => Array.isArray(stored) ? Array.isArray(projected) && stored.length === projected.length && stored.every((x, i) => within(x, projected[i]))
+  : stored && typeof stored === "object" ? !!projected && typeof projected === "object" && !Array.isArray(projected) && Object.keys(stored).every(k => Object.hasOwn(projected, k) && within(stored[k], projected[k])) : stored === projected;
 const noteBody = n => ({ commit: n.commit, author: n.author, domain: n.domain, text: n.text, kind: n.kind, time: n.time, nonce: n.nonce });
 function withinSize(commits, notes, blobs = new Map()) {
   const bytes = new TextEncoder().encode(JSON.stringify({ format: FORMAT, project: PROJECT, commits: [...commits.values()], notes: [...notes.values()], blobs: [...blobs.values()] })).length;
@@ -83,7 +89,9 @@ export class Repository {
     return id;
   }
   async putStudios(docs) { const out = {}; for (const [kind, doc] of Object.entries(docs).sort()) out[kind] = await this.putBlob(kind, doc); return out; }
-  studioDocs(commit) { return Object.fromEntries(Object.entries(studiosOf(commit)).map(([kind, id]) => [kind, structuredClone(this.blobs.get(id).doc)])); }
+  // Blobs keep the bytes they were hashed with; reading brings them up to date.
+  studioDoc(id) { const { kind, doc } = this.blobs.get(id); return this.blobKinds[kind] ? this.blobKinds[kind](structuredClone(doc)) : structuredClone(doc); }
+  studioDocs(commit) { return Object.fromEntries(Object.entries(studiosOf(commit)).map(([kind, id]) => [kind, this.studioDoc(id)])); }
   async init() {
     const root = await this.make({ parents: [], branch: "main", params: LEGACY_DEFAULTS, author: "EvolveTech", domain: "Systems", message: "Motor-driver reference design", time: "2026-10-25T00:00:00.000Z" });
     this.root = root.id; this.commits.set(root.id, root); return this;
@@ -153,7 +161,7 @@ export class Repository {
     }
     // Domain documents merge by object id; both-sides edits become conflicts.
     const kinds = new Set([...Object.keys(studiosOf(target)), ...Object.keys(studiosOf(source))]), studios = {}, studioConflicts = [];
-    const doc = (c, k) => studiosOf(c)[k] ? this.blobs.get(studiosOf(c)[k]).doc : this.studioDefaults[k];
+    const doc = (c, k) => studiosOf(c)[k] ? this.studioDoc(studiosOf(c)[k]) : this.studioDefaults[k];
     for (const k of kinds) {
       const t = doc(target, k), s = doc(source, k), b = doc(base, k);
       const r = merge3(b, t ?? s, s ?? t);
@@ -170,8 +178,8 @@ export class Repository {
     for (const b of bundle.blobs || []) {
       if (!b || !isHash(b.id) || !this.blobKinds[b.kind]) throw new Error("A design document has an unknown kind. Nothing was imported.");
       let doc; try { doc = this.blobKinds[b.kind](structuredClone(b.doc)); } catch (e) { throw new Error(`A ${b.kind} document is invalid (${e.message}). Nothing was imported.`); }
-      if (canonical(doc) !== canonical(b.doc) || await hash(blobBody(b)) !== b.id) throw new Error("A design document failed content verification. Nothing was imported.");
-      blobs.set(b.id, { kind: b.kind, doc, id: b.id });
+      if (!within(b.doc, doc) || await hash(blobBody(b)) !== b.id) throw new Error("A design document failed content verification. Nothing was imported.");
+      blobs.set(b.id, { kind: b.kind, doc: structuredClone(b.doc), id: b.id });
     }
     for (const c of bundle.commits) {
       if (!c || !isHash(c.id) || !Array.isArray(c.parents) || c.parents.length > 2 || !c.parents.every(isHash)

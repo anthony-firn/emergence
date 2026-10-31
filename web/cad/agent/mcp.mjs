@@ -6,6 +6,7 @@
 // and every edit is saved back to it.
 import { createInterface } from "node:readline";
 import { openProject, summary, exportArtifact, examples, exampleFile } from "./headless.mjs";
+import { buildScript } from "../domains/rebuild.js";
 const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 const projectPath = opt("--project"), ctx = await openProject(projectPath, { example: opt("--example") || "blank" }), { project, save } = ctx;
 const DOMAINS = [...project.store.ids(), "mech"];
@@ -15,6 +16,7 @@ const TOOLS = [
   { name: "run_script", description: "Run a list of {op, args} commands atomically: if any step fails, every touched domain is restored.", inputSchema: { type: "object", properties: { steps: { type: "array", items: { type: "object", properties: { op: { type: "string" }, args: { type: "object" } }, required: ["op"] } } }, required: ["steps"] } },
   { name: "solve", description: "Solve the project's linked domains (any of flight, mechanical/electrothermal, parts, PCB, silicon chip flow, optics, fluids, architecture) and return outputs, every check with its status, link issues and convergence.", inputSchema: { type: "object", properties: {} } },
   { name: "project", description: "The open project's manifest (name, domains, headline outputs, studies, optimisation) and every input and output port of its domains, with units, for drawing links with system.link.", inputSchema: { type: "object", properties: {} } },
+  { name: "build_script", description: "The open project as the ordered commands that build it from a blank project: a worked example of how to make any design, ready for run_script.", inputSchema: { type: "object", properties: {} } },
   { name: "list_examples", description: "Example project files. Domains are added with project.add_domain and linked with system.link; examples show complete projects.", inputSchema: { type: "object", properties: {} } },
   { name: "open_example", description: "Replace the open design with an example project (or blank). Saved to the project file.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
   { name: "get_document", description: "Return one domain's design document as JSON.", inputSchema: { type: "object", properties: { domain: { type: "string", enum: DOMAINS } }, required: ["domain"] } },
@@ -29,6 +31,7 @@ async function call(name, a = {}) {
   if (name === "solve") return summary(await project.solve(), project);
   if (name === "project") { const ports = project.system.ports(), list = m => [...m.values()].map(p => ({ port: p.port, label: p.label, unit: p.unit, ...(p.min !== undefined && { min: p.min, max: p.max }) }));
     return { ...project.store.docs.project, tour: undefined, inputs: list(ports.inputs), outputs: list(ports.outputs), links: project.store.docs.system.links }; }
+  if (name === "build_script") return buildScript(project.file().documents);
   if (name === "list_examples") return [{ id: "blank", name: "Blank project" }, ...await examples()];
   if (name === "open_example") { project.load(await exampleFile(a.id)); await save(); return { opened: project.store.docs.project.name, domains: project.active() }; }
   if (name === "get_document") return a.domain === "mech" ? ctx.mech.snapshot() : project.store.get(a.domain);

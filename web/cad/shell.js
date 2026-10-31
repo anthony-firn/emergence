@@ -14,6 +14,11 @@ import "./ui/parts-view.js";
 import "./ui/optics-view.js";
 import "./ui/fluids-view.js";
 import "./ui/architecture-view.js";
+import "./ui/equations-view.js";
+import "./ui/power-view.js";
+import "./ui/structures-view.js";
+import "./ui/controls-view.js";
+import "./ui/testing-view.js";
 import "./ui/render-view.js";
 import { observe } from "./ui/tour.js";
 
@@ -121,12 +126,16 @@ $("project-file").addEventListener("change", async () => {
 function renderDomains() {
   const root = $("domain-choices"), on = project.active(); root.replaceChildren();
   for (const d of DOMAINS) {
-    const info = DOMAIN_INFO[d], has = on.includes(d);
-    const c = card(`${info.icon} ${info.title}`, info.blurb, [act(has ? "Remove" : "Add", () => project.bus.run(has ? "project.remove_domain" : "project.add_domain", { domain: d }).then(() => { renderDomains(); if (!has) selectStudio(info.studio); }).catch(e => { out.textContent = `✗ ${e.message}`; }), has ? "" : "accent")]);
-    c.dataset.on = has; root.append(c);
+    const info = DOMAIN_INFO[d], has = on.includes(d), go = (op, args) => project.bus.run(op, { domain: d, ...args }).then(() => { renderDomains(); if (op === "project.add_domain") { $("domain-dialog").close(); selectStudio(info.studio); } }).catch(e => { out.textContent = `✗ ${e.message}`; });
+    const c = card(`${info.icon} ${info.title}`, info.blurb, has ? [act("Empty it", () => go("project.reset_domain", { start: "empty" })), act("Starter", () => go("project.reset_domain", { start: "starter" })), act("Remove", () => go("project.remove_domain"))]
+      : [act("Add empty", () => go("project.add_domain", { start: "empty" }), "accent"), act("Add starter", () => go("project.add_domain", { start: "starter" }))]);
+    c.dataset.on = has; c.dataset.domain = d; root.append(c);
   }
 }
 $("studio-add").addEventListener("click", () => { renderDomains(); $("domain-dialog").showModal(); });
+$("project-edit").addEventListener("click", () => { const m = project.store.docs.project; $("project-title").value = m.name; $("project-description").value = m.summary; $("project-dialog").showModal(); $("project-title").select(); });
+$("project-form").addEventListener("submit", e => { e.preventDefault(); project.bus.batch([{ op: "project.rename", args: { name: $("project-title").value } }, { op: "project.describe", args: { summary: $("project-description").value || " " } }], { source: "ui", label: "Name the project" }).then(() => $("project-dialog").close()).catch(err => { $("project-title").setCustomValidity(err.message); $("project-title").reportValidity(); }); });
+$("project-title").addEventListener("input", () => $("project-title").setCustomValidity(""));
 
 // The command line: the registry's parser, completions and the shared undo.
 const input = $("command-input"), out = $("command-output"), list = $("command-suggestions"), past = []; let cursor = 0, picks = [], pick = -1;

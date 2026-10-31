@@ -69,7 +69,7 @@ def check(url, screenshots=None):
 
         # Links: disabling one removes the drive; the System graph shows every domain.
         assert page.locator(".link-graph .domain-node").count() >= 8
-        page.locator(".link-table tr", has_text="Design-point ESC current").locator("input[type=checkbox]").uncheck()
+        page.locator(".link-table tr", has_text="hottest of the six MOSFETs").locator("input[type=checkbox]").uncheck()
         page.wait_for_function("() => !window.emergence.solution.applied['mech.current']", timeout=60000)
         page.locator("#command-undo").click()
         page.wait_for_function("() => window.emergence.solution.applied['mech.current']", timeout=60000)
@@ -98,8 +98,13 @@ def check(url, screenshots=None):
         print("Optics best focus, kernel part meshes and the whole-system render passed.")
 
         page.locator("#studio-tab-pcb").click()
-        with page.expect_download(timeout=120000) as fab:
+        with page.expect_download(timeout=420000) as fab:
             page.locator("#pcb-fab").click()
+            # The export has its own Worker: a solve goes on beside it and cannot time it out.
+            gsd = page.evaluate("() => window.emergence.solution.outputs['optics.gsd'].value")
+            page.locator("#command-input").fill("flight.set altitude=75"); page.keyboard.press("Enter")
+            page.wait_for_function("g => window.emergence.solution.outputs['optics.gsd'].value !== g", arg=gsd, timeout=60000)
+            page.locator("#command-undo").click()
         archive = zipfile.ZipFile(fab.value.path())
         assert {"emergence-F_Cu.gbr", "emergence-B_Cu.gbr", "emergence.drl", "emergence.kicad_pcb"} <= set(archive.namelist())
         assert archive.read("emergence.drl").startswith(b"M48")

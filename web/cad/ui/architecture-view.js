@@ -34,13 +34,16 @@ function render() {
   head.append(title); root.append(head);
   const grid = node("div", undefined, "domain-grid");
   const p = section(grid, "Plan", "metres · north up · click a room");
-  p.append(plan(d, x));
-  const room = d.rooms.find(q => q.id === selected) || d.rooms[0], z = x?.rooms.find(q => q.id === room.id);
-  const insp = section(grid, room.name, z ? `${z.temperature.toFixed(2)} °C` : "");
+  const room = d.rooms.find(q => q.id === selected) || d.rooms[0], z = x?.rooms.find(q => q.id === room?.id);
+  if (room) p.append(plan(d, x)); else p.append(node("p", "No rooms yet. Add the first one below.", "small muted"));
+  const insp = section(grid, room?.name ?? "Rooms", z ? `${z.temperature.toFixed(2)} °C` : "");
+  if (room) {
   if (z) { const stats = node("dl", undefined, "stat-grid"); for (const [t, v] of [["Envelope UA", format(z.UA, "W/K", 4)], ["Solar gain", format(z.solar, "W", 4)], ["Internal gains", format(z.internal, "W", 4)], ["Supply air", `${(room.supply / 3.6).toFixed(0)} L/s at ${room.supplyTemp} °C`], ["Cooling removed", format(z.cooling, "W", 4)], ["Outdoor air required (62.1)", `${z.ventilation.toFixed(1)} L/s`]]) { const div = node("div"); div.append(node("dt", t), node("dd", v)); stats.append(div); } insp.append(stats); }
   const f = node("div", undefined, "field-grid");
   textField(f, { label: "Name", id: "arch-name", value: room.name, op: "architecture.update_room", args: v => ({ id: room.id, name: v }), status });
   selectField(f, { label: "Mode", id: "arch-mode", value: room.mode, options: [["supplied", "Supplied (floats)"], ["conditioned", "Conditioned (set point)"]], op: "architecture.update_room", args: v => ({ id: room.id, mode: v }), status });
+  numberField(f, { label: "Plan X", id: "arch-x", unit: "m", value: room.x, min: -500, max: 500, step: .1, op: "architecture.update_room", args: v => ({ id: room.id, at: [v, room.y] }), status });
+  numberField(f, { label: "Plan Y", id: "arch-y", unit: "m", value: room.y, min: -500, max: 500, step: .1, op: "architecture.update_room", args: v => ({ id: room.id, at: [room.x, v] }), status });
   for (const [key, label, unit, min, max, step, value] of [["width", "Width", "m", .5, 200, .1, room.width], ["depth", "Depth", "m", .5, 200, .1, room.depth], ["height", "Height", "m", 2, 20, .1, room.height], ["people", "Occupants", "", 0, 2000, 1, room.people],
     ["lighting", "Lighting", "W/m2", 0, 50, .5, room.lighting], ["supply", "Supply air", "m3/h", 0, 1e6, 10, room.supply], ["supply_temp", "Supply temperature", "degC", 5, 40, .5, room.supplyTemp], ["setpoint", "Set point", "degC", 10, 35, .5, room.setpoint], ["roof_u", "Roof U", "W/m2K", 0, 5, .01, room.roofU]])
     numberField(f, { label, id: `arch-${key}`, unit, value, min, max, step, op: "architecture.update_room", args: v => ({ id: room.id, [key]: v }), status });
@@ -54,12 +57,17 @@ function render() {
     for (const c of [ex, u, win]) { const td = node("td"); td.append(c); tr.append(td); } tr.append(node("td", String(ORIENTATION[side]))); wb.append(tr); }
   walls.append(wb); insp.append(walls);
   const eq = node("label", undefined, "check-label"), ec = node("input"); ec.type = "checkbox"; ec.checked = room.equipment; ec.id = "arch-equipment"; ec.addEventListener("change", () => run("architecture.update_room", { id: room.id, equipment: ec.checked }, status).catch(() => {}));
-  eq.append(ec, document.createTextNode("Equipment room (receives the linked charger heat)")); insp.append(eq, button("Remove room", () => run("architecture.remove_room", { id: room.id }, status).catch(() => {})), status);
+  eq.append(ec, document.createTextNode("Equipment room (receives the equipment heat)")); insp.append(eq, button("Remove room", () => run("architecture.remove_room", { id: room.id }, status).catch(() => {})));
+  }
+  insp.append(status);
   root.append(grid);
   const site = section(root, "Site, envelope and equipment");
   const sf = node("div", undefined, "field-grid");
   for (const [key, label, unit, min, max, step, value] of [["outdoor", "Outdoor design temperature", "degC", -40, 55, .5, d.site.outdoor], ["solar", "Peak vertical irradiance", "W/m2", 0, 1200, 10, d.site.solar], ["glazing_u", "Glazing U", "W/m2K", .3, 7, .1, d.glazing.U], ["shgc", "Glazing SHGC", "", .05, .9, .01, d.glazing.shgc], ["units", "Chargers running", "", 0, 10000, 1, d.units], ["limit", "Equipment room limit", "degC", 5, 80, .5, d.limit]])
     numberField(sf, { label, id: `arch-site-${key}`, unit, value, min, max, step, op: "architecture.site", args: v => ({ [key]: v }), status });
+  textField(sf, { label: "Site name", id: "arch-site-name", value: d.site.name, op: "architecture.site", args: v => ({ name: v }), status });
+  const eqp = numberField(sf, { label: "Heat per equipment unit", id: "arch-site-equipment", unit: "W", value: d.equipmentPower, min: 0, max: 1e6, step: 1, op: "architecture.site", args: v => ({ equipment: v }), status });
+  if (solution?.applied["architecture.equipment_power"]) eqp.disabled = true;
   site.append(sf);
   const chip = linkedChip(solution, "architecture.equipment_power"); if (chip) site.append(chip);
   site.append(button("＋ Add room", () => run("architecture.add_room", { label: "New room" }, status).then(r => { selected = r.id; render(); }).catch(() => {})));

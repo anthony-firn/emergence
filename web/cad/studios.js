@@ -1,14 +1,14 @@
 import {FOOTPRINTS, pads, bodyBounds, pcbChecks, siliconChecks, documentFor, validateDocument, pcbBOM, RTL_SOURCES} from "./studio-model.js";
 import {project, onSolved} from "./app.js";
-import {request} from "./models.js";
-import {kernelBoard, densityIssues, kicadPCB, gerberCheck, netOf, OZ} from "./domains/pcb.js";
+import {request, requestLong} from "./models.js";
+import {kernelBoard, densityIssues, kicadPCB, gerberCheck, netOf, traceCurrent, OZ, powerPort} from "./domains/pcb.js";
 import {STAGES, gdsii, verifyGDS, powerSummary} from "./domains/silicon.js";
 import {zip} from "./core/integrity.js";
 import {format} from "./core/units.js";
 import {slug} from "./core/project.js";
 const named=()=>slug(project.store.docs.project.name);
 import {mountLitho} from "./ui/litho-view.js";
-import {checkCards, certificates, assumptionList} from "./ui/kit.js";
+import {checkCards, certificates, assumptionList, miniForm} from "./ui/kit.js";
 
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const svgNode=(tag,attrs={},text)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
@@ -24,7 +24,7 @@ class Studio {
     this.kind=kind;this.pcb=kind==="pcb";this.root=document.getElementById(kind+"-studio");this.selected=null;
     this.layers={top:true,bottom:true};this.airwires=true;this.routing=false;this.avoid=true;this.startPad=null;this.net=null;
     this.layer="top";this.routeWidth=.5;this.connectivity=false;this.heat=false;this.solution=null;this.lastMessage=null;
-    project.store.on(({ids,reason})=>{if(ids.includes(kind)){if(reason!=="edit")this.startPad=null;this.render();}});
+    project.store.on(({ids,reason})=>{if(ids.includes(kind)||kind==="silicon"&&ids.includes("litho")){if(reason!=="edit")this.startPad=null;this.render();}});
     // The undo entry is pushed after the store change that triggered render().
     project.bus.on(e=>{if(e.type==="reset")this.render();else this.syncUndo();});
     onSolved(s=>{this.solution=s;this.renderResults();});
@@ -51,7 +51,7 @@ class Studio {
       try {
         const file=input.files[0];if(!file)return;if(file.size>500000)throw new Error("Design files must be below 500 KB.");
         const doc=validateDocument(JSON.parse(await file.text()));if(doc.kind!==this.kind)throw new Error("Open this file in the "+doc.kind+" workspace.");
-        this.selected=null;this.startPad=null;await project.bus.run(this.kind+".load",{design:doc});this.message("Imported design. Undo restores your previous document.");
+        this.selected=null;this.startPad=null;await project.bus.run(this.pcb?"pcb.load":"silicon.load",{design:doc});this.message("Imported design. Undo restores your previous document.");
       }catch(e){this.message("Import rejected: "+e.message);}finally{input.value="";}
     });
     files.append(upload,button(this.pcb?"↓ BOM CSV":"↓ Floorplan SVG",this.kind+"-output",()=>{
@@ -62,7 +62,7 @@ class Studio {
     else files.append(button("↓ GDSII","silicon-gds",()=>this.exportGDS(),"accent"));
     head.append(title,files);this.root.append(head);
     const commands=node("div",undefined,"command-bar"),addLabel=node("label",this.pcb?"Footprint":"Block type"),types=node("select");types.id=this.kind+"-type";
-    for(const [value,label] of this.pcb?Object.entries(FOOTPRINTS).map(([k,v])=>[k,v.title]):[["logic","Logic block"],["memory","Memory macro"],["io","I/O block"],["analog","Analog block"]]){const o=node("option",label);o.value=value;types.append(o);}
+    for(const [value,label] of this.pcb?[...Object.entries(FOOTPRINTS),...Object.entries(this.design.footprints)].map(([k,v])=>[k,v.title]):[["logic","Logic block"],["memory","Memory macro"],["io","I/O block"],["analog","Analog block"]]){const o=node("option",label);o.value=value;types.append(o);}
     addLabel.htmlFor=types.id;addLabel.append(types);
     commands.append(addLabel,button(this.pcb?"＋ Place component":"＋ Add block",this.kind+"-add",()=>this.add(types.value),"accent"));
     if(this.pcb) {
@@ -79,6 +79,7 @@ class Studio {
     this.undoButtons=[undo,redo];this.syncUndo();commands.append(undo,redo);
     commands.append(node("span","Part of the project draft · saved with each revision","studio-save"));
     this.root.append(commands);
+    if(this.pcb)this.footprintTools();
     if(!this.pcb){this.flow=node("div",undefined,"silicon-flow stage-flow");this.root.append(this.flow);}
     const grid=node("div",undefined,"studio-grid"),explorer=node("aside",undefined,"studio-explorer"),centre=node("div",undefined,"studio-centre"),inspector=node("aside",undefined,"studio-inspector");
     explorer.append(node("p",this.pcb?"BOARD / mm":"FLOORPLAN / µm","panel-label"));
@@ -124,6 +125,14 @@ class Studio {
     assumptionList(scope,this.kind);this.root.append(scope);
     if(document.activeElement===document.body)window.scrollTo({top:scrollY,behavior:"instant"});
   }
+  // A package from its numbers, or a pad list; a board's own footprints list here.
+  footprintTools() {
+    const d=node("details",undefined,"authoring footprint-tools");d.open=!!this.footprintsOpen;d.addEventListener("toggle",()=>this.footprintsOpen=d.open);d.append(node("summary",`Make a footprint · ${Object.keys(this.design.footprints).length} of your own`));
+    miniForm(d,{id:"pcb-footprint",action:"＋ Footprint",fields:[{name:"name",label:"Name",placeholder:"soic14"},{name:"kind",label:"Pattern",options:[["dual","Two rows"],["single","One row"],["quad","Four sides"],["custom","My own pad list"]]},{name:"pins",label:"Pins",number:true},{name:"pitch",label:"Pitch (mm)",number:true},{name:"span",label:"Row spacing (mm)",number:true},{name:"smd",label:"Surface mount",check:true},{name:"pad_w",label:"Pad width (mm)",number:true},{name:"pad_h",label:"Pad height (mm)",number:true},{name:"pad",label:"Through pad Ø (mm)",number:true},{name:"drill",label:"Drill (mm)",number:true},{name:"pads",label:"Pads [[x, y], …] (mm)",wide:true,when:v=>v.kind==="custom"},{name:"title",label:"Title"},{name:"mass",label:"Mass (g)",number:true}],submit:a=>project.bus.run("pcb.footprint",a).then(r=>this.message(r.message)).catch(e=>this.message(e.message))});
+    d.append(node("p","These follow the numbers you give: use the land pattern from the part's datasheet. A custom pad list may give each pad its own size as [x, y, width, height].","small muted"));
+    for(const [name,f] of Object.entries(this.design.footprints)){const row=node("div",undefined,"item-row");row.append(node("span",`${name}: ${f.pads.length} pads, ${f.width} × ${f.height} mm`),button("Delete",null,()=>this.run("pcb.remove_footprint",{name})));d.append(row);}
+    this.root.append(d);
+  }
   number(root,label,key,value,command,min,max,step) {
     const l=node("label",label),i=node("input");i.id=this.kind+"-"+key;i.type="number";i.min=min;i.max=max;i.step=step;i.value=value;l.htmlFor=i.id;l.append(i);root.append(l);
     i.addEventListener("change",()=>{
@@ -147,9 +156,9 @@ class Studio {
         for(const angle of [0,90,180,270]){const o=node("option",angle+"°");o.value=angle;select.append(o);}select.value=item.rotation;
         select.addEventListener("change",()=>this.run("pcb.move",{id:item.id,rotation:select.value}));l.append(select);root.append(l);
         this.number(root,"Dissipation (W)","power",this.design.powers[item.id]??0,n=>["pcb.power",{id:item.id,watts:n}],0,500,.01);
-        const linked=item.id==="U1"&&this.solution?.applied["pcb.u1_power"];
+        const linked=this.solution?.applied[`pcb.${powerPort(item.id)}`];
         if(linked)root.append(node("p",`⛓ Driven by ${linked.from.join(", ")}: ${format(linked.value,"W",4)}`,"link-note"));
-        root.append(node("p","PAD NET ASSIGNMENTS","panel-label studio-section-label"));
+        root.append(node("p","PAD NET ASSIGNMENTS","panel-label studio-section-label"),node("p","NC marks a pin deliberately left unconnected.","small muted"));
         item.nets.forEach((net,i)=>this.field(root,"Pad "+(i+1),"net-"+(i+1),net,v=>["pcb.net",{pad:item.id+":"+(i+1),net:v||"-"}],32));
       } else {
         for(const key of ["width","height"])this.number(root,key==="width"?"Block width":"Block height","block-"+key,item[key],n=>["silicon.update_block",{id:item.id,[key]:n}],1,10000,this.design.grid);
@@ -178,6 +187,10 @@ class Studio {
       const widthLabel=node("label","Connection width"),width=node("input");width.id="pcb-route-width";width.type="number";width.min=.1;width.max=5;width.step=.1;width.value=this.routeWidth;widthLabel.htmlFor=width.id;widthLabel.append(width);root.append(widthLabel);
       width.addEventListener("change",()=>{if(width.value!==""&&width.checkValidity())this.routeWidth=Number(width.value);else{width.value=this.routeWidth;this.message("Connection width must be 0.1–5 mm.");}});
       root.append(node("p","Click two same-net pads with Connect pads active. With Avoid obstacles on, the router finds a clear 45° path; otherwise a direct 45° bend is drawn and the checks report collisions.","small muted"));
+      miniForm(root,{id:"pcb-via",action:"＋ Via",cls:"stacked",fields:[{name:"x",label:"Via X (mm)",number:true},{name:"y",label:"Via Y (mm)",number:true},{name:"net",label:"Net"}],submit:({x,y,net})=>project.bus.run("pcb.via",{at:[x,y],net}).then(r=>this.message(r.message)).catch(e=>this.message(e.message))});
+      miniForm(root,{id:"pcb-pour",action:"＋ Pour copper",cls:"stacked",fields:[{name:"net",label:"Pour net"},{name:"points",label:"Outline [[x, y], …] (mm)",wide:true}],submit:a=>project.bus.run("pcb.pour",{...a,layer:this.layer}).then(r=>this.message(r.message)).catch(e=>this.message(e.message))});
+      for(const p of this.design.pours){const row=node("div",undefined,"item-row");row.append(node("span",`${p.net} on ${p.layer}`),button("Remove",null,()=>this.run("pcb.remove_pour",{id:p.id})));root.append(row);}
+      miniForm(root,{id:"pcb-trace",action:"＋ Draw trace",cls:"stacked",fields:[{name:"from",label:"From pad",placeholder:"J1:1"},{name:"to",label:"To pad",placeholder:"U1:1"},{name:"points",label:"Every point [[x, y], …] (mm)",wide:true}],submit:a=>project.bus.run("pcb.trace",{...a,layer:this.layer,width:this.routeWidth}).then(r=>this.message(r.message)).catch(e=>this.message(e.message))});
       if(this.design.routes.length) {
         const l=node("label","Connection"),s=node("select");s.id="pcb-route-selection";l.htmlFor=s.id;
         for(const route of this.design.routes){const o=node("option",route.from+" → "+route.to+" / "+route.layer+" / "+route.width+" mm");o.value=route.id;s.append(o);}l.append(s);root.append(l);
@@ -209,17 +222,20 @@ class Studio {
     svg.append(svgNode("rect",{x:0,y:0,width:d.width,height:d.height,class:"studio-board"}),svgNode("rect",{x:0,y:0,width:d.width,height:d.height,fill:"url(#"+this.kind+"-grid)", "pointer-events":"none"}));
     if(this.pcb) {
       const all=pads(d),byID=new Map(all.map(p=>[p.id,p])),checks=pcbChecks(d),hot=new Set(densityIssues(d).map(i=>i.object));
+      for(const p of d.pours)if(this.layers[p.layer]){const shape=svgNode("polygon",{points:p.points.map(q=>q.join(",")).join(" "),fill:p.layer==="top"?"#f19177":"#71afff",opacity:!this.net||this.net===p.net?.22:.06,stroke:p.layer==="top"?"#f19177":"#71afff","stroke-width":.1,"data-pour":p.id});shape.append(svgNode("title",{},`${p.net} pour · ${p.layer}`));svg.append(shape);}
       if(this.airwires)for(const net of checks.nets)for(const [a,b] of net.airwires)svg.append(svgNode("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:"airwire",opacity:!this.net||this.net===net.name ? .7 : .12}));
       for(const r of d.routes)if(this.layers[r.layer]){const line=svgNode("polyline",{points:r.points.map(p=>p.join(",")).join(" "),fill:"none",stroke:r.layer==="top"?"#f19177":"#71afff","stroke-width":r.width,"stroke-linecap":"round","stroke-linejoin":"round",opacity:!this.net||byID.get(r.from).net===this.net?1:.16,class:hot.has(r.id)?"route-hot":"route"});
-        line.append(svgNode("title",{},`${r.from} → ${r.to} · ${r.layer} · ${r.width} mm · ${d.currents[netOf(d,r)]??0} A`));svg.append(line);}
+        line.append(svgNode("title",{},`${r.from} → ${r.to} · ${r.layer} · ${r.width} mm · ${traceCurrent(d,r)} A`));svg.append(line);}
       for(const c of d.components) {
-        const b=bodyBounds(c),g=this.object(svg,c,c.id);
-        g.append(svgNode("rect",{...b,rx:.5,class:"pcb-body"}),svgNode("text",{x:c.x,y:c.y-.7,"font-size":2,"text-anchor":"middle",class:"component-label"},c.id));
+        const b=bodyBounds(c,this.design),g=this.object(svg,c,c.id);
+        g.append(svgNode("rect",{...b,rx:.5,class:"pcb-body"}));
+        if(c.footprint!=="via"){const size=Math.max(.9,Math.min(2,b.height*.45));g.append(svgNode("text",{x:c.x,y:c.y-size*.35,"font-size":size,"text-anchor":"middle",class:"component-label"},c.id));}
       }
       for(const p of all) {
         const g=svgNode("g",{role:"button",tabindex:0,"aria-label":p.id+" "+(p.net||"unassigned"),class:"pcb-pad", "data-pad":p.id});
         const selected=this.startPad===p.id;
-        g.append(svgNode("circle",{cx:p.x,cy:p.y,r:1.4,fill:"transparent"}),svgNode("circle",{cx:p.x,cy:p.y,r:p.radius,fill:selected?"#fff":"#dfba6b",stroke:selected?"#5fd4e8":"#2a3542","stroke-width":selected ? .45 : .15}),svgNode("circle",{cx:p.x,cy:p.y,r:.3,fill:"#13232d"}));
+        if(p.w)g.append(svgNode("rect",{x:p.x-p.w/2,y:p.y-p.h/2,width:p.w,height:p.h,fill:selected?"#fff":"#dfba6b",stroke:selected?"#5fd4e8":"#2a3542","stroke-width":selected ? .3 : .08}));
+        else g.append(svgNode("circle",{cx:p.x,cy:p.y,r:Math.max(p.radius,1),fill:"transparent"}),svgNode("circle",{cx:p.x,cy:p.y,r:p.radius,fill:selected?"#fff":"#dfba6b",stroke:selected?"#5fd4e8":"#2a3542","stroke-width":selected ? .45 : .15}),svgNode("circle",{cx:p.x,cy:p.y,r:(p.drill??.6)/2,fill:"#13232d"}));
         g.append(svgNode("title",{},p.id+" · "+(p.net||"no net")));
         g.addEventListener("click",()=>this.padClick(p));
         g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();this.padClick(p);}});
@@ -268,6 +284,8 @@ class Studio {
       a.addEventListener("change",()=>{if(a.checkValidity()&&a.value!=="")this.run("pcb.current",{net:net.name,amps:Number(a.value)});});
       if(this.design.loadNets.includes(net.name)&&this.solution?.applied["pcb.load_current"])amps.append(node("small",`⛓ linked: ${format(this.solution.applied["pcb.load_current"].value,"A",4)}`,"link-note"));
       row.append(amps);
+      const load=node("label",undefined,"check-label"),lc=node("input");lc.type="checkbox";lc.id="pcb-load-"+net.name;lc.checked=this.design.loadNets.includes(net.name);lc.addEventListener("change",()=>this.run("pcb.load_net",{net:net.name,enabled:lc.checked}));load.append(lc,document.createTextNode("Follows the linked load current"));row.append(load);
+      if(this.design.routes.some(r=>netOf(this.design,r)===net.name)){const w=node("label","Width of every trace (mm)"),wi=node("input");wi.type="number";wi.min=.1;wi.max=5;wi.step=.1;wi.id="pcb-net-width-"+net.name;w.htmlFor=wi.id;w.append(wi);wi.addEventListener("change",()=>{if(wi.value!==""&&wi.checkValidity())this.run("pcb.net_width",{net:net.name,width:Number(wi.value)});});row.append(w);}
       const members=node("div");for(const p of pads(this.design).filter(p=>p.net===net.name))members.append(button(p.id,null,()=>{this.selected=p.component;this.connectivity=false;this.render();}));
       row.append(members);wrap.append(row);
     }return wrap;
@@ -301,7 +319,7 @@ class Studio {
     if(this.pcb) {
       const k=r.details?.kernel;
       stat("Copper I²R loss",format(r.outputs.copper_loss?.value,"W",4));stat("Board + parts dissipation",format(r.outputs.dissipation?.value,"W",4));stat("Populated mass",format(r.outputs.board_mass?.value*1000,"g",3));
-      stat("Load current (OUT, GND)",format(this.solution.applied["pcb.load_current"]?.value??this.design.currents.OUT,"A",4));
+      if(this.design.loadNets.length)stat(`Load current (${this.design.loadNets.join(", ")})`,format(this.solution.applied["pcb.load_current"]?.value??this.design.currents[this.design.loadNets[0]],"A",4));
       if(k){stat("Sheet resistance",`${(k.sheet_resistance[0]*1e3).toFixed(4)} mΩ/□`);stat("Stack thermal resistance",`${(k.thermal_resistance*1e4).toFixed(3)} K·cm²/W`);}
       this.results.append(stats);
       if(k?.traces.length){const t=node("table",undefined,"data-table"),h=node("tr"),head=node("thead"),body=node("tbody");
@@ -360,9 +378,9 @@ class Studio {
     }catch(e){out.textContent="Impedance unavailable: "+e.message;}
   }
   async fabrication() {
-    const d=this.design;this.message("Writing copper, profile and drill files in the Rust kernel…");
+    const d=this.design;this.message("Writing copper, profile and drill files in the Rust kernel. A large board takes a minute or two; you can keep working.");
     try{
-      const k=kernelBoard(d),{result:r}=await request("pcb",{input:{board:k.board,currents:k.currents,fabrication:true,cell:5e-5}});
+      const k=kernelBoard(d),{result:r}=await requestLong("pcb",{input:{board:k.board,currents:k.currents,fabrication:true,cell:5e-5}});
       const files=[],report=[];
       for(const l of r.gerber){const name=l.name==="top"?"emergence-F_Cu.gbr":"emergence-B_Cu.gbr";files.push({name,data:l.gerber});
         const c=gerberCheck(d,l.gerber,l.name==="top"?"top":"bottom");report.push(`${l.name} copper: ${c.loops} regions, read-back ${c.gerberArea.toFixed(1)} mm² vs drawn ${c.drawnArea.toFixed(1)} mm², ${(c.agreement*100).toFixed(1)}% agreement at a 0.1 mm raster`);}

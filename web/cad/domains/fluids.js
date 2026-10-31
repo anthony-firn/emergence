@@ -43,7 +43,8 @@ export function validateFluids(d) {
       throw new Error(`${e.id}: channel count, gap, length and K values.`);
     return { ...base, fins: e.fins, gap: e.gap, length: e.length, Kin: e.Kin, Kout: e.Kout };
   });
-  return { temperature: d.temperature, pressure: d.pressure, heatLimit: d.heatLimit, fan: { preset: d.fan.preset, shutoff: d.fan.shutoff, free: d.fan.free }, elements: out };
+  if (!finite(d.heatLoad ?? 0, 0, 1e6)) throw new Error("Invalid heat carried by the air.");
+  return { temperature: d.temperature, pressure: d.pressure, heatLimit: d.heatLimit, heatLoad: d.heatLoad ?? 0, fan: { preset: d.fan.preset, shutoff: d.fan.shutoff, free: d.fan.free }, elements: out };
 }
 // Dry air: ideal gas density, Sutherland viscosity, constant cp.
 export function air(celsius, pressure = 101325) {
@@ -106,7 +107,7 @@ export function fluidsResults(d, overrides = {}) {
   const doc = structuredClone(d);
   const sink = doc.elements.find(e => e.kind === "channels");
   if (sink) for (const [k, key] of [["fin_count", "fins"], ["sink_gap", "gap"], ["sink_height", "height"], ["sink_length", "length"], ["sink_width", "width"]]) if (overrides[k] !== undefined) sink[key] = key === "fins" ? Math.round(overrides[k]) : overrides[k];
-  const t = overrides.air_temperature ?? doc.temperature, op = operatingPoint(doc, t), heat = overrides.heat_load;
+  const t = overrides.air_temperature ?? doc.temperature, op = operatingPoint(doc, t), heat = overrides.heat_load ?? doc.heatLoad;
   return { doc, op, sink, temperature: t, heat };
 }
 export function fluidsAssumptions(d) {

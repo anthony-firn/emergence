@@ -8,10 +8,11 @@ import { project, onSolved, mechanical } from "../app.js";
 import { instances, MATERIALS } from "../domains/parts.js";
 import { opticsMesh } from "../domains/optics.js";
 import { reference } from "../core/project.js";
+import { footprintOf } from "../studio-model.js";
 import { DOMAIN_INFO } from "../domains/index.js";
 import { Renderer, M, boxMesh, discMesh } from "./gl.js";
 import { modelMesh, sinkMesh } from "./meshes.js";
-import { node, button, format, download, toast } from "./kit.js";
+import { node, button, format, download, toast, run, section as panel } from "./kit.js";
 const root = document.getElementById("render-studio");
 const COLOURS = { Mechanical: [.66, .72, .78, 1], cfrp: [.2, .21, .23, 1], "al-6061": [.75, .78, .82, 1], abs: [.24, .32, .4, 1], brass: [.78, .62, .3, 1], "steel-304": [.62, .64, .66, 1], copper: [.85, .55, .3, 1], "ti-64": [.6, .6, .63, 1], peek: [.7, .62, .45, 1], pa12: [.85, .85, .82, 1],
   sink: [.78, .8, .84, 1], board: [.12, .42, .26, 1], trace: [.85, .55, .3, 1], glass: [.55, .8, .95, .45], battery: [.85, .65, .2, 1], rotor: [.95, .55, .25, .2], wall: [.82, .8, .76, 1], window: [.55, .8, .95, .35], floor: [.42, .44, .46, 1],
@@ -40,7 +41,9 @@ const GEOMETRY = {
   },
   pcb(docs) {
     const b = docs.pcb, t = b.stackup.thickness, out = [{ mesh: box(b.width, b.height, t), matrix: M.identity(), color: COLOURS.board, label: "Board", detail: `${b.width} × ${b.height} mm · ${b.routes.length} traces` }];
-    for (const c of b.components) out.push({ mesh: box(5, 4, 3), matrix: M.translate(c.x - b.width / 2, b.height / 2 - c.y, t), color: c.footprint === "dip8" ? [.15, .15, .17, 1] : c.footprint === "transistor" ? [.3, .3, .32, 1] : [.6, .55, .45, 1], label: c.id, detail: c.name });
+    for (const c of b.components) { if (c.footprint === "via") continue; const f = footprintOf(b, c.footprint), turned = c.rotation % 180 !== 0, w = turned ? f.height : f.width, h = turned ? f.width : f.height;
+      out.push({ mesh: box(w, h, f.smd ? 1.2 : 3), matrix: M.translate(c.x - b.width / 2, b.height / 2 - c.y, t), color: /dip|soic|tdson/i.test(c.footprint) ? [.15, .15, .17, 1] : c.footprint === "transistor" ? [.3, .3, .32, 1] : [.6, .55, .45, 1], label: c.id, detail: c.name }); }
+    for (const p of b.pours) { const xs = p.points.map(q => q[0]), ys = p.points.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); out.push({ mesh: box(x1 - x0, y1 - y0, .07), matrix: M.translate((x0 + x1) / 2 - b.width / 2, b.height / 2 - (y0 + y1) / 2, p.layer === "top" ? t : -.07), color: COLOURS.trace, label: `${p.net} pour`, detail: p.layer }); }
     for (const r of b.routes) for (let k = 1; k < r.points.length; k++) { const [x0, y0] = r.points[k - 1], [x1, y1] = r.points[k], len = Math.hypot(x1 - x0, y1 - y0); if (!len) continue;
       out.push({ mesh: box(len, r.width, .1), matrix: M.mul(M.translate((x0 + x1) / 2 - b.width / 2, b.height / 2 - (y0 + y1) / 2, r.layer === "top" ? t : -.1), M.rz(-Math.atan2(y1 - y0, x1 - x0))), color: COLOURS.trace, label: `${r.from} → ${r.to}`, detail: `${r.layer} · ${r.width} mm` }); }
     return out;
@@ -149,7 +152,26 @@ function render() {
   head.append(title, tools); root.append(head);
   const stage = node("div", undefined, "render-stage"); stage.append(canvas, legend); root.append(stage, status);
   legend.textContent = "Click a part to identify it.";
+  layout();
   build();
+}
+// Where each domain's geometry sits. A row left blank is laid out automatically.
+function layout() {
+  const docs = project.store.docs, scene = docs.project.scene, sec = panel(root, "Layout", "millimetres · degrees"), table = node("table", undefined, "data-table place-table"), thead = node("thead"), tr = node("tr"), body = node("tbody"), note = node("p", "", "studio-status"); note.id = "render-layout-status";
+  for (const h of ["Domain", "X", "Y", "Z", "Tilt x", "Turn z", "Copies", "Spacing about z", ""]) tr.append(node("th", h)); thead.append(tr); table.append(thead);
+  for (const d of geometryDomains().filter(x => x !== "architecture")) {
+    const p = scene.placements[d], row = node("tr"), id = k => `render-${d}-${k}`, cell = (key, value, label) => { const i = node("input"); i.id = id(key); i.value = value ?? ""; i.setAttribute("aria-label", `${DOMAIN_INFO[d].title} ${label}`); if (key !== "count") { i.type = "number"; i.step = "any"; } const td = node("td"); td.append(i); row.append(td); i.addEventListener("change", place); return i; };
+    const read = k => document.getElementById(id(k)).value;
+    function place() { const n = k => read(k) === "" ? undefined : Number(read(k)); run("project.place", { domain: d, x: n("x") ?? 0, y: n("y") ?? 0, z: n("z") ?? 0, rx: n("rx"), rz: n("rz"), phase: n("phase"), ...(read("count") && { count: read("count") }) }, note).catch(() => {}); }
+    row.append(node("td", DOMAIN_INFO[d].title));
+    cell("x", p?.at[0], "x"); cell("y", p?.at[1], "y"); cell("z", p?.at[2], "z"); cell("rx", p?.rx, "tilt"); cell("rz", p?.rz, "turn"); cell("count", p?.count, "copies"); cell("phase", p?.phase, "spacing");
+    const auto = node("td"); if (p) auto.append(button("Auto", () => run("project.unplace", { domain: d }, note).catch(() => {}))); row.append(auto); body.append(row);
+  }
+  table.append(body); sec.append(table);
+  if (project.active().includes("architecture")) { const f = node("div", undefined, "rtl-actions"), rooms = node("select"), z = node("input"); rooms.id = "render-site-room"; rooms.setAttribute("aria-label", "Room the design sits in"); z.id = "render-site-z"; z.type = "number"; z.setAttribute("aria-label", "Height above the floor in mm"); z.placeholder = "Height above floor";
+    for (const r of docs.architecture.rooms) { const o = node("option", r.name); o.value = r.id; rooms.append(o); } rooms.value = scene.site?.room ?? ""; z.value = scene.site?.z ?? "";
+    const go = () => run("project.site", { ...(rooms.value && { room: rooms.value }), ...(z.value !== "" && { z: Number(z.value) }) }, note).catch(() => {}); rooms.addEventListener("change", go); z.addEventListener("change", go); f.append(node("span", "In the building", "panel-label"), rooms, z); sec.append(f); }
+  sec.append(note);
 }
 onSolved(s => { solution = s; if (!root.hidden) build(); });
 project.store.on(({ ids }) => { if (root.hidden) return; if (ids.includes("project")) render(); else build(); });

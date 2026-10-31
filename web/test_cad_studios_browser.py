@@ -53,6 +53,10 @@ def check(url, screenshots=None):
 
         page.locator("#studio-tab-pcb").click()
         assert page.locator("#mechanical-studio").is_hidden()
+        # The example's board is fully routed, so routing is exercised on the starter board.
+        starter = page.evaluate("async () => (await import(new URL('studio-model.js', location.href).href)).pcbExample()")
+        page.locator("#pcb-import").set_input_files({"name": "starter.json", "mimeType": "application/json", "buffer": json.dumps({"format": "emergence-studio/1", "kind": "pcb", "design": starter}).encode()})
+        page.wait_for_function("() => document.querySelector('#pcb-status').textContent.includes('Imported design')")
         assert page.locator("#pcb-canvas .pcb-pad").count() == 19
         page.locator("#pcb-route").click()
         page.locator('[data-pad="J1:1"]').click()
@@ -157,7 +161,7 @@ def check(url, screenshots=None):
             page.evaluate("(theme) => document.documentElement.dataset.theme=theme", theme)
             for width in (320, 390, 768, 1360):
                 page.set_viewport_size({"width": width, "height": 844})
-                for kind in ("system", "flight", "mechanical", "parts", "pcb", "silicon", "optics", "fluids", "architecture", "render"):
+                for kind in ("system", "flight", "mechanical", "parts", "structures", "power", "pcb", "silicon", "optics", "fluids", "architecture", "controls", "testing", "render"):
                     page.locator("#studio-tab-" + kind).click()
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), (theme, width, kind)
         browser.close()

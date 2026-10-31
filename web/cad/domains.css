@@ -156,3 +156,17 @@ body{padding-bottom:120px}
 .empty-project{border:1px dashed var(--line-2);border-radius:10px;padding:22px;margin:8px 0 26px}.empty-project h3{margin:0 0 6px}
 @media(max-width:650px){.project-heading{flex-direction:column}.project-actions{justify-content:flex-start;width:100%}.project-actions>*{flex:1}.studio-bar{flex-direction:column;align-items:stretch;gap:0}.studio-add{min-height:36px;margin-bottom:12px}.credits small{padding-left:0}}
 .project-start>*{font-size:12px;min-height:36px;margin:0;padding:6px 12px}
+/* Forms that run one command, and the panels built from them. */
+.mini-form{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-end;margin:12px 0}.mini-form label{flex:1 1 120px;min-width:0;margin:0;font-size:11px}.mini-form label.wide{flex:3 1 260px}.mini-form label.check-label{flex:0 0 auto;display:flex;align-items:center;gap:6px}.mini-form input,.mini-form select{font-size:12px;padding:6px 8px}.mini-form input[type=checkbox]{width:auto;margin:0}.mini-form button{font-size:11px;min-height:32px;padding:4px 12px;flex:0 0 auto}
+.authoring{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.authoring>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.item-list{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:5px}.item-list li{display:flex;align-items:baseline;gap:10px;font-size:12px;flex-wrap:wrap}.item-list li>span{flex:1;min-width:180px}.item-list code{font-size:10px;color:var(--dim)}.item-list button{font-size:10px;min-height:24px;padding:1px 8px}
+.feature-outline{list-style:none;margin:6px 0;padding:0;font:10px/1.7 var(--mono);color:var(--muted)}.feature-outline li b{color:var(--text);font-weight:500}
+.footprint-tools{margin:0 0 14px}.place-table input{width:76px;font-size:11px;padding:4px 6px}.place-table td{white-space:nowrap}
+.item-row{display:flex;gap:10px;align-items:center;font-size:12px;padding:3px 0}.item-row span{flex:1}.item-row button{font-size:10px;min-height:24px;padding:1px 8px}
+.mini-form.stacked{flex-direction:column;align-items:stretch}.mini-form.stacked label{flex:none}
+.item-list li>span.pill{flex:0 0 auto;min-width:0}
+/* Controls, testing and structures. */
+.campbell{width:100%;height:auto;max-width:760px}.campbell .band{fill:color-mix(in srgb,var(--cyan) 22%,transparent)}.campbell .band-hit{fill:color-mix(in srgb,var(--red) 40%,transparent)}.campbell .mode-line{stroke:var(--ember);stroke-width:2}
+.test-banner{border:1px solid color-mix(in srgb,var(--ember) 50%,var(--line-2));background:color-mix(in srgb,var(--ember) 8%,transparent);border-radius:8px;padding:12px 16px;font-size:13px;margin:12px 0 18px}
+.test-table td small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.test-table tr[data-status=passed] td:nth-child(4){color:var(--green)}.test-table tr[data-status=failed] td:nth-child(4){color:var(--red)}.test-table tr[data-status="not run"] td:nth-child(4){color:var(--ember)}.test-table button{font-size:10px;min-height:24px;padding:1px 8px}
+.mini-form textarea{font:11px/1.5 var(--mono);width:100%}

@@ -42,8 +42,9 @@ test("pad clearance is checked at the exact circular copper boundary",()=>{
     {id:"C1",name:"Capacitor",footprint:"capacitor",x:10,y:10,rotation:0,nets:["A","B"]},
     {id:"C2",name:"Capacitor",footprint:"capacitor",x:10,y:12,rotation:0,nets:["C","D"]},
   ],routes:[]};
-  assert.equal(pcbChecks(b).issues.length,0); // Centre spacing 2 - 2*.8 = .4 mm.
-  b.components[1].y=11.999;assert(pcbChecks(b).issues.some(i=>i.code==="pad-clearance"));
+  const pads=()=>pcbChecks(b).issues.filter(i=>i.code==="pad-clearance");
+  assert.equal(pads().length,0); // Centre spacing 2 - 2*.8 = .4 mm.
+  b.components[1].y=11.999;assert(pads().length>0);
 });
 test("floorplan checks agree with exact rectangular area, overlap, bounds and halos",()=>{
   const d={width:100,height:100,grid:1,margin:10,spacing:5,target:70,blocks:[

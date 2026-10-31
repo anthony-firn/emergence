@@ -8,7 +8,7 @@ export const PRESETS = {
   reference: {}, compact: { width: 32, length: 35, finHeight: 16, fins: 10, velocity: 2, current: 20 },
   optical: { width: 55, length: 65, fins: 12, opticalPower: 4, absorption: 65, current: 20 },
 };
-const UNIT = { "": "", "m/s": "m/s", A: "A", "°C": "degC", W: "W", mm: "mm", "%": "%" };
+const UNIT = { "": "", "m/s": "m/s", A: "A", "°C": "degC", W: "W", mm: "mm", "%": "%", "mΩ": "mohm" };
 export const FIELD_UNIT = key => key === "fins" ? "count" : UNIT[FIELDS[key].unit] ?? "";
 export class MechanicalState {
   constructor() { this.params = values({}); this.features = []; this.drawings = {}; }
@@ -38,9 +38,9 @@ export function mechanicalCommands(host) {
         { name: "width", type: "number", min: 1, max: 50, unit: "mm", default: 12 }, { name: "depth", type: "number", min: 1, max: 50, unit: "mm", default: 8, named: true },
         { name: "height", type: "number", min: 1, max: 50, unit: "mm", default: 6, named: true }, { name: "x", type: "number", min: -100, max: 100, unit: "mm", named: true },
         { name: "y", type: "number", min: -100, max: 100, unit: "mm", named: true, default: 0 }, { name: "z", type: "number", min: -100, max: 100, unit: "mm", named: true, default: 0 },
-        { name: "domain", type: "enum", values: ["Mechanical", "Electrical", "Thermal", "Photonics", "Radiation"], default: "Mechanical", named: true }],
+        { name: "domain", type: "enum", values: ["Mechanical", "Electrical", "Thermal", "Photonics", "Radiation"], default: "Mechanical", named: true }, { name: "id", type: "string", maxLength: 48, named: true }],
       run: a => edit(s => { if (s.features.length >= 16) throw new Error("The prototype supports sixteen custom solids.");
-        const p = { id: `part-${crypto.randomUUID().slice(0, 12)}`, name: a.name.trim() || "Part", shape: a.shape, domain: a.domain, x: a.x ?? Math.min(100, s.params.width / 2 + 20), y: a.y, z: a.z,
+        const p = { id: a.id || `part-${crypto.randomUUID().slice(0, 12)}`, name: a.name.trim() || "Part", shape: a.shape, domain: a.domain, x: a.x ?? Math.min(100, s.params.width / 2 + 20), y: a.y, z: a.z,
           width: a.width, depth: a.shape === "cylinder" ? a.width : a.depth, height: a.height };
         s.features.push(p); return { id: p.id, message: `Added ${p.name} (${p.id}).` }; }) },
     { op: "mech.update_part", title: "Edit a part's placement or dimensions", example: "mech.update_part part-1 x=40 height=8", coalesce: a => "mech.update_part:" + a.id + Object.keys(a).sort().join(),
@@ -65,7 +65,7 @@ export function mechanicalCommands(host) {
 }
 // Typed ports onto the original electrothermal project graph in Rust.
 export function mechanicalAdapter(host, request) {
-  const inputs = Object.entries(FIELDS).filter(([k]) => k !== "opticalSize").map(([id, f]) => ({ id, label: f.label, unit: FIELD_UNIT(id), min: f.min, max: f.max, base: () => host.state().params[id] }));
+  const inputs = Object.entries(FIELDS).filter(([k]) => k !== "opticalSize").map(([id, f]) => ({ id, label: f.label, unit: FIELD_UNIT(id), min: f.min, max: f.max, ...(id === "heat" && { aggregate: "sum" }), base: () => host.state().params[id] }));
   const outputs = [
     ["q1_power", "Q1 dissipation", "W"], ["q1_tj", "Q1 junction temperature", "degC"], ["sink_resistance", "Sink thermal resistance", "K/W"],
     ["trace_resistance", "Power trace resistance", "ohm"], ["sink_dp", "Sink pressure drop (Rust graph)", "Pa"], ["gap", "Fin channel gap", "mm"],
@@ -96,6 +96,6 @@ export function mechanicalAdapter(host, request) {
 export const mechanicalAssumptions = () => [
   { id: "mech.density", label: "Heat-sink density 2.70 g/cm³ (6063 aluminium)", kind: "nominal", source: "Handbook value; anodising and fasteners not included." },
   { id: "mech.channel", label: "Laminar developing channel correlations for the fin array", kind: "nominal", source: "Rust project graph; out-of-regime inputs report unavailable." },
-  { id: "mech.switching", label: "Q1 switching loss 3 W ± 30%", kind: "nominal", source: "Prescribed loss interval from the motor-driver project." },
+  { id: "mech.switching", label: "Q1 switching loss, with ±30% carried", kind: "nominal", source: "A prescribed input unless the Power studio's datasheet estimate is linked to it." },
 ];
 export { DEFAULTS };

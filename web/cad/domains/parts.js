@@ -7,7 +7,11 @@ export const MATERIALS = {
   "brass": { title: "Brass C360", density: 8.50 }, "copper": { title: "Copper C110", density: 8.96 }, "ti-64": { title: "Titanium Ti-6Al-4V", density: 4.43 },
   "cfrp": { title: "Carbon fibre / epoxy laminate", density: 1.55 }, "abs": { title: "ABS", density: 1.04 }, "peek": { title: "PEEK", density: 1.32 }, "pa12": { title: "Nylon PA12 (printed)", density: 1.01 },
 };
+// Two plain starts for a part built feature by feature; the rest are finished models.
+export const BASE_TEMPLATES = ["block", "disc"];
 export const TEMPLATES = {
+  block: { title: "Block (build from here)", material: "al-6061", model: { name: "block", cell: .5, params: { w: 60, d: 40, h: 20 }, shape: { op: "box", center: [0, 0, "h/2"], half: ["w/2", "d/2", "h/2"] } } },
+  disc: { title: "Disc (build from here)", material: "al-6061", model: { name: "disc", cell: .5, params: { diameter: 60, h: 12 }, shape: { op: "cylinder_z", center: [0, 0, "h/2"], radius: "diameter/2", height: "h" } } },
   flange: { title: "Bolted flange", material: "steel-304", model: { name: "bolted flange", cell: .6,
     params: { bolts: 6, bolt_circle: 80, bolt: 3.3, thickness: 6, bore: 25, od: "bolt_circle + 5*bolt", hub: 12 },
     shape: { op: "difference",
@@ -29,6 +33,10 @@ export const TEMPLATES = {
     params: { base: 40, plate: 4, pin: 2.5, height: 20, pitch: 6, count: 6 },
     shape: { op: "union", parts: [{ op: "box", center: [0, 0, "plate/2"], half: ["base/2", "base/2", "plate/2"] },
       { op: "array", shape: { op: "cylinder_z", center: [0, 0, "plate + height/2"], radius: "pin/2", height: "height" }, period: ["pitch", "pitch", 0], counts: ["count", "count", 1] }] } } },
+  thread: { title: "ISO metric thread", material: "steel-304", model: { name: "metric thread", cell: .1,
+    params: { diameter: 8, pitch: 1.25, length: 20 }, shape: { op: "kit", kit: "thread", args: { diameter: "diameter", pitch: "pitch", length: "length" } } } },
+  spring: { title: "Compression spring", material: "steel-304", model: { name: "compression spring", cell: .2,
+    params: { wire: 1.2, mean_diameter: 10, free_length: 30, coils: 6 }, shape: { op: "kit", kit: "spring", args: { wire: "wire", mean_diameter: "mean_diameter", free_length: "free_length", coils: "coils", steps: 240 } } } },
   gyroid: { title: "Gyroid sheet lattice", material: "pa12", model: { name: "gyroid lattice", cell: .3,
     params: { cell: 8, wall: .6, nx: 3, ny: 3, nz: 2 },
     shape: { op: "clip", shape: { op: "periodic", kind: "gyroid", cell: ["cell", "cell", "cell"], level: 0, thickness: "wall" }, min: [0, 0, 0], max: ["nx*cell", "ny*cell", "nz*cell"] } } },
@@ -87,4 +95,59 @@ export function instances(p) {
   return Array.from({ length: p.count }, (_, i) => p.pattern === "polar" ? { rz: p.rz + 360 * i / p.count, by: [p.x, p.y, p.z] } : { rz: p.rz, by: [p.x, p.y, p.z + (p.pattern === "stack" ? i * p.stack : 0)] });
 }
 export const placed = (p, inst = instances(p)[0]) => ({ ...p.model, shape: { op: "rotate", axis: [0, 0, 1], angle: inst.rz * Math.PI / 180, shape: { op: "translate", by: inst.by, shape: p.model.shape } } });
+// Building a solid feature by feature. Each step wraps the tree so far, so the
+// feature tree reads as the order a person worked in. Every number may be an
+// expression of the part's parameters. Positions are the feature's centre, mm.
+const half = v => typeof v === "number" ? v / 2 : `(${v})/2`;
+export const FEATURE_SHAPES = ["box", "cylinder", "sphere", "cone", "torus", "extrude", "revolve"];
+export function primitive({ shape, x = 0, y = 0, z = 0, width = 20, depth = 20, height = 20, radius = 10, radius2 = 5, round = 0, points, angle }) {
+  const c = [x, y, z], at = v => typeof z === "number" && typeof v === "number" ? z + v : `(${z})+(${v})`;
+  if (shape === "box") return { op: "box", center: c, half: [half(width), half(depth), half(height)], ...(round && { round }) };
+  if (shape === "cylinder") return { op: "cylinder_z", center: c, radius, height };
+  if (shape === "sphere") return { op: "sphere", center: c, radius };
+  if (shape === "cone") return { op: "cone", a: [x, y, at(typeof height === "number" ? -height / 2 : `-(${height})/2`)], b: [x, y, at(half(height))], radius_a: radius, radius_b: radius2 };
+  if (shape === "torus") return { op: "torus", center: c, major: radius, minor: radius2 };
+  if (shape === "extrude" || shape === "revolve") {
+    if (!Array.isArray(points) || points.length < 3 || !points.every(p => Array.isArray(p) && p.length === 2 && p.every(v => Number.isFinite(v) || typeof v === "string"))) throw new Error(`A ${shape} needs a sketch of at least three [x, y] points.`);
+    const sketch = { op: "polygon", loops: [points] };
+    return shape === "extrude" ? { op: "translate", by: [x, y, 0], shape: { op: "extrude", sketch, z0: at(typeof height === "number" ? -height / 2 : `-(${height})/2`), z1: at(half(height)) } }
+      : { op: "translate", by: c, shape: { op: "revolve", sketch, ...(angle !== undefined && { angle: typeof angle === "number" ? angle * Math.PI / 180 : `(${angle})*pi/180` }) } };
+  }
+  throw new Error(`Shapes: ${FEATURE_SHAPES.join(", ")}.`);
+}
+export const COMBINE = ["add", "cut", "keep", "blend"];
+export function combine(tree, how, other, k = 2) {
+  if (how === "add") return tree.op === "union" ? { ...tree, parts: [...tree.parts, other] } : { op: "union", parts: [tree, other] };
+  if (how === "cut") return { op: "difference", a: tree, b: other };
+  if (how === "keep") return { op: "intersection", parts: [tree, other] };
+  if (how === "blend") return { op: "blend", a: tree, b: other, k };
+  throw new Error(`Combine by ${COMBINE.join(", ")}.`);
+}
+export const MODIFY = ["shell", "offset", "round", "fillet", "pattern", "polar", "mirror", "move", "rotate", "scale", "clip"];
+const AXES = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
+export function modify(tree, m, cell) {
+  const { op, value = 1, axis = "z", x = 0, y = 0, z = 0, nx = 1, ny = 1, nz = 1, count = 6, min, max } = m, a = AXES[axis];
+  if (!a) throw new Error("Axes: x, y, z.");
+  if (op === "shell") return { op: "shell", shape: tree, thickness: value };
+  if (op === "offset") return { op: "offset", shape: tree, distance: value };
+  if (op === "round") return { op: "round_convex", shape: tree, radius: value, cell: cell ?? .5 };
+  if (op === "fillet") return { op: "round_concave", shape: tree, radius: value, cell: cell ?? .5 };
+  if (op === "pattern") return { op: "array", shape: tree, period: [x, y, z], counts: [nx, ny, nz] };
+  if (op === "polar") return { op: "polar_array", axis: a, count, shape: tree };
+  if (op === "mirror") return { op: "union", parts: [tree, { op: "mirror", normal: a, shape: tree }] };
+  if (op === "move") return { op: "translate", by: [x, y, z], shape: tree };
+  if (op === "rotate") return { op: "rotate", axis: a, angle: typeof value === "number" ? value * Math.PI / 180 : `(${value})*pi/180`, shape: tree };
+  if (op === "scale") return { op: "scale", factor: value, shape: tree };
+  if (op === "clip") { if (!min || !max) throw new Error("A clip needs min and max corners."); return { op: "clip", shape: tree, min, max }; }
+  throw new Error(`Operations: ${MODIFY.join(", ")}.`);
+}
+// The tree as lines a person can read, newest feature first.
+export function outline(node, depth = 0, out = []) {
+  if (!node || typeof node !== "object" || depth > 12) return out;
+  const op = node.op; if (!op) return out;
+  out.push({ depth, op, detail: op === "kit" ? node.kit : ["thickness", "distance", "radius", "count", "factor"].filter(k => node[k] !== undefined).map(k => `${k} ${node[k]}`).join(" · ") });
+  for (const k of ["a", "b", "shape"]) if (node[k] && typeof node[k] === "object") outline(node[k], depth + 1, out);
+  for (const n of node.parts ?? []) outline(n, depth + 1, out);
+  return out;
+}
 export const partsAssumptions = d => d.parts.length ? [{ id: "parts.materials", label: "Handbook densities for mass", kind: "nominal", source: "Alloy temper and print infill change mass; printed parts are taken as fully dense." }] : [];

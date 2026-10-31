@@ -44,7 +44,7 @@ export function validateOptics(d) {
   if (!d || !finite(d.wavelength, 300, 2500) || !d.source || !finite(d.source.power, 0, 100) || !finite(d.source.diameter, .1, 100)
     || !d.target || !finite(d.target.z, -1000, 5000) || !finite(d.target.diameter, .01, 500) || typeof d.target.name !== "string" || d.target.name.length > 60
     || !Number.isInteger(d.rays) || d.rays < 16 || d.rays > 4000 || !Array.isArray(d.fields ?? [0]) || (d.fields ?? [0]).length > 5 || !(d.fields ?? [0]).every(f => finite(f, 0, 45))
-    || !finite(d.pixel ?? 3.45, .5, 50) || !(d.requiredGsd === 0 || finite(d.requiredGsd ?? 1, .001, 1000)) || !Array.isArray(d.elements) || d.elements.length > 24 || new Set(d.elements.map(e => e?.id)).size !== d.elements.length)
+    || !finite(d.pixel ?? 3.45, .5, 50) || !finite(d.objectDistance ?? 60, .001, 1e6) || !(d.requiredGsd === 0 || finite(d.requiredGsd ?? 1, .001, 1000)) || !Array.isArray(d.elements) || d.elements.length > 24 || new Set(d.elements.map(e => e?.id)).size !== d.elements.length)
     throw new Error("Invalid optical system settings.");
   for (const e of d.elements) {
     if (!e || typeof e.id !== "string" || !/^[a-zA-Z][a-zA-Z0-9_-]{0,23}$/.test(e.id) || typeof e.name !== "string" || !e.name.trim() || e.name.length > 60 || !KINDS.includes(e.kind)
@@ -55,7 +55,7 @@ export function validateOptics(d) {
   }
   return {
     wavelength: d.wavelength, source: { power: d.source.power, diameter: d.source.diameter }, rays: d.rays,
-    fields: [...new Set(d.fields ?? [0])].sort((a, b) => a - b), pixel: d.pixel ?? 3.45, requiredGsd: d.requiredGsd ?? 1,
+    fields: [...new Set(d.fields ?? [0])].sort((a, b) => a - b), pixel: d.pixel ?? 3.45, requiredGsd: d.requiredGsd ?? 1, objectDistance: d.objectDistance ?? 60,
     target: { name: d.target.name, z: d.target.z, diameter: d.target.diameter },
     elements: d.elements.map(e => e.kind === "stop" ? { id: e.id, name: e.name, kind: e.kind, z: e.z, diameter: e.diameter }
       : { id: e.id, name: e.name, kind: e.kind, z: e.z, thickness: e.thickness, diameter: e.diameter, glass: e.glass, ...(e.kind === "lens" ? { r1: e.r1, r2: e.r2 } : {}) }),

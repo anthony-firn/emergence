@@ -122,8 +122,22 @@ export class System {
     }
     const converged = residual <= tolerance || !cyclic;
     this.warm = outputs; this.applied = applied;
+    // Work that reads the settled system and feeds nothing back into it: flight
+    // tests, the test plan. It runs once, after the coupled loop.
+    for (const [id, a] of this.adapters) {
+      if (!a.after || !this.enabled(id)) continue;
+      try { const r = await a.after(docs[id], { outputs, results, docs }); results[id] = { ...results[id], ...r, outputs: { ...results[id]?.outputs, ...r.outputs }, checks: [...(results[id]?.checks ?? []), ...(r.checks ?? [])] }; for (const [k, o] of Object.entries(r.outputs ?? {})) outputs[`${id}.${k}`] = { ...o, domain: id }; }
+      catch (e) { results[id] = { ...results[id], checks: [...(results[id]?.checks ?? []), { id: `${id}-after`, text: `${a.title} evaluation`, status: "unavailable", reason: e.message }] }; }
+    }
     if (!converged) issues.push({ kind: "convergence", message: `Coupled links did not settle in ${maxIterations} passes (relative change ${residual.toExponential(1)}). Values shown are the last pass.` });
     const checks = Object.entries(results).flatMap(([domain, r]) => (r.checks || []).map(c => ({ ...c, domain })));
+    // The project's own requirements, on any output. An interval that straddles
+    // a limit is undecided, not met.
+    for (const q of docs.project?.requirements ?? []) {
+      const o = outputs[q.port], p = ports.outputs.get(q.port), v = o?.value, lo = o?.lo ?? v, hi = o?.hi ?? v, bound = [q.min !== undefined && `≥ ${q.min}`, q.max !== undefined && `≤ ${q.max}`].filter(Boolean).join(" and ");
+      const inside = x => (q.min === undefined || x >= q.min) && (q.max === undefined || x <= q.max);
+      checks.push({ id: q.id, domain: "project", text: q.label || `${p?.label || q.port} ${bound}${o ? ` ${label(o.unit)}` : ""}`.trim(), ...(Number.isFinite(v) ? { status: inside(lo) && inside(hi) ? "met" : inside(v) || inside(lo) || inside(hi) ? "undecided" : "unmet", value: { nominal: v }, unit: o.unit } : { status: "unavailable", reason: o ? `${q.port} has no value.` : `${q.port} is not in this project.` }) });
+    }
     return { outputs, applied, results, checks, issues, iterations, residual, converged, cyclic, order, history, dormant, ms: performance.now() - started, ports };
   }
 }

@@ -15,9 +15,9 @@ function render() {
     const sink = op.elements.find(e => e.kind === "channels"), hero = node("div", undefined, "system-hero");
     for (const [label, v] of [["Volume flow", `${(op.Q * 1000).toFixed(3)} L/s${op.high - op.low > 1e-9 ? ` (${(op.low * 1000).toFixed(3)}–${(op.high * 1000).toFixed(3)})` : ""}`], ["Driving pressure", format(op.pressure, "Pa", 4)],
       ["Sink approach air", format(sink?.approach, "m/s", 4)], ["Channel Reynolds", sink?.re.toFixed(0)], ["Air density", `${op.props.rho.toFixed(4)} kg/m³`], ["Air temperature", format(x.temperature, "degC", 3)],
-      ["Rust graph sink Δp", format(solution.outputs["mech.sink_dp"]?.value, "Pa", 4)], ["Duct model sink Δp", format((sink.lo + sink.hi) / 2, "Pa", 4)]]) { const c = node("div", undefined, "hero-stat"); c.append(node("span", label), node("b", v ?? "—")); hero.append(c); }
+      ...(sink ? [["Rust graph sink Δp", format(solution.outputs["mech.sink_dp"]?.value, "Pa", 4)], ["Duct model sink Δp", format((sink.lo + sink.hi) / 2, "Pa", 4)]] : [])]) { const c = node("div", undefined, "hero-stat"); c.append(node("span", label), node("b", v ?? "—")); hero.append(c); }
     root.append(hero);
-    root.append(node("p", "The two sink pressure drops come from independent models: the Rust project graph treats the fins as parallel plates (Dh = 2g) with developing-flow corrections; the duct model uses the finite-aspect channel (Dh = 2gh/(g+h)) with entry and exit losses. They are shown side by side, not reconciled.", "small muted"));
+    if (sink && project.active().includes("mech")) root.append(node("p", "The two sink pressure drops come from independent models: the Rust project graph treats the fins as parallel plates (Dh = 2g) with developing-flow corrections; the duct model uses the finite-aspect channel (Dh = 2gh/(g+h)) with entry and exit losses. They are shown side by side, not reconciled.", "small muted"));
     // Schematic with per-element pressure drop.
     const sch = section(root, "Air path", `${d.elements.length} elements in series`), max = Math.max(...op.elements.map(e => (e.lo + e.hi) / 2), 1e-9), path = node("div", undefined, "air-path");
     for (const e of op.elements) {
@@ -41,16 +41,18 @@ function render() {
   for (const e of d.elements) {
     const row = node("tr"), num = (key, step, label) => { const i = node("input"); i.type = "number"; i.step = step; i.value = e[key]; i.id = `fluids-${e.id}-${key}`; i.setAttribute("aria-label", `${e.name} ${label}`);
       i.addEventListener("change", () => run("fluids.update", { id: e.id, [key]: Number(i.value) }, status).catch(() => { i.value = e[key]; })); return i; };
-    row.append(node("td", e.name), node("td", e.kind));
-    const wh = node("td"); if (e.kind === "channels") wh.append(node("span", `${e.fins - 1} × ${format(e.gap, "mm", 3)} × ${format(e.height, "mm", 3)}`)); else wh.append(num("width", 1, "width"), node("span", " × "), num("height", 1, "height")); row.append(wh);
-    const len = node("td"); if (e.kind === "duct") len.append(num("length", 1, "length")); else len.textContent = e.kind === "channels" ? format(e.length, "mm", 3) : "—"; row.append(len);
+    const nameCell = node("td"), name = node("input"); name.value = e.name; name.maxLength = 60; name.id = `fluids-${e.id}-name`; name.setAttribute("aria-label", `${e.name} name`); name.addEventListener("change", () => run("fluids.update", { id: e.id, name: name.value }, status).catch(() => { name.value = e.name; })); nameCell.append(name);
+    row.append(nameCell, node("td", e.kind));
+    const wh = node("td"); wh.append(num("width", 1, "width"), node("span", " × "), num("height", 1, "height")); if (e.kind === "channels") wh.append(node("small", " fins "), num("fins", 1, "fin count"), node("small", " gap "), num("gap", .05, "channel gap")); row.append(wh);
+    const len = node("td"); if (e.kind === "duct" || e.kind === "channels") len.append(num("length", 1, "length")); else len.textContent = "—"; row.append(len);
     const loss = node("td"); if (e.kind === "fitting") loss.append(node("span", "K "), num("K", .05, "loss coefficient")); else if (e.kind === "filter") loss.append(num("coefficient", 1, "filter coefficient"), node("small", " Pa·s/m")); else if (e.kind === "duct") loss.append(node("span", "ε "), num("roughness", .0005, "roughness")); else loss.append(node("span", "K in "), num("Kin", .05, "entry loss"), node("span", " out "), num("Kout", .05, "exit loss")); row.append(loss);
-    const del = node("td"); if (e.kind !== "channels") del.append(button("Remove", () => run("fluids.remove", { id: e.id }, status).catch(() => {}))); else del.append(node("small", "⛓ geometry from Mechanical")); row.append(del);
+    if (e.kind === "channels") loss.append(node("span", "K in "), num("Kin", .05, "entry loss"), node("span", " out "), num("Kout", .05, "exit loss"));
+    const del = node("td"); del.append(button("Remove", () => run("fluids.remove", { id: e.id }, status).catch(() => {}))); if (e.kind === "channels" && solution?.applied["fluids.sink_gap"]) del.append(node("small", " ⛓ linked geometry")); row.append(del);
     body.append(row);
   }
   table.append(body); el.append(table);
   const add = node("div", undefined, "rtl-actions");
-  add.append(button("＋ Duct", () => run("fluids.add", { kind: "duct" }, status).catch(() => {})), button("＋ Fitting", () => run("fluids.add", { kind: "fitting" }, status).catch(() => {})), button("＋ Filter", () => run("fluids.add", { kind: "filter" }, status).catch(() => {})));
+  add.append(button("＋ Duct", () => run("fluids.add", { kind: "duct" }, status).catch(() => {})), button("＋ Fitting", () => run("fluids.add", { kind: "fitting" }, status).catch(() => {})), button("＋ Filter", () => run("fluids.add", { kind: "filter" }, status).catch(() => {})), button("＋ Fin channels", () => run("fluids.add", { kind: "channels" }, status).catch(() => {}), "", "fluids-add-channels"));
   el.append(add);
   const src = section(root, "Driving pressure and air");
   const f = node("div", undefined, "field-grid");
@@ -58,6 +60,9 @@ function render() {
   if (d.fan.preset === "custom") { numberField(f, { label: "Shut-off pressure", id: "fluids-shutoff", unit: "Pa", value: d.fan.shutoff, min: 1, max: 5000, op: "fluids.fan", args: v => ({ preset: "custom", shutoff: v }), status }); numberField(f, { label: "Free delivery", id: "fluids-free", unit: "m3/s", value: d.fan.free, min: 1e-5, max: 10, step: .0001, op: "fluids.fan", args: v => ({ preset: "custom", free: v }), status }); }
   const t = numberField(f, { label: "Air temperature", id: "fluids-temperature", unit: "degC", value: d.temperature, min: -40, max: 150, op: "fluids.set", args: v => ({ temperature: v }), status });
   const chip = linkedChip(solution, "fluids.air_temperature"); if (chip) { t.disabled = true; t.parentElement.append(chip); }
+  numberField(f, { label: "Air pressure", id: "fluids-pressure", unit: "Pa", value: d.pressure, min: 5e4, max: 2e5, step: 100, op: "fluids.set", args: v => ({ pressure: v }), status });
+  const hl = numberField(f, { label: "Heat carried by the air", id: "fluids-heat", unit: "W", value: d.heatLoad, min: 0, max: 1e6, step: .5, op: "fluids.set", args: v => ({ heat: v }), status });
+  const hc = linkedChip(solution, "fluids.heat_load"); if (hc) { hl.disabled = true; hl.parentElement.append(hc); }
   numberField(f, { label: "Air temperature rise limit", id: "fluids-limit", unit: "K", value: d.heatLimit, min: .1, max: 200, op: "fluids.set", args: v => ({ heat_limit: v }), status });
   src.append(f); const w = linkedChip(solution, "fluids.drive_pressure"); if (w && d.fan.preset === "wake") src.append(w); src.append(status);
   if (r) { const c = section(root, "Fluid checks"); checkCards(c, r.checks || []); certificates(c, r.certificates); }

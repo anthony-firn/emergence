@@ -1,0 +1,26 @@
+// Records the real tool results into the project, through its own commands, so each carries the digest of what it covers.
+import { readFileSync, writeFileSync } from "node:fs";
+const S = (process.env.EVIDENCE_WORK ?? "/tmp/emergence-evidence") + "/", read = f => JSON.parse(readFileSync(S + f, "utf8"));
+const { openProject } = await import(new URL("../../web/cad/agent/headless.mjs", import.meta.url));
+const { project: p } = await openProject(undefined, { example: "drone" }), run = (op, a) => p.bus.run(op, a);
+const c = read("px4-run/compare.json"), t = c.tuned, drc = read("kicad/drc-filled.json"), copper = read("kicad/copper-compare.json"), pins = read("px4-run/firmware-pins.json");
+const date = new Date().toISOString().slice(0, 10), rec = (id, value, by, note) => run("testing.record", { id, value: +value.toFixed(3), date, by, ...(note && { note: note.slice(0, 300) }) });
+await rec("px4-params", 0, "PX4 v1.17.0", "All 29 parameters exist, every default matches, and the tuned gains are inside PX4's ranges.");
+await rec("px4-roll", t.roll.rmsDegrees, "PX4 v1.17.0, SIH", `Rise ${t.roll.px4.rise.toFixed(3)} s on PX4 against ${t.roll.sim.rise.toFixed(3)} s in the model; settle ${t.roll.px4.settle.toFixed(3)} s against ${t.roll.sim.settle.toFixed(3)} s.`);
+await rec("px4-rate", Math.abs(t.rate.px4.overshoot - t.rate.sim.overshoot), "PX4 v1.17.0, SIH", `Overshoot ${t.rate.px4.overshoot.toFixed(1)}% on PX4 against ${t.rate.sim.overshoot.toFixed(1)}% in the model, 24 steps averaged.`);
+await rec("px4-crossover", 100 * Math.abs(t.measured.crossoverHz / t.model.crossoverHz - 1), "PX4 v1.17.0, SIH", `${t.measured.crossoverHz.toFixed(2)} Hz on PX4 against ${t.model.crossoverHz.toFixed(2)} Hz in the model at the same 250 Hz loop, coherence ${t.measured.crossCoherence.toFixed(2)}.`);
+await rec("px4-phase", t.measured.phaseMargin, "PX4 v1.17.0, SIH", `The model says ${t.model.phaseMargin.toFixed(1)}° at the same 250 Hz loop, so it errs on the safe side.`);
+await rec("px4-gain", t.measured.gainMargin, "PX4 v1.17.0, SIH", `The model says ${t.model.gainMargin.toFixed(1)} dB. Coherence is ${t.measured.gainCoherence.toFixed(2)} at ${t.measured.gainMarginHz.toFixed(1)} Hz, so this is weak evidence.`);
+const errors = drc.violations.filter(v => v.severity === "error").length, warnings = drc.violations.filter(v => v.severity !== "error"), kinds = [...new Set(warnings.map(v => v.type))];
+await rec("kicad-drc", errors, "KiCad 9.0.9", `${warnings.length} warnings, all ${kinds.join(", ")}: the board's footprint library is not installed in KiCad.`);
+await rec("kicad-open", drc.unconnected_items.length, "KiCad 9.0.9");
+await rec("kicad-copper", Math.min(copper.top, copper.bottom), "KiCad 9.0.9", `${copper.top.toFixed(2)}% on top, ${copper.bottom.toFixed(2)}% on the bottom, on a 50 µm grid.`);
+await rec("am32-pins", pins.mismatches, "AM32 source, read as text", `${pins.checked} assignments checked. 50.4 V reads 2.80 V at the ADC and 3.15 V at the comparators.`);
+const thin = (tr, n) => tr.t.map((x, i) => [+x.toFixed(3), +tr.px4[i].toFixed(2), +tr.sim[i].toFixed(2)]).filter((_, i) => i % n === 0);
+for (const t of p.store.get("testing").traces ?? []) await run("testing.remove_trace", { id: t.id });
+await run("testing.trace", { id: "px4-roll", title: "15° roll step on PX4 against the model", unit: "°", rows: thin(t.traces, 3), note: "One flight, with PX4's simulated gyro noise in it.", source: "https://github.com/PX4/PX4-Autopilot/tree/v1.17.0" });
+await run("testing.trace", { id: "px4-rate", title: "30 °/s rate step on PX4 against the model", unit: "°/s", rows: thin(t.rate.trace, 2), note: "24 steps averaged. PX4 starts about 20 ms late: setpoint latency outside the feedback loop.", source: "https://github.com/PX4/PX4-Autopilot/tree/v1.17.0" });
+const s = await p.solve(), plan = s.results.testing.details;
+console.log(JSON.stringify(plan.summary)); for (const i of plan.items.filter(i => i.kind === "software")) console.log(i.status.padEnd(8), String(i.value ?? "").padEnd(8), i.unit ?? "", i.title);
+for (const c of s.checks) if (c.status !== "met") console.log(" ", c.status, c.domain, c.text, (c.reason ?? "").slice(0, 100));
+writeFileSync(new URL("../../web/cad/projects/inspection-drone.json", import.meta.url), JSON.stringify(p.file(), null, 1) + "\n"); process.exit(0);

@@ -38,6 +38,35 @@ export function selectField(root, { label, id, value, options, op, args, status 
   s.addEventListener("change", () => quiet(run(op, args(s.value), status).catch(() => { s.value = value; })));
   return s;
 }
+// A compact form that runs one command. Empty fields are left out, so the
+// command's own defaults apply; a failed command keeps what was typed.
+// What has been typed outlives any re-render, until the form is submitted.
+const drafts = new Map();
+export function miniForm(root, { id, fields, action, submit, status, cls = "" }) {
+  const form = node("div", undefined, `mini-form ${cls}`), inputs = {}, labels = {}, key = f => `${id}-${f.name}`;
+  for (const f of fields) {
+    const l = node("label", f.label), i = node(f.options ? "select" : f.long ? "textarea" : "input"); i.id = `${id}-${f.name}`; if (f.long) i.rows = 5; l.htmlFor = i.id; if (f.wide) l.classList.add("wide");
+    if (f.options) for (const [v, t] of f.options) { const o = node("option", t); o.value = v; i.append(o); }
+    else { if (f.number) { i.type = "number"; i.step = f.step ?? "any"; } if (f.check) i.type = "checkbox"; if (f.placeholder) i.placeholder = f.placeholder; if (f.list) i.setAttribute("list", f.list); i.spellcheck = false; }
+    if (f.value !== undefined) i[f.check ? "checked" : "value"] = f.value;
+    if (drafts.has(key(f))) i[f.check ? "checked" : "value"] = drafts.get(key(f));
+    i.addEventListener(f.options || f.check ? "change" : "input", () => drafts.set(key(f), f.check ? i.checked : i.value));
+    if (f.check) l.classList.add("check-label");
+    l.append(i); form.append(l); inputs[f.name] = i; labels[f.name] = l;
+  }
+  // A field with `when` shows only while it applies to the form's other values.
+  const current = () => Object.fromEntries(fields.map(f => [f.name, inputs[f.name].value]));
+  const refresh = () => { for (const f of fields) if (f.when) labels[f.name].hidden = !f.when(current()); };
+  for (const f of fields) if (f.options) inputs[f.name].addEventListener("change", refresh);
+  refresh();
+  form.append(button(action, () => {
+    const values = {};
+    for (const f of fields) { const i = inputs[f.name]; if (labels[f.name].hidden) continue; if (f.check) { if (i.checked) values[f.name] = true; } else if (i.value !== "") values[f.name] = f.number ? Number(i.value) : i.value; }
+    Promise.resolve().then(() => submit(values)).then(() => { for (const f of fields) drafts.delete(key(f)); for (const f of fields) if (f.value === undefined && !f.options) inputs[f.name][f.check ? "checked" : "value"] = f.check ? false : ""; })
+      .catch(e => { if (status) status.textContent = e.message; else toast(e.message); });
+  }, "accent", `${id}-submit`));
+  root.append(form); return inputs;
+}
 export function checkCards(root, checks) {
   const grid = node("div", undefined, "requirements domain-checks");
   for (const c of checks) {
@@ -93,10 +122,14 @@ export function lineChart({ series, x, y, width = 420, height = 220, marks = [] 
   for (const m of marks) if ([m.x, m.y].every(Number.isFinite)) root.append(svg("circle", { cx: sx(m.x), cy: sy(m.y), r: 4, class: "chart-mark" }), svg("text", { x: sx(m.x) + 7, y: sy(m.y) - 7, class: "chart-tick" }, m.label || ""));
   return root;
 }
-// Re-render a studio when its documents change or a system solve lands.
+// Re-render a studio when its documents change or a system solve lands, but
+// never under someone's fingers: a solve can land while they are typing.
+const typing = () => document.activeElement?.matches?.("input:not([type=checkbox]):not([type=range]),textarea,select");
 export function live(domains, render) {
   let pending = false;
-  const go = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; render(); }); };
+  const go = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false;
+    if (typing()) { document.activeElement.addEventListener("focusout", go, { once: true }); return; }
+    render(); }); };
   project.store.on(({ ids }) => { if (ids.some(id => domains.includes(id))) go(); });
   onSolved(go);
   return go;

@@ -20,6 +20,13 @@ export function coerce(arg, raw) {
       if (arg.min !== undefined && n < arg.min || arg.max !== undefined && n > arg.max) throw new Error(`${where} must be ${arg.min}–${arg.max}${arg.unit ? " " + arg.unit : ""}.`);
       return n;
     }
+    // A number, or an expression the kernel resolves against a part's parameters.
+    case "expr": {
+      const n = typeof raw === "number" ? raw : Number(String(raw).trim());
+      if (finite(n)) return n;
+      if (typeof raw !== "string" || !raw.trim() || raw.length > 200) throw new Error(`${where} must be a number or an expression.`);
+      return raw.trim();
+    }
     case "string": {
       const s = String(raw);
       if (s.length > (arg.maxLength ?? 120)) throw new Error(`${where} is longer than ${arg.maxLength ?? 120} characters.`);
@@ -140,7 +147,7 @@ export class CommandBus {
   // All-or-nothing across domains: any failure restores every touched domain.
   batch(list, options = {}) { const p = this.queue.then(() => this.#batch(list, options)); this.queue = p.catch(() => {}); return p; }
   async #batch(list, { source = "script", label = "Script" } = {}) {
-    if (!Array.isArray(list) || list.length > 500) throw new Error("A script is a list of up to 500 commands.");
+    if (!Array.isArray(list) || list.length > 2000) throw new Error("A script is a list of up to 2,000 commands.");
     const snaps = new Map(), results = [], entries = [];
     const take = domain => { const d = this.domains.get(domain); if (d?.snapshot && !snaps.has(domain)) snaps.set(domain, d.snapshot()); };
     try {

@@ -15,6 +15,7 @@ export const UNITS = {
   Pa: U(PRESSURE), kPa: U(PRESSURE, 1e3), bar: U(PRESSURE, 1e5),
   "m/s": U(VELOCITY), "m3/s": U(FLOW, 1, 0, "m³/s"), "L/s": U(FLOW, 1e-3), "L/min": U(FLOW, 1e-3 / 60), "m3/h": U(FLOW, 1 / 3600, 0, "m³/h"),
   A: U(CURRENT), mA: U(CURRENT, 1e-3), V: U(VOLT), mV: U(VOLT, 1e-3), ohm: U(OHM, 1, 0, "Ω"), mohm: U(OHM, 1e-3, 0, "mΩ"),
+  Hz: U(D(0, 0, -1)), rpm: U(D(0, 0, -1), 1 / 60), MPa: U(PRESSURE, 1e6), GPa: U(PRESSURE, 1e9), kgm2: U(D(2, 1), 1, 0, "kg·m²"), Nm: U(D(2, 1, -2), 1, 0, "N·m"),
   "K/W": U(D(-2, -1, 3, 0, 1)), "W/m2": U(D(0, 1, -3), 1, 0, "W/m²"), "W/mm2": U(D(0, 1, -3), 1e6, 0, "W/mm²"), "W/K": U(D(2, 1, -3, 0, -1)),
   "W/m2K": U(D(0, 1, -3, 0, -1), 1, 0, "W/m²K"), "1/h": U(D(0, 0, -1), 1 / 3600, 0, "1/h"),
 };

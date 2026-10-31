@@ -1,7 +1,7 @@
 // Optics studio: element prescription, meridional ray fan, spot diagrams.
 import { project, onSolved } from "../app.js";
 import { surfaces, sag, GLASSES, refractiveIndex, edgeThickness, elementMass, COOKE_SOURCE } from "../domains/optics.js";
-import { node, svg, button, format, numberField, checkCards, certificates, assumptionList, section, linkedChip, live, run } from "./kit.js";
+import { node, svg, button, format, numberField, textField, checkCards, certificates, assumptionList, section, linkedChip, live, run, miniForm } from "./kit.js";
 const root = document.getElementById("optics-studio");
 let solution = null;
 function layout(d, r) {
@@ -46,21 +46,22 @@ function render() {
   const tools = node("div", undefined, "studio-file-tools");
   tools.append(button("⌖ Best focus", () => run("optics.focus", {}, status).catch(() => {}), "accent", "optics-focus"));
   head.append(title, tools); root.append(head);
-  if (x) {
+  const lensed = x && d.elements.length > 0;
+  if (lensed) {
     const hero = node("div", undefined, "system-hero");
     for (const [label, v] of [["Focal length", format(x.paraxial.efl, "mm", 6)], ["Working f-number", `f/${x.fnumber.toFixed(2)}`], ["On-axis RMS spot", `${(x.trace.rms * 1000).toFixed(2)} µm`], ["Ground sample distance", `${x.gsd.toFixed(3)} cm/px at ${x.altitude} m`],
       ["Transmission (uncoated)", `${(100 * x.trace.transmitted).toFixed(1)}%`], ["Glass mass", format(x.mass, "g", 3)], ["Paraxial focus", format(x.paraxial.focus, "mm", 6)], ["Image plane", format(d.target.z, "mm", 6)]]) { const c = node("div", undefined, "hero-stat"); c.append(node("span", label), node("b", v)); hero.append(c); }
     root.append(hero);
   }
   const lay = section(root, "Meridional layout", `λ ${d.wavelength} nm · fields ${d.fields.join(", ")}° · ${d.rays} rays per field`);
-  lay.append(layout(d, x), spots(d, x));
+  if (lensed) lay.append(layout(d, x), spots(d, x)); else lay.append(node("p", "Add a lens, window or stop below to trace rays.", "small muted"));
   // Prescription table.
   const pres = section(root, "Prescription");
   const table = node("table", undefined, "data-table prescription"), head2 = node("thead"), tr = node("tr");
   for (const h of ["Element", "Kind", "z vertex", "R1", "R2", "Thickness", "Clear Ø", "Glass", "n", "Edge", "Mass", ""]) tr.append(node("th", h)); head2.append(tr); table.append(head2);
   const body = node("tbody");
   for (const e of [...d.elements].sort((a, b) => a.z - b.z)) {
-    const row = node("tr"); row.append(node("td", `${e.id} · ${e.name}`), node("td", e.kind));
+    const row = node("tr"), nameCell = node("td"), nm = node("input"); nm.value = e.name; nm.maxLength = 60; nm.id = `optics-${e.id}-name`; nm.setAttribute("aria-label", `${e.id} name`); nm.addEventListener("change", () => run("optics.update", { id: e.id, name: nm.value }, status).catch(() => { nm.value = e.name; })); nameCell.append(nm); row.append(nameCell, node("td", e.kind));
     for (const [key, step] of [["z", .01], ["r1", .001], ["r2", .001], ["thickness", .001], ["diameter", .1]]) {
       const td = node("td"); if (e[key] === undefined) { td.textContent = "—"; row.append(td); continue; }
       const i = node("input"); i.type = "number"; i.step = step; i.value = e[key]; i.id = `optics-${e.id}-${key}`; i.setAttribute("aria-label", `${e.id} ${key}`);
@@ -74,14 +75,19 @@ function render() {
   const add = node("div", undefined, "rtl-actions");
   add.append(button("＋ Lens", () => run("optics.add", { kind: "lens" }, status).catch(() => {})), button("＋ Window", () => run("optics.add", { kind: "window" }, status).catch(() => {})), button("＋ Stop", () => run("optics.add", { kind: "stop" }, status).catch(() => {})));
   pres.append(add);
-  const sys = section(root, "Source, sensor and mission");
+  const lenses = d.elements.filter(e => e.kind === "lens");
+  if (lenses.length) miniForm(pres, { id: "optics-design", action: "Solve radius", status, fields: [{ name: "id", label: "Plano-convex lens", options: lenses.map(e => [e.id, `${e.id} · ${e.name}`]) }, { name: "efl", label: "Focal length (mm)", number: true }], submit: a => run("optics.design_lens", a, status) });
+  const sys = section(root, "Source, sensor and object");
   const f = node("div", undefined, "field-grid");
   for (const [key, label, unit, min, max, step, value] of [["wavelength", "Wavelength", "nm", 300, 2500, 1, d.wavelength], ["diameter", "Entrance beam Ø", "mm", .1, 100, .1, d.source.diameter],
-    ["target_z", "Image plane z", "mm", -1000, 5000, .001, d.target.z], ["target_diameter", "Sensor diagonal", "mm", .01, 500, .1, d.target.diameter], ["rays", "Rays per field", "", 16, 4000, 1, d.rays]])
+    ["power", "Source power", "W", 0, 100, .1, d.source.power], ["target_z", "Image plane z", "mm", -1000, 5000, .001, d.target.z], ["target_diameter", "Target diameter", "mm", .01, 500, .1, d.target.diameter], ["rays", "Rays per field", "", 16, 4000, 1, d.rays],
+    ["pixel", "Pixel pitch", "µm", .5, 50, .01, d.pixel], ["required_gsd", "Required ground sample (0 for none)", "cm", 0, 1000, .01, d.requiredGsd], ["object_distance", "Object distance", "m", .001, 1e6, 1, d.objectDistance]])
     numberField(f, { label, id: `optics-${key}`, unit, value, min, max, step, op: "optics.set", args: v => ({ [key]: v }), status });
+  textField(f, { label: "Target name", id: "optics-target-name", value: d.target.name, op: "optics.set", args: v => ({ target_name: v }), status });
+  textField(f, { label: "Field angles, degrees", id: "optics-fields", value: d.fields.join(","), op: "optics.set", args: v => ({ fields: v }), status });
   sys.append(f);
   const alt = linkedChip(solution, "optics.altitude"); if (alt) sys.append(alt);
-  sys.append(node("p", `Pixel pitch ${d.pixel} µm; ${d.requiredGsd > 0 ? `required ground sample distance ≤ ${d.requiredGsd} cm` : "no ground-sample requirement set"}. Glass indices from Sellmeier fits; N-SK16 n_d = ${refractiveIndex("N-SK16", 587.56).toFixed(5)}, F2 n_d = ${refractiveIndex("F2", 587.56).toFixed(5)} (catalogue 1.62041, 1.62004).`, "small muted"), status);
+  sys.append(node("p", `Glass indices from Sellmeier fits; N-SK16 n_d = ${refractiveIndex("N-SK16", 587.56).toFixed(5)}, F2 n_d = ${refractiveIndex("F2", 587.56).toFixed(5)} (catalogue 1.62041, 1.62004).`, "small muted"), status);
   if (r) { const c = section(root, "Optical checks"); checkCards(c, r.checks || []); certificates(c, r.certificates); }
   const a = section(root, "Assumptions"); assumptionList(a, "optics");
 }

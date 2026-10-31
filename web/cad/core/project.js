@@ -4,9 +4,9 @@
 // Nothing in the system knows what is being designed: a drone, a building
 // full of servers and a single lens are all just project files.
 export const PROJECT_FORMAT = "emergence-project/1";
-export const DOMAINS = ["flight", "mech", "parts", "pcb", "silicon", "optics", "fluids", "architecture"];
+export const DOMAINS = ["flight", "mech", "parts", "structures", "power", "pcb", "silicon", "optics", "fluids", "architecture", "controls", "testing", "equations"];
 export const STUDIOS = ["system", "history", "render", "mechanical", ...DOMAINS.filter(d => d !== "mech")];
-export const projectDefault = () => ({ name: "Untitled project", summary: "", domains: [], headline: [], studies: [], optimize: null, tour: [], scene: { placements: {} }, credits: [] });
+export const projectDefault = () => ({ name: "Untitled project", summary: "", domains: [], headline: [], requirements: [], studies: [], optimize: null, tour: [], scene: { placements: {} }, credits: [] });
 
 const PORT = /^[a-z]+\.[a-zA-Z0-9_]+$/, PATH = /^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,7}$/, REF = /^[a-z]+:[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,7}$/, ID = /^[a-zA-Z][a-zA-Z0-9_-]{0,31}$/;
 const finite = (v, lo = -1e9, hi = 1e9) => Number.isFinite(v) && v >= lo && v <= hi;
@@ -28,6 +28,12 @@ export function validateProject(d) {
   const domains = list(d.domains, DOMAINS.length, "Domains").map(x => domain(x, "Each domain"));
   if (new Set(domains).size !== domains.length) throw new Error("Each domain appears once.");
   const headline = list(d.headline, 12, "Headline outputs").map(h => ({ port: port(h?.port, "A headline output"), ...(str(h.label, 60, "A headline label") && { label: h.label }) }));
+  const requirements = list(d.requirements, 32, "Requirements").map(q => {
+    if (!q || typeof q.id !== "string" || !ID.test(q.id)) throw new Error("Each requirement needs an id.");
+    if (q.max === undefined && q.min === undefined || q.max !== undefined && !finite(q.max) || q.min !== undefined && !finite(q.min)) throw new Error(`Requirement ${q.id} needs a min or max.`);
+    return { id: q.id, port: port(q.port, "A requirement"), ...(q.min !== undefined && { min: q.min }), ...(q.max !== undefined && { max: q.max }), ...(str(q.label, 80, "A requirement label") && { label: q.label }) };
+  });
+  if (new Set(requirements.map(q => q.id)).size !== requirements.length) throw new Error("Requirement ids must be unique.");
   const studies = list(d.studies, 16, "Study inputs").map(s => {
     if (!s || typeof s.id !== "string" || !ID.test(s.id)) throw new Error("Each study input needs an id.");
     const out = { id: s.id, label: str(s.label, 60, "A study label", false), domain: domain(s.domain, "A study domain"), path: path(s.path, "A study path") };
@@ -43,7 +49,6 @@ export function validateProject(d) {
       if (!finite(v?.min) || !finite(v.max) || v.max <= v.min || !finite(v.step, 1e-9) || v.step > v.max - v.min) throw new Error("Each variable needs min < max and a step within the range.");
       return { domain: domain(v.domain, "A variable domain"), path: path(v.path, "A variable path"), label: str(v.label, 60, "A variable label", false), min: v.min, max: v.max, step: v.step, ...(v.integer && { integer: true }) };
     });
-    if (!variables.length) throw new Error("An optimisation needs at least one variable.");
     const constraints = list(o.constraints, 8, "Constraints").map(c => {
       if (c?.max === undefined && c?.min === undefined || c.max !== undefined && !finite(c.max) || c.min !== undefined && !finite(c.min)) throw new Error("Each constraint needs a min or max.");
       return { port: port(c.port, "A constraint port"), ...(c.min !== undefined && { min: c.min }), ...(c.max !== undefined && { max: c.max }), ...(str(c.label, 80, "A constraint label") && { label: c.label }) };
@@ -71,12 +76,12 @@ export function validateProject(d) {
   }
   const site = d.scene?.site;
   if (site && (typeof site !== "object" || site.room !== undefined && (typeof site.room !== "string" || !ID.test(site.room)) || site.z !== undefined && !finite(site.z, -1e5, 1e5))) throw new Error("The scene site is { room, z }.");
-  const credits = list(d.credits, 16, "Credits").map(c => {
+  const credits = list(d.credits, 32, "Credits").map(c => {
     if (!c || typeof c.url !== "string" || !/^https:\/\/[^\s]{4,300}$/.test(c.url)) throw new Error("Each credit links an https URL.");
     return { title: str(c.title, 120, "A credit title", false), url: c.url, ...(c.domain && { domain: domain(c.domain, "A credit domain") }),
       ...(str(c.licence, 40, "A licence") && { licence: c.licence }), ...(str(c.note, 300, "A credit note") && { note: c.note }) };
   });
-  return { name, summary: str(d.summary, 600, "Summary") ?? "", domains, headline, studies, optimize, tour,
+  return { name, summary: str(d.summary, 600, "Summary") ?? "", domains, headline, requirements, studies, optimize, tour,
     scene: { placements, ...(site && { site: { ...(site.room && { room: site.room }), ...(site.z !== undefined && { z: site.z }) } }) }, credits };
 }
 

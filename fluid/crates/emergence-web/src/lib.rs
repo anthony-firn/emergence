@@ -200,7 +200,7 @@ fn workspace_config(input: &Value) -> Result<Value, String> {
     let fins = setting(p,"fins",9.,5.,14.)?;
     if fins.fract() != 0. { return Err("Fin count must be an integer".into()); }
     let velocity = setting(p,"velocity",2.5,0.5,4.)?;
-    let current = setting(p,"current",30.,5.,40.)?;
+    let current = setting(p,"current",30.,0.5,40.)?;
     let ambient = setting(p,"ambient",45.,15.,60.)?;
     let heat = setting(p,"heat",0.,0.,10.)?;
     let width = setting(p,"width",40.,30.,70.)?;
@@ -232,7 +232,15 @@ fn workspace_config(input: &Value) -> Result<Value, String> {
     // Optical coupling is prescribed absorbed power P*a, not inferred from
     // the independent sphere-scattering experiment. Conservation is exact
     // for this boundary model; the original loss interval is retained.
-    doc.params.get_mut("q1.switching_loss").unwrap().value = format!("{} W", 3.0 + heat + optical);
+    // A linked power stage supplies its own on-resistance and switching loss.
+    let switching = setting(p,"switching",3.,0.,50.)?;
+    doc.params.get_mut("q1.switching_loss").unwrap().value = format!("{} W", switching + heat + optical);
+    let rds = setting(p,"rdsOn",4.5,0.1,100.)?;
+    if rds != 4.5 {
+        let param = doc.params.get_mut("q1.rds_on_25").unwrap();
+        param.value = format!("{rds} mOhm");
+        param.tol = None;
+    }
     let p = project::Project::new(doc, ".", Default::default())?;
     let e = p.evaluate();
     let checks: Vec<_> = e.checks.values().map(|c|json!({

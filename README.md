@@ -72,22 +72,31 @@ negative result: on Taylor–Green it did not beat the best fixed grid.
 The **[cross-domain CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**
 designs anything that spans domains. A project is a file: the domains it uses
 (any of flight sizing, a power stage's mechanical and electrothermal design,
-feature-tree parts on the Rust kernel, PCB, silicon, optics, fluids and
-architecture), one design document per domain, the typed, unit-checked links
+feature-tree parts on the Rust kernel, structures, power electronics, PCB, silicon,
+optics, fluids, architecture, controls, test plans and your own equations), one design document per domain, the typed, unit-checked links
 between their ports, and what to watch (headline outputs, sensitivity inputs,
 an optimisation, a tour and the 3D layout). One solver runs the project's
 domains in dependency order, iterates the coupled loops and reports whether they
 settle. Two example project files ship in `web/cad/projects/`: an inspection
-quadcopter, whose weight spiral (mass → thrust → ESC current → MOSFET heat →
-heat-sink size → mass) closes through eight domains, and an edge-compute shelter,
-whose accelerator nodes heat the building that supplies their inlet air. Blank
-projects grow by adding domains. Every edit is a command shared by the UI, a
-command line, the tours, scripts, a Node CLI and an MCP server, which open the
-same project files (`node web/cad/agent/cli.mjs new my.emergence.json --example
+quadcopter built from real parts (published motor and propeller bench data, a routed
+ESC with data sheet MOSFETs and an STM32F051 wired for AM32, gains flown on real PX4
+firmware and a board that passes KiCad's own checks), whose
+weight spiral (mass → thrust → motor current → MOSFET heat → heat-sink size → mass)
+closes through twelve domains, and an edge-compute shelter,
+whose accelerator nodes heat the building that supplies their inlet air. A blank
+project starts with nothing: add domains empty or with a starter, build solids
+feature by feature, make footprints, write your own equations and requirements.
+Both examples rebuild exactly from blank, and any project can be read as its build
+script. Every edit is a command shared by the UI, a command line, the tours,
+scripts, a Node CLI and an MCP server, which open the same project files (`node web/cad/agent/cli.mjs new my.emergence.json --example
 drone`, `node web/cad/agent/mcp.mjs --project my.emergence.json`), and every
 document is part of each revision. Public reference designs: a Tiny Tapeout PWM
 motor controller (Apache-2.0), the Optiland Cooke triplet (MIT) and the ASHRAE
-140 BESTEST 600 envelope.
+140 BESTEST 600 envelope. The test plan keeps simulation, correlation with published
+measurements, real-software results and physical tests apart, and a recorded result goes
+stale if the design changes under it. Nothing in the quadcopter has been built, it has
+flown only on a simulated aircraft, and its physical tests read "not run" until someone
+records a result.
 See [architecture, references and checks](analysis/cross_domain_cad.md).
 
 **[Collaborative CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**:

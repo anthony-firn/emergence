@@ -152,9 +152,9 @@ def check(url, screenshots=None):
 
         page.locator("#studio-tab-silicon").focus()
         page.keyboard.press("Home")
-        assert page.locator("#studio-tab-system").get_attribute("aria-selected") == "true"
+        assert page.locator("#studio-tab-render").get_attribute("aria-selected") == "true"
         page.keyboard.press("ArrowRight")
-        assert page.locator("#studio-tab-flight").get_attribute("aria-selected") == "true"
+        assert page.locator("#studio-tab-system").get_attribute("aria-selected") == "true"
         page.keyboard.press("End")
         assert page.locator("#studio-tab-history").get_attribute("aria-selected") == "true"
         for theme in ("light", "dark"):

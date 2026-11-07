@@ -99,6 +99,26 @@ flown only on a simulated aircraft, and its physical tests read "not run" until 
 records a result.
 See [architecture, references and checks](analysis/cross_domain_cad.md).
 
+The browser opens in a Blender-inspired Layout workspace: a central 3D viewport,
+workspace tabs across the top, a scene outliner and contextual properties on the
+right, and a collapsible command console below. Select a collection or a part to
+inspect it; placement and part edits use the same undoable commands as the domain
+studios. The side rail offers standard camera views and scene fit. Drag the panel
+divider to resize Properties, press **N** to hide it, **Ctrl+Space** to maximize the
+editor, and **F3** for command search. Layout preferences stay on this device;
+project files and peer revisions contain the design. Capabilities, model limits
+and the donation link remain in Help and the header. This layout does not add
+Blender file compatibility or mesh-editing tools.
+
+For a UI-only release, `python3 web/build.py --out /tmp/emergence-ui
+--reuse-wasm-from /path/to/previous-package` verifies the previous WASM checksum,
+requires unchanged Rust sources, and records both the new UI commit and the
+original WASM commit in `BUILD.json`. Omit the reuse option to compile Rust.
+Run `python3 web/test_cad_editor_browser.py http://localhost:PORT/play/emergence/cad/`
+against the packaged site to check real edits, undo, picking, camera controls,
+panel preferences, keyboard navigation, mobile widths and the production CSP.
+
+
 **[Collaborative CAD workspace](https://www.evolvetech.dev/play/emergence/cad/)**:
 edit cooling geometry, add and place box/cylinder parts, branch and review changes,
 and exchange revisions through WebRTC or portable project files. Dimensions drive

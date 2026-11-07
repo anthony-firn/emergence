@@ -26,6 +26,8 @@ def check(url, screenshots=None):
         solved = "() => window.emergence.solution && window.emergence.solution.outputs['flight.total_mass']"
         page.goto(url, wait_until="networkidle")
         page.wait_for_function(solved, timeout=60000)
+        # Layout is the default workspace; this suite exercises the System studio.
+        page.locator("#studio-tab-system").click()
         assert page.locator("#system-studio").is_visible()
         value = lambda port: page.evaluate(f"() => window.emergence.solution.outputs['{port}'].value")
 

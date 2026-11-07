@@ -12,9 +12,10 @@
   <link rel="stylesheet" href="workspace.css">
   <link rel="stylesheet" href="studios.css">
   <link rel="stylesheet" href="domains.css">
+  <link rel="stylesheet" href="editor.css">
   <script type="module" src="shell.js"></script>
 </head>
-<body>
+<body class="editor-shell">
   <a class="skip" href="#main">Skip to workspace</a>
   <header class="app-header">
     <a class="app-brand" href="/projects/emergence/"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 2 13 7.5v15L16 32 3 24.5v-15L16 2Z M3 9.5 16 17l13-7.5M16 17v15M9.5 5.7 23 13.3v7.5l-6.5 3.7" stroke="currentColor" stroke-width="1.5"/></svg><strong>emergence<span> / CAD</span></strong></a>
@@ -26,6 +27,7 @@
     <div class="repo-bar"><div class="repo-name"><span aria-hidden="true">◇</span> evolvetech <span>/</span> <strong id="project-slug">project</strong><span class="pill">Local first</span></div><div class="repo-tools"><button id="export" type="button" title="Every revision, review and design document, sealed with SHA-256">↓ Export history</button><label class="file-button" for="import" title="Merge an exported history of this project">↑ Merge history<input id="import" type="file" accept="application/json,.json"></label><button id="connect" class="accent" type="button">⇄ Connect peers <span id="peer-count">0</span></button></div></div>
     <div class="branch-bar"><label for="branch">⑂</label><select id="branch" aria-label="Active branch"></select><button id="new-branch" type="button">＋ New branch</button><span class="branch-separator"></span><span id="head-label" class="mono"></span><span id="sync-status" role="status">Your workspace is local. Connect a peer to exchange revisions.</span><span id="global-draft" class="global-draft"></span><button id="global-save" type="button" class="accent" disabled>Save revision…</button><button id="global-reviews" type="button">⑂ Reviews &amp; history</button></div>
     <div class="studio-bar"><div class="studio-switch" role="tablist" aria-label="Design studios">
+      <button id="studio-tab-render" type="button" role="tab" aria-selected="false" aria-controls="render-studio" tabindex="-1" data-studio="render"><span class="studio-icon">◭</span><span><strong>Layout</strong><small>Whole-system 3D</small></span><b id="badge-render"></b></button>
       <button id="studio-tab-system" type="button" role="tab" aria-selected="true" aria-controls="system-studio" data-studio="system"><span class="studio-icon">◎</span><span><strong>System</strong><small>Links · checks · assumptions</small></span><b id="badge-system"></b></button>
       <button id="studio-tab-flight" type="button" role="tab" aria-selected="false" aria-controls="flight-studio" tabindex="-1" data-studio="flight"><span class="studio-icon">✈</span><span><strong>Flight</strong><small>Mass · thrust · endurance</small></span><b id="badge-flight"></b></button>
       <button id="studio-tab-mechanical" type="button" role="tab" aria-selected="false" aria-controls="mechanical-studio" tabindex="-1" data-studio="mechanical"><span class="studio-icon">⬡</span><span><strong>Mechanical</strong><small>Power stage · assembly · drawing</small></span><b id="badge-mechanical"></b></button>
@@ -40,7 +42,6 @@
       <button id="studio-tab-controls" type="button" role="tab" aria-selected="false" aria-controls="controls-studio" tabindex="-1" data-studio="controls"><span class="studio-icon">◉</span><span><strong>Controls</strong><small>PX4 · flight tests</small></span><b id="badge-controls"></b></button>
       <button id="studio-tab-testing" type="button" role="tab" aria-selected="false" aria-controls="testing-studio" tabindex="-1" data-studio="testing"><span class="studio-icon">✓</span><span><strong>Testing</strong><small>Evidence · test plan</small></span><b id="badge-testing"></b></button>
       <button id="studio-tab-equations" type="button" role="tab" aria-selected="false" aria-controls="equations-studio" tabindex="-1" data-studio="equations"><span class="studio-icon">ƒ</span><span><strong>Equations</strong><small>Your own formulas</small></span><b id="badge-equations"></b></button>
-      <button id="studio-tab-render" type="button" role="tab" aria-selected="false" aria-controls="render-studio" tabindex="-1" data-studio="render"><span class="studio-icon">◭</span><span><strong>Render</strong><small>Whole-system 3D</small></span><b id="badge-render"></b></button>
       <button id="studio-tab-history" type="button" role="tab" aria-selected="false" aria-controls="history-studio" tabindex="-1" data-studio="history"><span class="studio-icon">◷</span><span><strong>History</strong><small>Revisions · reviews · merge</small></span><b id="badge-history"></b></button>
     </div><button id="studio-add" type="button" class="studio-add" aria-haspopup="dialog">＋ Domain</button></div>
     <section id="system-studio" role="tabpanel" aria-labelledby="studio-tab-system"></section>

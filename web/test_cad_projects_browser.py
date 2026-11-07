@@ -77,7 +77,7 @@ def check(url, screenshots=None):
         # A blank project grows by the UI; removing a domain leaves its links dormant.
         page.locator("#projects-open").click(); page.locator("#project-new").click()
         page.wait_for_selector(".empty-project", timeout=60000)
-        assert tabs() == ["system", "render", "history"]
+        assert tabs() == ["render", "system", "history"]
         page.locator("#system-starter-optics").click(); page.wait_for_function("() => !document.querySelector('#studio-tab-optics').hidden")
         page.locator("#studio-add").click(); page.locator('#domain-choices [data-domain="fluids"]').get_by_role("button", name="Add starter").click()
         page.wait_for_function("() => !document.querySelector('#studio-tab-fluids').hidden")

@@ -1,3 +1,4 @@
+import { mountEditor } from './editor.js';
 // The page shell: the open project's heading and studio tabs, the project
 // and domain menus, the command line, the global save bar, live status badges
 // and the project's guided tour. Studios load as independent modules.
@@ -254,3 +255,6 @@ function endTour() {
   tourSnapshot = null; $("tour").hidden = true; selectStudio("system");
 }
 $("tour-close").addEventListener("click", endTour);
+
+// Arrange the existing editors after their controls and command handlers exist.
+mountEditor({ selectStudio, getStudio: () => activeStudio });

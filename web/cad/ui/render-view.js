@@ -20,6 +20,7 @@ const COLOURS = { Mechanical: [.66, .72, .78, 1], cfrp: [.2, .21, .23, 1], "al-6
 const boxes = new Map();
 const box = (w, d, h) => { const k = `${w}|${d}|${h}`; if (!boxes.has(k)) boxes.set(k, boxMesh(w, d, h)); return boxes.get(k); };
 const deg = Math.PI / 180;
+let sceneItems = [], selection = null;
 let viewer = null, scope = "design", section = false, solution = null, generation = 0;
 const canvas = node("canvas", undefined, "render-canvas"); canvas.id = "render-canvas"; canvas.tabIndex = 0; canvas.setAttribute("aria-label", "Whole-system 3D view. Drag to orbit, scroll to zoom, shift-drag to pan, click to identify a part.");
 const status = node("p", "", "mesh-info"); status.id = "render-status";
@@ -29,7 +30,7 @@ const GEOMETRY = {
   async parts(docs) {
     const out = [];
     for (const p of docs.parts.parts) { const mesh = await modelMesh(p.model, p.overrides);
-      for (const inst of instances(p)) out.push({ mesh, matrix: M.mul(M.rz(inst.rz * deg), M.translate(...inst.by)), color: COLOURS[p.material] || COLOURS.Mechanical, label: p.name, detail: `${MATERIALS[p.material].title} · ${format(mesh.volume * MATERIALS[p.material].density / 1000, "g", 3)} each` }); }
+      for (const inst of instances(p)) out.push({ mesh, matrix: M.mul(M.rz(inst.rz * deg), M.translate(...inst.by)), color: COLOURS[p.material] || COLOURS.Mechanical, label: p.name, objectId: p.id, detail: `${MATERIALS[p.material].title} · ${format(mesh.volume * MATERIALS[p.material].density / 1000, "g", 3)} each` }); }
     return out;
   },
   async mech() {
@@ -42,7 +43,7 @@ const GEOMETRY = {
   pcb(docs) {
     const b = docs.pcb, t = b.stackup.thickness, out = [{ mesh: box(b.width, b.height, t), matrix: M.identity(), color: COLOURS.board, label: "Board", detail: `${b.width} × ${b.height} mm · ${b.routes.length} traces` }];
     for (const c of b.components) { if (c.footprint === "via") continue; const f = footprintOf(b, c.footprint), turned = c.rotation % 180 !== 0, w = turned ? f.height : f.width, h = turned ? f.width : f.height;
-      out.push({ mesh: box(w, h, f.smd ? 1.2 : 3), matrix: M.translate(c.x - b.width / 2, b.height / 2 - c.y, t), color: /dip|soic|tdson/i.test(c.footprint) ? [.15, .15, .17, 1] : c.footprint === "transistor" ? [.3, .3, .32, 1] : [.6, .55, .45, 1], label: c.id, detail: c.name }); }
+      out.push({ mesh: box(w, h, f.smd ? 1.2 : 3), matrix: M.translate(c.x - b.width / 2, b.height / 2 - c.y, t), color: /dip|soic|tdson/i.test(c.footprint) ? [.15, .15, .17, 1] : c.footprint === "transistor" ? [.3, .3, .32, 1] : [.6, .55, .45, 1], label: c.id, objectId: c.id, detail: c.name }); }
     for (const p of b.pours) { const xs = p.points.map(q => q[0]), ys = p.points.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); out.push({ mesh: box(x1 - x0, y1 - y0, .07), matrix: M.translate((x0 + x1) / 2 - b.width / 2, b.height / 2 - (y0 + y1) / 2, p.layer === "top" ? t : -.07), color: COLOURS.trace, label: `${p.net} pour`, detail: p.layer }); }
     for (const r of b.routes) for (let k = 1; k < r.points.length; k++) { const [x0, y0] = r.points[k - 1], [x1, y1] = r.points[k], len = Math.hypot(x1 - x0, y1 - y0); if (!len) continue;
       out.push({ mesh: box(len, r.width, .1), matrix: M.mul(M.translate((x0 + x1) / 2 - b.width / 2, b.height / 2 - (y0 + y1) / 2, r.layer === "top" ? t : -.1), M.rz(-Math.atan2(y1 - y0, x1 - x0))), color: COLOURS.trace, label: `${r.from} → ${r.to}`, detail: `${r.layer} · ${r.width} mm` }); }
@@ -51,7 +52,7 @@ const GEOMETRY = {
   silicon(docs) {
     // The die at true size: the floorplan is in micrometres.
     const d = docs.silicon, k = 1e-3, out = [{ mesh: box(d.width * k, d.height * k, .3), matrix: M.identity(), color: COLOURS.die, label: "Die", detail: `${(d.width * k).toFixed(1)} × ${(d.height * k).toFixed(1)} mm` }];
-    for (const b of d.blocks) out.push({ mesh: box(b.width * k, b.height * k, .05), matrix: M.translate((b.x + b.width / 2 - d.width / 2) * k, (d.height / 2 - b.y - b.height / 2) * k, .3), color: COLOURS[b.kind], label: b.name, detail: `${b.kind} · ${b.power} mW planned` });
+    for (const b of d.blocks) out.push({ mesh: box(b.width * k, b.height * k, .05), matrix: M.translate((b.x + b.width / 2 - d.width / 2) * k, (d.height / 2 - b.y - b.height / 2) * k, .3), color: COLOURS[b.kind], label: b.name, objectId: b.id, detail: `${b.kind} · ${b.power} mW planned` });
     return out;
   },
   async optics(docs) {
@@ -71,12 +72,12 @@ function building(docs, out) {
   const a = docs.architecture, mm = 1000, wall = 200;
   for (const r of a.rooms) {
     const x0 = r.x * mm, y0 = -r.y * mm, w = r.width * mm, d = r.depth * mm, h = r.height * mm, z = solution?.results.architecture?.details?.rooms.find(q => q.id === r.id);
-    out.push({ mesh: box(w, d, 60), matrix: M.translate(x0 + w / 2, y0 - d / 2, -60), color: COLOURS.floor, label: r.name, detail: z ? `${z.temperature.toFixed(1)} °C · ${r.mode}` : r.mode });
+    out.push({ mesh: box(w, d, 60), matrix: M.translate(x0 + w / 2, y0 - d / 2, -60), color: COLOURS.floor, label: r.name, domain: "architecture", objectId: r.id, detail: z ? `${z.temperature.toFixed(1)} °C · ${r.mode}` : r.mode });
     for (const [side, cx, cy, len, rot] of [["north", x0 + w / 2, y0, w, 0], ["south", x0 + w / 2, y0 - d, w, 0], ["west", x0, y0 - d / 2, d, Math.PI / 2], ["east", x0 + w, y0 - d / 2, d, Math.PI / 2]]) {
       const wl = r.walls[side]; if (!wl.exterior && side !== "south" && side !== "east") continue;
       const glass = wl.window > 0 ? Math.min(.9, wl.window / (len / mm * r.height)) : 0;
-      out.push({ mesh: box(len * (1 - glass), wall, h), matrix: M.mul(M.translate(cx, cy, 0), M.rz(rot), M.translate(len * glass / 2, 0, 0)), color: COLOURS.wall, label: `${r.name} · ${side} wall`, detail: wl.exterior ? `U ${wl.U} W/m²K` : "interior" });
-      if (glass) out.push({ mesh: box(len * glass, wall / 3, h * .6), matrix: M.mul(M.translate(cx, cy, h * .25), M.rz(rot), M.translate(-len * (1 - glass) / 2, 0, 0)), color: COLOURS.window, label: `${r.name} · ${side} window`, detail: `${wl.window} m² · SHGC ${a.glazing.shgc}` });
+      out.push({ mesh: box(len * (1 - glass), wall, h), matrix: M.mul(M.translate(cx, cy, 0), M.rz(rot), M.translate(len * glass / 2, 0, 0)), color: COLOURS.wall, label: `${r.name} · ${side} wall`, domain: "architecture", objectId: r.id, detail: wl.exterior ? `U ${wl.U} W/m²K` : "interior" });
+      if (glass) out.push({ mesh: box(len * glass, wall / 3, h * .6), matrix: M.mul(M.translate(cx, cy, h * .25), M.rz(rot), M.translate(-len * (1 - glass) / 2, 0, 0)), color: COLOURS.window, label: `${r.name} · ${side} window`, domain: "architecture", objectId: r.id, detail: `${wl.window} m² · SHGC ${a.glazing.shgc}` });
     }
   }
 }
@@ -94,7 +95,12 @@ function bounds(items) {
 const geometryDomains = () => project.active().filter(d => GEOMETRY[d]);
 async function build() {
   const gen = ++generation; viewer ||= new Renderer(canvas);
-  viewer.onpick = it => { legend.textContent = it ? `${it.label}${it.detail ? " · " + it.detail : ""}` : "Click a part to identify it."; };
+  viewer.onpick = it => {
+    legend.textContent = it ? `${it.label}${it.detail ? " · " + it.detail : ""}` : "Click a part to identify it.";
+    selection = it?.domain ? { domain: it.domain, id: it.objectId, name: it.label } : null;
+    highlight();
+    document.dispatchEvent(new CustomEvent('emergence:selection', { detail: selection }));
+  };
   status.textContent = "Meshing every domain in the Rust kernel…";
   const docs = { ...project.store.docs, mech: mechanical.state() }, scene = docs.project.scene, items = [], t0 = performance.now();
   try {
@@ -126,11 +132,13 @@ async function build() {
       building(docs, items);
     }
     if (gen !== generation) return;
-    if (!items.length) { viewer.set([], { size: 100, step: 10, z: 0 }); status.textContent = project.active().length ? "None of this project's domains has 3D geometry yet: parts, mechanical, PCB, silicon, optics, flight and architecture do." : "Add a domain to see it here."; return; }
+    if (!items.length) { sceneItems = []; viewer.set([], { size: 100, step: 10, z: 0 }); status.textContent = project.active().length ? "None of this project's domains has 3D geometry yet: parts, mechanical, PCB, silicon, optics, flight and architecture do." : "Add a domain to see it here."; return; }
     for (const it of items) it.gpu = it.mesh.gpu ||= viewer.upload(it.mesh);
     const [lo, hi] = bounds(items), span = Math.max(hi[0] - lo[0], hi[1] - lo[1], 1);
     viewer.plane = section ? [0, 1, 0, -(lo[1] + hi[1]) / 2] : null;
+    sceneItems = items;
     viewer.set(items, { size: span * .75, step: 10 ** Math.floor(Math.log10(span / 4)), z: lo[2] - span * .01 });
+    if (selection) highlight();
     const key = `${scope}|${project.active().join()}`;
     if (viewer.fitted !== key) { viewer.fit(lo, hi); viewer.fitted = key; }
     const triangles = items.reduce((s, it) => s + (it.mesh.indices?.length ?? 0) / 3, 0);
@@ -178,3 +186,19 @@ project.store.on(({ ids }) => { if (root.hidden) return; if (ids.includes("proje
 document.addEventListener("emergence:studio", e => { if (e.detail === "render") try { render(); } catch (err) { root.replaceChildren(node("p", `3D view unavailable: ${err.message}`, "conflict")); } });
 // Built on first view: hidden studios do not queue kernel work at start-up.
 if (!root.hidden) try { render(); } catch (e) { root.append(node("p", `3D view unavailable: ${e.message}`, "conflict")); }
+
+// Editor chrome controls the same renderer and camera used by the Render studio.
+function highlight() {
+  if (!viewer) return;
+  viewer.set(sceneItems.map(it => selection && it.domain === selection.domain && (!selection.id || it.objectId === selection.id)
+    ? { ...it, color: [.95, .58, .27, it.color[3]] } : it));
+}
+document.addEventListener('emergence:selection-view', e => { selection = e.detail; highlight(); });
+document.addEventListener('emergence:viewport', e => {
+  if (!viewer) return;
+  if (e.detail.action === 'fit') { if (sceneItems.length) viewer.fit(...bounds(sceneItems)); }
+  else if (e.detail.action === 'camera') {
+    const angles = { top: [0, Math.PI / 2 - .001], front: [0, 0], right: [Math.PI / 2, 0], iso: [-.7, .55] }[e.detail.view];
+    if (angles) { [viewer.yaw, viewer.pitch] = angles; viewer.draw(); }
+  }
+});

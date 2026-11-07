@@ -118,19 +118,31 @@ project.bus.on(() => renderDraft());
 // Real Rust models run in the shared lab Worker, under the same site CSP.
 onModelStatus(({ error }) => { $("model-status").textContent = `Models unavailable: ${error.message}. Reload to retry.`; });
 const scene = new Scene($("assembly"));
-function draw() { scene.update(params, domain, $("exploded").checked,features,selected,hiddenParts); $("geometry-label").textContent = `${params.width} × ${params.length} mm · ${params.fins} fins · ${params.finHeight} mm height`; $("stl").disabled=["board","q1","optic"].includes(selected); }
+const assemblyContext = () => {
+  const docs=project.store.docs;
+  return project.active().includes("pcb") ? {board:docs.pcb,pcbPlacement:docs.project.scene.placements.pcb,mechPlacement:docs.project.scene.placements.mech} : null;
+};
+const visibleParts = () => assemblyParts(params,features,assemblyContext());
+const assemblyNote=el("p",undefined,"small muted");assemblyNote.id="mechanical-assembly-note";
+$("assembly").closest(".viewport-panel").querySelector(".panel-toolbar").after(assemblyNote);
+project.store.on(({ids})=>{if(ids.some(id=>["pcb","project"].includes(id)))renderTree();});
+function draw() { const context=assemblyContext();
+  scene.update(params, domain, $("exploded").checked,features,selected,hiddenParts,context);
+  assemblyNote.textContent=context ? "Live PCB positions · schematic package envelopes. Heat-sink mounting, clearance and thermal contact are not validated. Explode moves the populated board together." : "Schematic electrothermal study; heat-sink dimensions are parametric.";
+  $("assembly").setAttribute("aria-label",context?"PCB-linked cooling assembly. Component positions come from the PCB; mounting and thermal contact are not validated. Drag or use arrow keys to orbit.":"Electrothermal assembly. Drag or use arrow keys to orbit."); $("geometry-label").textContent = `${params.width} × ${params.length} mm · ${params.fins} fins · ${params.finHeight} mm height`; $("stl").disabled=visibleParts().find(p=>p.id===selected)?.shape==="context"; }
 scene.onselect=id=>selectPart(id);
-function selectPart(id){selected=id;const part=assemblyParts(params,features).find(f=>f.id===id);if(part)domain=part.domain;renderDomains();renderTree();renderParameters();}
+function selectPart(id){selected=id;const part=visibleParts().find(f=>f.id===id);if(part)domain=part.domain;renderDomains();renderTree();renderParameters();}
 function renderTree(){
-  if(!assemblyParts(params,features).some(f=>f.id===selected))selected="sink";
+  const parts=visibleParts();
+  if(!parts.some(f=>f.id===selected))selected="sink";
   $("feature-tree").replaceChildren();
-  for(const f of assemblyParts(params,features)){
+  for(const f of parts){
     const row=el("div",undefined,"feature-row"),b=el("button",`${f.shape==="cylinder"?"○":"▧"} ${f.name}`),toggle=el("button",hiddenParts.has(f.id)?"◌":"◉");
     b.type=toggle.type="button";b.setAttribute("aria-pressed",String(selected===f.id));b.addEventListener("click",()=>selectPart(f.id));
     toggle.setAttribute("aria-label",`${hiddenParts.has(f.id)?"Show":"Hide"} ${f.name}`);toggle.addEventListener("click",()=>{hiddenParts.has(f.id)?hiddenParts.delete(f.id):hiddenParts.add(f.id);renderTree();draw();});row.append(b,toggle);$("feature-tree").append(row);
   }
   [...$("feature-tree").children].forEach((row,i)=>{
-    const f=assemblyParts(params,features)[i];
+    const f=parts[i];
     if(f.shape==="box"||f.shape==="cylinder")row.after(el("div","└ Sketch · "+(f.shape==="box"?"rectangle":"circle")+" on XY · Extrude "+f.height+" mm","feature-detail"));
   });
   draw();
@@ -222,7 +234,7 @@ $("apply-preset").addEventListener("click",action(async()=>{selected="sink";doma
 }));
 
 function renderDrawing(){
-  const parts=assemblyParts(params,features).filter(p=>p.shape!=="context");
+  const parts=visibleParts().filter(p=>p.shape!=="context");
   if(!parts.some(p=>p.id===drawingPart))drawingPart="sink";
   $("drawing-part").replaceChildren(...parts.map(p=>{const option=el("option",p.name);option.value=p.id;return option;}));$("drawing-part").value=drawingPart;
   const part=parts.find(p=>p.id===drawingPart),meta=drawings[drawingPart]||drawingDefaults(part);$("drawing-fields").replaceChildren();
@@ -236,7 +248,7 @@ function renderDrawing(){
   }
   updateSheet();
 }
-function sheetState(){const part=assemblyParts(params,features).find(p=>p.id===drawingPart)||assemblyParts(params,features)[0];return{part,meta:drawings[part.id]||drawingDefaults(part)};}
+function sheetState(){const part=visibleParts().find(p=>p.id===drawingPart)||visibleParts()[0];return{part,meta:drawings[part.id]||drawingDefaults(part)};}
 function updateSheet(){
   const {part,meta}=sheetState(),svg=drawingSVG(params,part,meta,active,dirty(),"preview-arrow"),doc=new DOMParser().parseFromString(svg,"image/svg+xml");
   const print=new DOMParser().parseFromString(drawingSVG(params,part,meta,active,dirty(),"print-arrow"),"image/svg+xml");
@@ -528,7 +540,7 @@ $("import").addEventListener("change", action(async () => {
   if (await receive(check.body)) toast(`Project imported${check.present ? ` · integrity verified (sha256 ${check.sha256.slice(0, 12)}…)` : ""}. Existing revisions and drafts are preserved.`);
 }));
 $("stl").addEventListener("click", action(async () => {
-  const b = $("stl"), target=selected,part=assemblyParts(params,features).find(f=>f.id===target); b.disabled = true; b.textContent = "Meshing in Rust…";
+  const b = $("stl"), target=selected,part=visibleParts().find(f=>f.id===target); b.disabled = true; b.textContent = "Meshing in Rust…";
   try {
     const { result: mesh } = await request("mesh", { params:{...params},features:structuredClone(features),target });
     const buffer = new ArrayBuffer(84 + mesh.triangles.length*50), data = new DataView(buffer);

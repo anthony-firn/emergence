@@ -109,6 +109,12 @@ editor, and **F3** for command search. Layout preferences stay on this device;
 project files and peer revisions contain the design. Capabilities, model limits
 and the donation link remain in Help and the header. This layout does not add
 Blender file compatibility or mesh-editing tools.
+The Mechanical viewport draws the open PCB's components at their board positions,
+transformed into the heat sink's scene frame. Exploding separates the populated
+board as a unit. Package envelopes are schematic; heat-sink mounting, clearance
+and thermal contact still need engineering validation. The thermal model's
+assumed interface is not a verified mechanical assembly.
+
 
 For a UI-only release, `python3 web/build.py --out /tmp/emergence-ui
 --reuse-wasm-from /path/to/previous-package` verifies the previous WASM checksum,

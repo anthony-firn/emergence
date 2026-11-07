@@ -186,3 +186,4 @@ body.editor-shell {
 /* Non-scaling SVG strokes use screen units: subpixel dash lengths can
    generate millions of segments when a focused spot becomes very small. */
 .editor-workarea .spot-rms { stroke-dasharray: 3 3; }
+#mechanical-assembly-note { margin: 0; padding: 7px 10px; border-bottom: 1px solid #444; font-size: 10px; }

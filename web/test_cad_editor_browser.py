@@ -100,6 +100,18 @@ def check(url, screenshots=None):
         if screenshots:
             screenshots.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshots / 'emergence-editor-desktop.png'))
+        # The compact layout exposes the spot plots immediately. Non-scaling
+        # outlines need screen-sized dashes to keep the GPU responsive at focus.
+        page.locator('#studio-tab-optics').click()
+        z = page.evaluate('window.emergence.documents().optics.target.z')
+        page.locator('#optics-focus').click()
+        page.wait_for_function('(z) => window.emergence.documents().optics.target.z !== z', arg=z)
+        page.locator('.spot').first.screenshot()
+        page.locator('#command-undo').click()
+        page.locator('#studio-tab-parts').click()
+        page.wait_for_function("() => document.querySelector('#parts-mesh-info').dataset.mesh === 'ready'", timeout=60000)
+        assert 'watertight' in page.locator('#parts-mesh-info').inner_text()
+        print('Focused optics plots, undo, studio switching and part preview passed.')
         for theme in ('light', 'dark'):
             page.evaluate('(t) => document.documentElement.dataset.theme=t', theme)
             for width in (320, 390, 768, 1360):

@@ -183,3 +183,6 @@ body.editor-shell {
   .editor-shell .app-brand strong { font-size: 11px; }
   .editor-shell .repo-bar { flex-direction: row; align-items: center; }
 }
+/* Non-scaling SVG strokes use screen units: subpixel dash lengths can
+   generate millions of segments when a focused spot becomes very small. */
+.editor-workarea .spot-rms { stroke-dasharray: 3 3; }

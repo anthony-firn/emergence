@@ -106,6 +106,7 @@ def check(url, screenshots=None):
         z = page.evaluate('window.emergence.documents().optics.target.z')
         page.locator('#optics-focus').click()
         page.wait_for_function('(z) => window.emergence.documents().optics.target.z !== z', arg=z)
+        page.wait_for_function("() => !document.body.classList.contains('solving')", timeout=60000)
         page.locator('.spot').first.screenshot()
         page.locator('#command-undo').click()
         page.locator('#studio-tab-parts').click()

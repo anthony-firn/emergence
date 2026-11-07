@@ -199,6 +199,7 @@ export function mountEditor({ selectStudio, getStudio }) {
   project.bus.on(event => { activity.textContent = event.type === 'error' ? `${event.op}: ${event.error.message}` : `${event.type}: ${event.op || event.label || 'project updated'}`; });
   document.addEventListener('keydown', e => {
     const editing = e.target.closest('input,textarea,select,[contenteditable=true]');
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setConsole(false); $('command-input').focus(); $('command-input').select(); return; }
     if (e.key === 'F3') { e.preventDefault(); setConsole(false); $('command-reference').click(); $('commands-filter').focus(); }
     if (editing || document.querySelector('dialog[open]')) return;
     if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); maximize(); }

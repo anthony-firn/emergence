@@ -63,7 +63,9 @@ def check(url, screenshots=None):
         page.reload(wait_until='networkidle')
         assert grip.get_attribute('aria-valuenow') == '320'
         assert not page.locator('#command-input').is_visible()
-        page.locator('#editor-console-toggle').click()
+        page.keyboard.press('Control+k')
+        assert page.locator('#command-input').is_visible()
+        assert page.locator('#command-input').evaluate('e => e === document.activeElement')
         page.locator('#editor-maximize').click()
         assert page.locator('#editor-area').evaluate("e => e.classList.contains('area-maximized')")
         page.keyboard.press('Escape')
